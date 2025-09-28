@@ -40,8 +40,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 
     // Create user session and redirect to home
     return createUserSession(authResponse.user.id, '/');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Authentication failed:', error);
+
+    // Check if this is an organization selection error
+    if (error.code === 'organization_selection_required' && error.pendingAuthenticationToken) {
+      // Redirect to organization selection page with pending token
+      return redirect(`/auth/organization-selection?token=${encodeURIComponent(error.pendingAuthenticationToken)}&organizations=${encodeURIComponent(JSON.stringify(error.organizations || []))}`);
+    }
+
     return redirect('/auth/login?error=' + encodeURIComponent('Authentication failed'));
   }
 }

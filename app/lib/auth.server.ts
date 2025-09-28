@@ -64,13 +64,16 @@ export async function logout(request: Request) {
   });
 }
 
-export function getAuthorizationUrl(state?: string) {
-  // Use WorkOS User Management with email/password authentication
-  // AuthKit is WorkOS's built-in authentication solution
+export function getAuthorizationUrl(state?: string, organizationId?: string) {
+  // Use WorkOS User Management with organization selection support
+  // AuthKit handles organization creation and selection automatically
   return workos.userManagement.getAuthorizationUrl({
     clientId: WORKOS_CLIENT_ID,
     redirectUri: WORKOS_REDIRECT_URI,
     provider: 'authkit',
+    // Enable organization selection/creation
+    // If no organizationId provided, WorkOS will handle org selection/creation
+    ...(organizationId && { organizationId }),
     ...(state && { state }),
   });
 }
@@ -85,6 +88,63 @@ export async function authenticateWithCode(code: string) {
     return authResponse;
   } catch (error) {
     console.error('WorkOS authentication error:', error);
+    throw error;
+  }
+}
+
+export async function authenticateWithOrganizationSelection(
+  pendingAuthenticationToken: string,
+  organizationId: string
+) {
+  try {
+    const authResponse = await workos.userManagement.authenticateWithOrganizationSelection({
+      clientId: WORKOS_CLIENT_ID,
+      pendingAuthenticationToken,
+      organizationId,
+    });
+
+    return authResponse;
+  } catch (error) {
+    console.error('WorkOS organization selection error:', error);
+    throw error;
+  }
+}
+
+// Organization management functions
+export async function createOrganization(name: string, domains: string[] = []) {
+  try {
+    const organization = await workos.organizations.createOrganization({
+      name,
+      domains,
+    });
+
+    return organization;
+  } catch (error) {
+    console.error('Failed to create organization:', error);
+    throw error;
+  }
+}
+
+export async function createOrganizationMembership(organizationId: string, userId: string) {
+  try {
+    const membership = await workos.userManagement.createOrganizationMembership({
+      organizationId,
+      userId,
+    });
+
+    return membership;
+  } catch (error) {
+    console.error('Failed to create organization membership:', error);
+    throw error;
+  }
+}
+
+export async function listOrganizations() {
+  try {
+    const { data: organizations } = await workos.organizations.listOrganizations();
+    return organizations;
+  } catch (error) {
+    console.error('Failed to list organizations:', error);
     throw error;
   }
 }
