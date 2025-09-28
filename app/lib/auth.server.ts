@@ -113,14 +113,26 @@ export async function authenticateWithOrganizationSelection(
 // Organization management functions
 export async function createOrganization(name: string, domains: string[] = []) {
   try {
+    console.log('Attempting to create organization with:', { name, domains });
+
+    // Try with minimal parameters first
     const organization = await workos.organizations.createOrganization({
-      name,
-      domains,
+      name: name.trim(),
+      // Remove domains parameter as it might be causing issues
+      // domains,
     });
 
+    console.log('Organization created successfully:', organization);
     return organization;
-  } catch (error) {
-    console.error('Failed to create organization:', error);
+  } catch (error: any) {
+    console.error('Failed to create organization:', {
+      message: error.message,
+      status: error.status,
+      code: error.code,
+      requestID: error.requestID,
+      details: error.data || error.response?.data || 'No additional details',
+      fullError: error
+    });
     throw error;
   }
 }
@@ -145,6 +157,20 @@ export async function listOrganizations() {
     return organizations;
   } catch (error) {
     console.error('Failed to list organizations:', error);
+    throw error;
+  }
+}
+
+export async function refreshTokenWithOrganization(refreshToken: string, organizationId: string) {
+  try {
+    const authResponse = await workos.userManagement.authenticateWithRefreshToken({
+      refreshToken,
+      organizationId,
+    });
+
+    return authResponse;
+  } catch (error) {
+    console.error('Failed to refresh token with organization:', error);
     throw error;
   }
 }

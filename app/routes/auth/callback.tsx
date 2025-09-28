@@ -2,6 +2,7 @@ import { redirect } from 'react-router';
 import type { Route } from './+types/callback';
 import { authenticateWithCode, createUserSession } from '~/lib/auth.server';
 import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
+import { sessionStorage, commitSession } from '~/lib/session.server';
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -23,10 +24,24 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Authenticate with WorkOS
     const authResponse = await authenticateWithCode(code);
 
-    // Organization ID is required for our application
+    // If no organization, store auth data in session and redirect to organization creation
     if (!authResponse.organizationId) {
-      console.error('No organization ID in authentication response');
-      return redirect('/auth/login?error=' + encodeURIComponent('Organization required'));
+      console.log('User authenticated but no organization - storing session and redirecting to org creation');
+
+      // Store temporary authentication data in session
+      const tempSession = await sessionStorage.getSession();
+      tempSession.set('tempUserId', authResponse.user.id);
+      tempSession.set('tempUserEmail', authResponse.user.email);
+      tempSession.set('tempUserFirstName', authResponse.user.firstName || '');
+      tempSession.set('tempUserLastName', authResponse.user.lastName || '');
+      tempSession.set('tempAccessToken', authResponse.accessToken);
+      tempSession.set('tempRefreshToken', authResponse.refreshToken);
+
+      return redirect('/auth/create-organization', {
+        headers: {
+          'Set-Cookie': await commitSession(tempSession),
+        },
+      });
     }
 
     // Create or update user in Convex database
