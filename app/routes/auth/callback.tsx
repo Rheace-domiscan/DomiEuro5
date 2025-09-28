@@ -1,6 +1,7 @@
 import { redirect } from 'react-router';
 import type { Route } from './+types/callback';
 import { authenticateWithCode, createUserSession } from '~/lib/auth.server';
+import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -21,7 +22,16 @@ export async function loader({ request }: Route.LoaderArgs) {
   try {
     // Authenticate with WorkOS
     const user = await authenticateWithCode(code);
-    
+
+    // Create or update user in Convex database
+    await createOrUpdateUserInConvex({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName || undefined,
+      lastName: user.lastName || undefined,
+      organizationId: (user as any).organizationId || undefined,
+    });
+
     // Create user session and redirect to home
     return createUserSession(user.id, '/');
   } catch (error) {

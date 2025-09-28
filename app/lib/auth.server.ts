@@ -1,6 +1,7 @@
 import { redirect } from 'react-router';
 import { workos, WORKOS_CLIENT_ID, WORKOS_REDIRECT_URI } from './workos.server';
 import { getSession, commitSession, destroySession, sessionStorage } from './session.server';
+import { createOrUpdateUserInConvex } from '../../lib/convex.server';
 
 export interface User {
   id: string;
@@ -19,6 +20,21 @@ export async function getUser(request: Request): Promise<User | null> {
 
   try {
     const user = await workos.userManagement.getUser(userId);
+
+    // Ensure user exists in Convex database (idempotent operation)
+    try {
+      await createOrUpdateUserInConvex({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+        organizationId: (user as any).organizationId || undefined,
+      });
+    } catch (convexError) {
+      console.error('Failed to sync user with Convex:', convexError);
+      // Continue anyway - don't block authentication for database issues
+    }
+
     return {
       id: user.id,
       email: user.email,
