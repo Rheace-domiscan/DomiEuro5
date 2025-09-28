@@ -9,8 +9,8 @@ export default defineSchema({
     updatedAt: v.number(),
     isActive: v.boolean(),
     // WorkOS integration fields
-    workosUserId: v.optional(v.string()),
-    organizationId: v.optional(v.string()),
+    workosUserId: v.string(), // Required - every user must have a WorkOS ID
+    organizationId: v.string(), // Required - every user must belong to an organization
   })
     .index("by_email", ["email"])
     .index("by_workos_user_id", ["workosUserId"])

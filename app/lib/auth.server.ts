@@ -21,19 +21,9 @@ export async function getUser(request: Request): Promise<User | null> {
   try {
     const user = await workos.userManagement.getUser(userId);
 
-    // Ensure user exists in Convex database (idempotent operation)
-    try {
-      await createOrUpdateUserInConvex({
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName || undefined,
-        lastName: user.lastName || undefined,
-        organizationId: (user as any).organizationId || undefined,
-      });
-    } catch (convexError) {
-      console.error('Failed to sync user with Convex:', convexError);
-      // Continue anyway - don't block authentication for database issues
-    }
+    // Note: When getting user from session, we don't have organizationId
+    // The user should already exist in Convex from the initial authentication
+    // We only sync basic user info here, not organization data
 
     return {
       id: user.id,
@@ -87,12 +77,12 @@ export function getAuthorizationUrl(state?: string) {
 
 export async function authenticateWithCode(code: string) {
   try {
-    const { user } = await workos.userManagement.authenticateWithCode({
+    const authResponse = await workos.userManagement.authenticateWithCode({
       clientId: WORKOS_CLIENT_ID,
       code,
     });
-    
-    return user;
+
+    return authResponse;
   } catch (error) {
     console.error('WorkOS authentication error:', error);
     throw error;

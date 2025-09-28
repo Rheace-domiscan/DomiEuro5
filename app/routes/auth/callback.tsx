@@ -21,19 +21,25 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   try {
     // Authenticate with WorkOS
-    const user = await authenticateWithCode(code);
+    const authResponse = await authenticateWithCode(code);
+
+    // Organization ID is required for our application
+    if (!authResponse.organizationId) {
+      console.error('No organization ID in authentication response');
+      return redirect('/auth/login?error=' + encodeURIComponent('Organization required'));
+    }
 
     // Create or update user in Convex database
     await createOrUpdateUserInConvex({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName || undefined,
-      lastName: user.lastName || undefined,
-      organizationId: (user as any).organizationId || undefined,
+      id: authResponse.user.id,
+      email: authResponse.user.email,
+      firstName: authResponse.user.firstName || undefined,
+      lastName: authResponse.user.lastName || undefined,
+      organizationId: authResponse.organizationId,
     });
 
     // Create user session and redirect to home
-    return createUserSession(user.id, '/');
+    return createUserSession(authResponse.user.id, '/');
   } catch (error) {
     console.error('Authentication failed:', error);
     return redirect('/auth/login?error=' + encodeURIComponent('Authentication failed'));

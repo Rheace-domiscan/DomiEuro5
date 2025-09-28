@@ -9,6 +9,8 @@ export function UsersDemo() {
       await createUser({
         email: "test@example.com",
         name: "Test User",
+        workosUserId: "demo_user_" + Date.now(),
+        organizationId: "demo_org_123",
       });
     } catch (error) {
       console.error("Failed to create user:", error);

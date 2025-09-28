@@ -16,7 +16,7 @@ export async function createOrUpdateUserInConvex(workosUser: {
   email: string;
   firstName?: string;
   lastName?: string;
-  organizationId?: string;
+  organizationId: string; // Required - organization is mandatory for our application
 }) {
   // Check if user already exists
   const existingUser = await convexServer.query(api.users.getUserByWorkosId, {

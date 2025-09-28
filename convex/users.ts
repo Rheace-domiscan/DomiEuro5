@@ -6,8 +6,8 @@ export const createUser = mutation({
   args: {
     email: v.string(),
     name: v.string(),
-    workosUserId: v.optional(v.string()),
-    organizationId: v.optional(v.string()),
+    workosUserId: v.string(), // Required
+    organizationId: v.string(), // Required
   },
   handler: async (ctx, args) => {
     const now = Date.now();
