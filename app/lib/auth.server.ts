@@ -1,7 +1,6 @@
 import { redirect } from 'react-router';
 import { workos, WORKOS_CLIENT_ID, WORKOS_REDIRECT_URI } from './workos.server';
 import { getSession, commitSession, destroySession, sessionStorage } from './session.server';
-import { createOrUpdateUserInConvex } from '../../lib/convex.server';
 
 export interface User {
   id: string;
@@ -13,7 +12,7 @@ export interface User {
 export async function getUser(request: Request): Promise<User | null> {
   const session = await getSession(request);
   const userId = session.get('userId');
-  
+
   if (!userId) {
     return null;
   }
@@ -31,7 +30,7 @@ export async function getUser(request: Request): Promise<User | null> {
       firstName: user.firstName || undefined,
       lastName: user.lastName || undefined,
     };
-  } catch (error) {
+  } catch (_error) {
     // If user doesn't exist or there's an error, clear the session
     return null;
   }
@@ -45,7 +44,11 @@ export async function requireUser(request: Request): Promise<User> {
   return user;
 }
 
-export async function createUserSession(userId: string, redirectTo: string = '/', request?: Request) {
+export async function createUserSession(
+  userId: string,
+  redirectTo: string = '/',
+  _request?: Request
+) {
   const session = await sessionStorage.getSession();
   session.set('userId', userId);
   return redirect(redirectTo, {
@@ -124,14 +127,22 @@ export async function createOrganization(name: string, domains: string[] = []) {
 
     console.log('Organization created successfully:', organization);
     return organization;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const workosError = error as {
+      message?: string;
+      status?: number;
+      code?: string;
+      requestID?: string;
+      data?: unknown;
+      response?: { data?: unknown };
+    };
     console.error('Failed to create organization:', {
-      message: error.message,
-      status: error.status,
-      code: error.code,
-      requestID: error.requestID,
-      details: error.data || error.response?.data || 'No additional details',
-      fullError: error
+      message: workosError.message,
+      status: workosError.status,
+      code: workosError.code,
+      requestID: workosError.requestID,
+      details: workosError.data || workosError.response?.data || 'No additional details',
+      fullError: workosError,
     });
     throw error;
   }
@@ -164,6 +175,7 @@ export async function listOrganizations() {
 export async function refreshTokenWithOrganization(refreshToken: string, organizationId: string) {
   try {
     const authResponse = await workos.userManagement.authenticateWithRefreshToken({
+      clientId: WORKOS_CLIENT_ID,
       refreshToken,
       organizationId,
     });

@@ -1,4 +1,4 @@
-import { useGetAllUsers, useCreateUser } from "../lib/useConvex";
+import { useGetAllUsers, useCreateUser } from '../lib/useConvex';
 
 export function UsersDemo() {
   const users = useGetAllUsers();
@@ -7,13 +7,13 @@ export function UsersDemo() {
   const handleCreateUser = async () => {
     try {
       await createUser({
-        email: "test@example.com",
-        name: "Test User",
-        workosUserId: "demo_user_" + Date.now(),
-        organizationId: "demo_org_123",
+        email: 'test@example.com',
+        name: 'Test User',
+        workosUserId: 'demo_user_' + Date.now(),
+        organizationId: 'demo_org_123',
       });
     } catch (error) {
-      console.error("Failed to create user:", error);
+      console.error('Failed to create user:', error);
     }
   };
 
@@ -21,10 +21,7 @@ export function UsersDemo() {
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Users Demo</h2>
 
-      <button
-        onClick={handleCreateUser}
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
-      >
+      <button onClick={handleCreateUser} className="bg-blue-500 text-white px-4 py-2 rounded mb-4">
         Create Test User
       </button>
 
@@ -36,12 +33,20 @@ export function UsersDemo() {
           <p>No users found.</p>
         ) : (
           <ul className="space-y-2">
-            {users.map((user) => (
+            {users.map(user => (
               <li key={user._id} className="border p-2 rounded">
-                <p><strong>Name:</strong> {user.name}</p>
-                <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>Created:</strong> {new Date(user.createdAt).toLocaleString()}</p>
-                <p><strong>Active:</strong> {user.isActive ? "Yes" : "No"}</p>
+                <p>
+                  <strong>Name:</strong> {user.name}
+                </p>
+                <p>
+                  <strong>Email:</strong> {user.email}
+                </p>
+                <p>
+                  <strong>Created:</strong> {new Date(user.createdAt).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Active:</strong> {user.isActive ? 'Yes' : 'No'}
+                </p>
               </li>
             ))}
           </ul>

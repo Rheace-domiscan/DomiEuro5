@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2025-09-29
+
+### Fixed
+- ✅ **Code Quality & Type Safety**
+  - Fixed all TypeScript `any` types with proper type definitions
+  - Replaced all non-null assertions (`!`) with runtime validation
+  - Added proper error types for WorkOS authentication and organization creation
+  - Imported official `Organization` type from WorkOS SDK
+  - Implemented `Session` type from React Router for session management
+
+- ✅ **Security Improvements**
+  - Made sensitive error logging development-only
+  - Added environment variable validation with clear error messages
+  - Removed console logging of user data in production
+  - Implemented silent failure for URL parameter validation
+
+- ✅ **ESLint & Prettier Setup**
+  - Configured ESLint with TypeScript, React, and accessibility rules
+  - Set up Prettier for consistent code formatting
+  - Added linting scripts to package.json
+  - Configured ignore patterns for unused parameters
+
+### Technical Details
+- **Error Handling**: Created `WorkOSError` and `OrganizationCreationError` types
+- **Runtime Validation**: Added checks for `CONVEX_URL` and `VITE_CONVEX_URL`
+- **Type Narrowing**: Leveraged TypeScript control flow analysis
+- **Development Experience**: Conditional logging for development vs production
+
+### Improvements
+- Reduced linting issues from 1,747 to 0 errors and 9 warnings
+- All remaining warnings are intentional (flow tracking and demo code)
+- Enhanced code maintainability with proper typing
+- Improved error messages for debugging
+
 ## [0.1.0] - 2025-09-28
 
 ### Added

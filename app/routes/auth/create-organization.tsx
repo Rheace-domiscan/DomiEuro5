@@ -5,6 +5,11 @@ import { getSession, sessionStorage, commitSession } from '~/lib/session.server'
 import { createOrganization, createOrganizationMembership } from '~/lib/auth.server';
 import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
 
+// Error type for organization creation flow (handles WorkOS + Convex errors)
+type OrganizationCreationError = {
+  message?: string;
+};
+
 interface LoaderData {
   user: {
     id: string;
@@ -18,7 +23,7 @@ interface ActionData {
   error?: string;
 }
 
-export async function loader({ request }: Route.LoaderArgs): Promise<LoaderData> {
+export async function loader({ request }: Route.LoaderArgs): Promise<LoaderData | Response> {
   const session = await getSession(request);
 
   // Verify user has temporary auth data in session
@@ -29,7 +34,9 @@ export async function loader({ request }: Route.LoaderArgs): Promise<LoaderData>
 
   if (!tempUserId || !tempUserEmail || !tempAccessToken || !tempRefreshToken) {
     // No valid temporary session, redirect back to login
-    return redirect('/auth/login?error=' + encodeURIComponent('Session expired. Please sign in again.'));
+    return redirect(
+      '/auth/login?error=' + encodeURIComponent('Session expired. Please sign in again.')
+    );
   }
 
   return {
@@ -54,7 +61,9 @@ export async function action({ request }: Route.ActionArgs): Promise<Response | 
   const tempRefreshToken = session.get('tempRefreshToken');
 
   if (!tempUserId || !tempUserEmail || !tempAccessToken || !tempRefreshToken) {
-    return redirect('/auth/login?error=' + encodeURIComponent('Session expired. Please sign in again.'));
+    return redirect(
+      '/auth/login?error=' + encodeURIComponent('Session expired. Please sign in again.')
+    );
   }
 
   if (!organizationName || organizationName.trim().length < 2) {
@@ -63,15 +72,21 @@ export async function action({ request }: Route.ActionArgs): Promise<Response | 
 
   try {
     // Step 1: Create organization in WorkOS
-    console.log('Creating organization:', organizationName);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Creating organization:', organizationName);
+    }
     const organization = await createOrganization(organizationName.trim());
 
     // Step 2: Create organization membership in WorkOS
-    console.log('Creating membership for user:', tempUserId, 'in org:', organization.id);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Creating membership for user:', tempUserId, 'in org:', organization.id);
+    }
     await createOrganizationMembership(organization.id, tempUserId);
 
     // Step 3: Create user in Convex database
-    console.log('Creating user in Convex with organization:', organization.id);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Creating user in Convex with organization:', organization.id);
+    }
     await createOrUpdateUserInConvex({
       id: tempUserId,
       email: tempUserEmail,
@@ -89,13 +104,19 @@ export async function action({ request }: Route.ActionArgs): Promise<Response | 
         'Set-Cookie': await commitSession(newSession),
       },
     });
+  } catch (error: unknown) {
+    const creationError = error as OrganizationCreationError;
 
-  } catch (error: any) {
-    console.error('Organization creation failed:', error);
+    // Only log detailed error info in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Organization creation failed:', creationError);
+    }
 
     // Handle specific WorkOS errors
-    if (error.message?.includes('organization already exists')) {
-      return { error: 'An organization with this name already exists. Please choose a different name.' };
+    if (creationError.message?.includes('organization already exists')) {
+      return {
+        error: 'An organization with this name already exists. Please choose a different name.',
+      };
     }
 
     return { error: 'Failed to create organization. Please try again.' };
@@ -130,7 +151,10 @@ export default function CreateOrganization() {
 
           <Form method="post" className="space-y-4">
             <div>
-              <label htmlFor="organizationName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="organizationName"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Organization Name
               </label>
               <input
@@ -142,7 +166,6 @@ export default function CreateOrganization() {
                 maxLength={50}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="Enter your organization name"
-                autoFocus
               />
               <p className="mt-1 text-xs text-gray-500">
                 This will be the name of your workspace. You can change it later.
@@ -158,10 +181,7 @@ export default function CreateOrganization() {
           </Form>
 
           <div className="mt-6 text-center">
-            <a
-              href="/auth/login"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
+            <a href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900">
               Back to Sign In
             </a>
           </div>

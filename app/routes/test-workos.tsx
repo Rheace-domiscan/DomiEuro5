@@ -1,7 +1,7 @@
 import type { Route } from './+types/test-workos';
 import { workos, WORKOS_CLIENT_ID, WORKOS_REDIRECT_URI } from '~/lib/workos.server';
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request: _request }: Route.LoaderArgs) {
   try {
     // Test WorkOS configuration
     const config = {
@@ -17,41 +17,41 @@ export async function loader({ request }: Route.LoaderArgs) {
       provider: 'authkit',
     });
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       config,
       authUrl: authUrl, // Show full URL for debugging
-      fullAuthUrl: authUrl
+      fullAuthUrl: authUrl,
     };
   } catch (error) {
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
       config: {
         clientId: WORKOS_CLIENT_ID,
         redirectUri: WORKOS_REDIRECT_URI,
         hasApiKey: !!process.env.WORKOS_API_KEY,
-      }
+      },
     };
   }
 }
 
-import { useLoaderData } from "react-router";
+import { useLoaderData } from 'react-router';
 
 export default function TestWorkOS() {
   const data = useLoaderData<typeof loader>();
-  
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-gray-900">WorkOS Configuration Test</h1>
-        
+
         {/* Debug info */}
         <div className="bg-blue-50 p-4 rounded-lg mb-6">
           <h3 className="font-bold text-blue-800">Debug Info:</h3>
           <pre className="text-sm text-blue-700 mt-2">{JSON.stringify(data, null, 2)}</pre>
         </div>
-        
+
         <div className="bg-white p-6 rounded-lg shadow-lg mb-6 border">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">Configuration Status</h2>
           <div className="space-y-3">
@@ -63,15 +63,21 @@ export default function TestWorkOS() {
             </div>
             <div className="flex">
               <span className="font-semibold text-gray-700 w-32">Client ID:</span>
-              <span className="text-gray-900 font-mono text-sm">{data.config?.clientId || 'Not found'}</span>
+              <span className="text-gray-900 font-mono text-sm">
+                {data.config?.clientId || 'Not found'}
+              </span>
             </div>
             <div className="flex">
               <span className="font-semibold text-gray-700 w-32">Redirect URI:</span>
-              <span className="text-gray-900 font-mono text-sm">{data.config?.redirectUri || 'Not found'}</span>
+              <span className="text-gray-900 font-mono text-sm">
+                {data.config?.redirectUri || 'Not found'}
+              </span>
             </div>
             <div className="flex">
               <span className="font-semibold text-gray-700 w-32">Has API Key:</span>
-              <span className={`font-bold ${data.config?.hasApiKey ? 'text-green-600' : 'text-red-600'}`}>
+              <span
+                className={`font-bold ${data.config?.hasApiKey ? 'text-green-600' : 'text-red-600'}`}
+              >
                 {data.config?.hasApiKey ? 'Yes' : 'No'}
               </span>
             </div>
@@ -100,8 +106,14 @@ export default function TestWorkOS() {
         <div className="bg-gray-50 p-4 rounded-lg border">
           <h3 className="font-semibold text-gray-800 mb-2">Next Steps:</h3>
           <ol className="list-decimal list-inside text-gray-700 space-y-1">
-            <li>If successful, go back to <a href="/" className="text-blue-600 underline">home page</a> and test login</li>
-            <li>If there's an error, check your WorkOS dashboard configuration</li>
+            <li>
+              If successful, go back to{' '}
+              <a href="/" className="text-blue-600 underline">
+                home page
+              </a>{' '}
+              and test login
+            </li>
+            <li>If there&apos;s an error, check your WorkOS dashboard configuration</li>
             <li>Ensure AuthKit is enabled in your WorkOS application</li>
           </ol>
         </div>

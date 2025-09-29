@@ -1,5 +1,6 @@
 import { redirect } from 'react-router';
 import { Form, useLoaderData } from 'react-router';
+import type { Organization } from '@workos-inc/node';
 import { authenticateWithOrganizationSelection, createUserSession } from '~/lib/auth.server';
 import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
 
@@ -16,8 +17,9 @@ export async function loader({ request }: { request: Request }) {
   if (organizationsParam) {
     try {
       organizations = JSON.parse(decodeURIComponent(organizationsParam));
-    } catch (error) {
-      console.error('Failed to parse organizations:', error);
+    } catch {
+      // Silently fail - organizations will remain empty array
+      // This handles URL tampering or encoding issues gracefully
     }
   }
 
@@ -37,19 +39,27 @@ export async function action({ request }: { request: Request }) {
     // Complete authentication with selected organization
     const authResponse = await authenticateWithOrganizationSelection(token, organizationId);
 
+    // Validate that WorkOS returned an organization ID
+    if (!authResponse.organizationId) {
+      throw new Error('WorkOS authentication succeeded but returned no organization ID');
+    }
+
     // Create or update user in Convex database
     await createOrUpdateUserInConvex({
       id: authResponse.user.id,
       email: authResponse.user.email,
       firstName: authResponse.user.firstName || undefined,
       lastName: authResponse.user.lastName || undefined,
-      organizationId: authResponse.organizationId!,
+      organizationId: authResponse.organizationId,
     });
 
     // Create user session and redirect to home
     return createUserSession(authResponse.user.id, '/');
   } catch (error) {
-    console.error('Organization selection failed:', error);
+    // Only log detailed error info in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Organization selection failed:', error);
+    }
     return redirect('/auth/login?error=' + encodeURIComponent('Organization selection failed'));
   }
 }
@@ -61,11 +71,9 @@ export default function OrganizationSelection() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="max-w-md w-full">
         <div className="bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold text-gray-900 text-center mb-6">
-            Select Organization
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 text-center mb-6">Select Organization</h1>
           <p className="text-gray-600 text-center mb-6">
-            Please select the organization you'd like to join:
+            Please select the organization you&apos;d like to join:
           </p>
 
           <Form method="post" className="space-y-4">
@@ -73,7 +81,7 @@ export default function OrganizationSelection() {
 
             {organizations.length > 0 ? (
               <div className="space-y-3">
-                {organizations.map((org: any) => (
+                {organizations.map((org: Organization) => (
                   <button
                     key={org.id}
                     type="submit"
@@ -83,9 +91,7 @@ export default function OrganizationSelection() {
                   >
                     <div className="font-semibold text-gray-900">{org.name}</div>
                     {org.domains && org.domains.length > 0 && (
-                      <div className="text-sm text-gray-500">
-                        Domains: {org.domains.join(', ')}
-                      </div>
+                      <div className="text-sm text-gray-500">Domains: {org.domains.join(', ')}</div>
                     )}
                   </button>
                 ))}
@@ -93,7 +99,8 @@ export default function OrganizationSelection() {
             ) : (
               <div className="text-center">
                 <p className="text-gray-600 mb-4">
-                  No organizations available. Please contact your administrator or try signing in again.
+                  No organizations available. Please contact your administrator or try signing in
+                  again.
                 </p>
                 <a
                   href="/auth/login"

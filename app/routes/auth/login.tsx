@@ -12,7 +12,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return null;
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request: _request }: Route.ActionArgs) {
   // Generate the WorkOS authorization URL
   const authorizationUrl = getAuthorizationUrl();
   return redirect(authorizationUrl);

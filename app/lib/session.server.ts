@@ -1,4 +1,4 @@
-import { createCookieSessionStorage } from 'react-router';
+import { createCookieSessionStorage, type Session } from 'react-router';
 
 if (!process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET environment variable is required');
@@ -21,10 +21,10 @@ export async function getSession(request: Request) {
   return sessionStorage.getSession(cookie);
 }
 
-export async function commitSession(session: any) {
+export async function commitSession(session: Session) {
   return sessionStorage.commitSession(session);
 }
 
-export async function destroySession(session: any) {
+export async function destroySession(session: Session) {
   return sessionStorage.destroySession(session);
 }

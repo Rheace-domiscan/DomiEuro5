@@ -1,13 +1,14 @@
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api";
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '../convex/_generated/api';
 
 // Server-side Convex client using HTTP
-const convexUrl = process.env.CONVEX_URL!;
+const convexUrl = process.env.CONVEX_URL;
 
 if (!convexUrl) {
-  throw new Error("CONVEX_URL environment variable is required for server-side operations");
+  throw new Error('CONVEX_URL environment variable is required for server-side operations');
 }
 
+// TypeScript now knows convexUrl is defined after the check above
 export const convexServer = new ConvexHttpClient(convexUrl);
 
 // Server-side user operations

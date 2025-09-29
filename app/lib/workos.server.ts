@@ -11,4 +11,5 @@ if (!process.env.WORKOS_CLIENT_ID) {
 export const workos = new WorkOS(process.env.WORKOS_API_KEY);
 
 export const WORKOS_CLIENT_ID = process.env.WORKOS_CLIENT_ID;
-export const WORKOS_REDIRECT_URI = process.env.WORKOS_REDIRECT_URI || 'http://localhost:5173/auth/callback';
+export const WORKOS_REDIRECT_URI =
+  process.env.WORKOS_REDIRECT_URI || 'http://localhost:5173/auth/callback';

@@ -1,10 +1,9 @@
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../convex/_generated/api';
 
 // User queries
 export const useGetAllUsers = () => useQuery(api.users.getAllUsers);
-export const useGetUserByEmail = (email: string) =>
-  useQuery(api.users.getUserByEmail, { email });
+export const useGetUserByEmail = (email: string) => useQuery(api.users.getUserByEmail, { email });
 export const useGetUserByWorkosId = (workosUserId: string) =>
   useQuery(api.users.getUserByWorkosId, { workosUserId });
 export const useGetUsersByOrganization = (organizationId: string) =>
