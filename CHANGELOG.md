@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-09-30
+
+### Added
+- Documented in-repo onboarding for multi-agent workflows via `AGENTS.md`
+- Added Claude-specific quickstart guidance in `CLAUDE.md`
+
+### Changed
+- Brought in Playwright tooling (`@playwright/test`, `@playwright/mcp`) to prep end-to-end coverage
+
+### Known Issues
+- ESLint `no-console` warnings remain in auth flows and `components/UsersDemo.tsx`
+- Generated Playwright reports (`playwright-report/`) are not yet ignored
+
 ## [0.2.0] - 2025-09-29
 
 ### Fixed
