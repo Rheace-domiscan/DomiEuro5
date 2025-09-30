@@ -6,4 +6,6 @@
 /.react-router/
 /build/
 
+/playwright-report/
+
 .env.local
