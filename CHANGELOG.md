@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2025-10-01
+
+### Removed
+- Removed Playwright tooling (`@playwright/test`, `@playwright/mcp`) to simplify project dependencies
+
+### Changed
+- Updated project documentation with agent setup guidance
+
 ## [0.2.1] - 2025-09-30
 
 ### Added
