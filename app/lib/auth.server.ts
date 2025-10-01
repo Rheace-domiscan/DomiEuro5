@@ -213,7 +213,7 @@ export async function syncUserRoleFromWorkOS(
 
     // Get the role from the first membership (user should only have one membership per org)
     const membership = memberships[0];
-    const role = membership?.role?.slug || 'team_member';
+    const role = membership?.role?.slug || 'member';
 
     // Sync role to Convex
     await convexServer.mutation(api.users.updateUserRole, {
@@ -225,7 +225,7 @@ export async function syncUserRoleFromWorkOS(
   } catch (error) {
     console.error('Failed to sync user role from WorkOS:', error);
     // Return default role if sync fails
-    return 'team_member';
+    return 'member';
   }
 }
 
@@ -319,11 +319,16 @@ export async function createOrganization(name: string, domains: string[] = []) {
   }
 }
 
-export async function createOrganizationMembership(organizationId: string, userId: string) {
+export async function createOrganizationMembership(
+  organizationId: string,
+  userId: string,
+  roleSlug: string = 'owner'
+) {
   try {
     const membership = await workos.userManagement.createOrganizationMembership({
       organizationId,
       userId,
+      roleSlug, // Required when WorkOS RBAC is enabled
     });
 
     return membership;

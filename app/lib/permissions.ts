@@ -20,7 +20,7 @@ export const ROLES = {
   ADMIN: 'admin',
   MANAGER: 'manager',
   SALES: 'sales',
-  TEAM_MEMBER: 'team_member',
+  TEAM_MEMBER: 'member', // WorkOS uses 'member' as the slug, not 'team_member'
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -120,10 +120,7 @@ export function hasRole(role: string | undefined, allowedRoles: Role[]): boolean
  * }
  * ```
  */
-export function hasTierAccess(
-  currentTier: string | undefined,
-  requiredTier: Tier
-): boolean {
+export function hasTierAccess(currentTier: string | undefined, requiredTier: Tier): boolean {
   if (!currentTier) return false;
 
   const tierHierarchy: Record<Tier, number> = {

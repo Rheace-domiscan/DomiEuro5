@@ -104,7 +104,7 @@ export const getUserRole = query({
       .withIndex('by_workos_user_id', q => q.eq('workosUserId', args.workosUserId))
       .first();
 
-    return user?.role || 'team_member'; // Default to team_member if no role set
+    return user?.role || 'member'; // Default to member (WorkOS default role slug)
   },
 });
 

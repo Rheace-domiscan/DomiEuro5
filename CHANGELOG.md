@@ -2,6 +2,77 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-10-01
+
+### 🎉 Major Feature - Phase 4: Authentication & Permissions Middleware
+
+This release completes Phase 4 of the billing roadmap, implementing role-based access control (RBAC) middleware and tier-based feature gating for the billing system.
+
+### Added
+- **Permission System** (`app/lib/permissions.ts`)
+  - Complete RBAC configuration with 5 user roles (owner, admin, manager, sales, member)
+  - 3-tier subscription system (free, starter, professional)
+  - Granular permission mapping for billing, user management, and feature access
+  - Helper functions: `hasPermission()`, `hasRole()`, `hasTierAccess()`
+  - Human-readable role and tier name getters
+
+- **Authentication Middleware** (enhanced `app/lib/auth.server.ts`)
+  - `requireRole()` - Protect routes by user role (e.g., owner/admin only)
+  - `requireTier()` - Gate features by subscription tier (e.g., Starter+ only)
+  - `syncUserRoleFromWorkOS()` - Automatic role sync from WorkOS to Convex
+  - Enhanced session management with organizationId and role storage
+
+- **Convex Role Management** (enhanced `convex/users.ts`)
+  - `getUserRole()` query - Fetch user role with default fallback
+  - `updateUserRole()` mutation - Update user roles in database
+  - Role field added to users table schema
+
+### Changed
+- **Role Synchronization**
+  - Auth callback now syncs user roles from WorkOS on every login
+  - Organization creation automatically assigns 'owner' role to creator
+  - Session stores both organizationId and role for quick access
+  - Default role set to 'member' (matching WorkOS default)
+
+- **WorkOS Integration**
+  - `createOrganizationMembership()` now requires roleSlug parameter (fixed RBAC bug)
+  - Role slug standardized to 'member' instead of 'team_member' (WorkOS compliance)
+  - Enhanced error logging for organization creation failures
+
+### Fixed
+- **Critical Bugs**
+  - Fixed missing `roleSlug` parameter in organization membership creation (causing silent failures)
+  - Fixed role slug mismatch between code ('team_member') and WorkOS ('member')
+  - Fixed CONVEX_URL configuration error (was using dashboard URL instead of deployment URL)
+  - Fixed TypeScript errors in organization creation error handling
+
+### Technical Details
+- **Phase 4 Status**: ✅ COMPLETE - All 8 tasks verified
+- **Dependencies**: Phase 3 (WorkOS RBAC Setup) prerequisite confirmed
+- **TypeScript**: 0 errors, all type checks passing
+- **ESLint**: 0 errors, 5 acceptable development warnings
+- **Convex Schema**: Role field added to users table
+- **Manual Testing**: ✅ Login flow tested, role syncing confirmed
+
+### Verification Results
+```
+✅ Files: 1 created, 3 modified
+✅ TypeScript: 0 errors
+✅ Linting: 0 errors
+✅ Convex: Schema deployed, functions working
+✅ Manual Test: Role syncs from WorkOS to Convex
+✅ No regressions detected
+```
+
+### Files Modified
+- `app/lib/permissions.ts` - Created permission system
+- `app/lib/auth.server.ts` - Added middleware and role sync
+- `convex/users.ts` - Added role queries/mutations
+- `convex/schema.ts` - Added role field to users table
+
+### Next Phase
+Ready for **Phase 5: Stripe Integration - Backend** (webhook handling, checkout sessions, subscription management)
+
 ## [1.1.1] - 2025-10-01
 
 ### Added
