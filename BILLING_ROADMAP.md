@@ -190,12 +190,14 @@ export function hasPermission(role: string, permission: string): boolean {
 ```
 
 ---
+Before implementation fo phase 5, we must first set up our testing framework with Vitest.
+---
 
 ### Phase 5: Stripe Integration - Backend (Day 3-4, 8-10 hours)
 
 **Goal:** Implement Stripe checkout, customer creation, and webhook handling
 
-**Dependencies:** Phase 1, 2, 4 complete
+**Dependencies:** Phase 1, 2, 4 and Vitest setup complete
 
 #### Tasks:
 
