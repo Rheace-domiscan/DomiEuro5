@@ -5,12 +5,7 @@
  * tier definitions, pricing, seat limits, and role permissions.
  */
 
-import type {
-  TierConfigMap,
-  PermissionMap,
-  UserRole,
-  SubscriptionTier,
-} from '~/types/billing';
+import type { TierConfigMap, PermissionMap, UserRole, SubscriptionTier } from '~/types/billing';
 
 /**
  * Role constants
@@ -143,10 +138,7 @@ export function hasPermission(role: UserRole, permission: string): boolean {
 /**
  * Check if a role can access a specific tier
  */
-export function canAccessTier(
-  userTier: SubscriptionTier,
-  requiredTier: SubscriptionTier
-): boolean {
+export function canAccessTier(userTier: SubscriptionTier, requiredTier: SubscriptionTier): boolean {
   const tierHierarchy: Record<SubscriptionTier, number> = {
     free: 0,
     starter: 1,
@@ -166,10 +158,7 @@ export function getTierDisplayName(tier: SubscriptionTier): string {
 /**
  * Get tier price in pounds
  */
-export function getTierPrice(
-  tier: SubscriptionTier,
-  interval: 'monthly' | 'annual'
-): number {
+export function getTierPrice(tier: SubscriptionTier, interval: 'monthly' | 'annual'): number {
   return TIER_CONFIG[tier].price[interval] / 100; // Convert pence to pounds
 }
 
@@ -190,8 +179,7 @@ export function calculateSubscriptionCost(
 
   // Calculate additional seat cost
   // For annual billing, multiply monthly seat price by 10 (2 months free)
-  const additionalSeatCost =
-    additionalSeats * PER_SEAT_PRICE * (interval === 'annual' ? 10 : 1);
+  const additionalSeatCost = additionalSeats * PER_SEAT_PRICE * (interval === 'annual' ? 10 : 1);
 
   return basePrice + additionalSeatCost;
 }
