@@ -15,8 +15,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Convex Database Commands
 
+- `npx convex dev` - Start Convex development server (provides CONVEX_URL for .env)
 - `npx convex deploy` - Deploy Convex functions and schema to the cloud
-- `npx convex dev` - Start local Convex development server
+- `npx convex codegen` - Regenerate TypeScript types from schema
 
 ## Architecture Overview
 
@@ -24,10 +25,12 @@ This is a React Router v7 application with WorkOS authentication and Convex data
 
 ### Tech Stack
 - **Frontend**: React Router v7, React 19, TailwindCSS v4
-- **Authentication**: WorkOS (with organization support)
-- **Database**: Convex (real-time database)
+- **Authentication**: WorkOS (SSO, organization management, AuthKit, RBAC)
+- **Billing**: Stripe (subscriptions, customer portal, webhooks) - optional feature
+- **Database**: Convex (real-time, serverless database)
 - **Styling**: TailwindCSS with Vite plugin
 - **Build Tool**: Vite with React Router plugin
+- **Language**: TypeScript (strict mode)
 
 ### Key Directories
 - `app/` - React Router application code
@@ -65,11 +68,17 @@ The Convex database has a `users` table with the following required fields:
 
 ### Environment Variables
 Required environment variables (see `.env.example`):
-- `WORKOS_API_KEY` - WorkOS API key
-- `WORKOS_CLIENT_ID` - WorkOS client ID
-- `WORKOS_REDIRECT_URI` - OAuth redirect URI
-- `SESSION_SECRET` - Session encryption secret
-- `CONVEX_URL` - Convex deployment URL
+- `WORKOS_API_KEY` - WorkOS API key (required for auth)
+- `WORKOS_CLIENT_ID` - WorkOS client ID (required for auth)
+- `WORKOS_REDIRECT_URI` - OAuth redirect URI (e.g., http://localhost:5173/auth/callback)
+- `SESSION_SECRET` - Session encryption secret (required)
+- `CONVEX_URL` - Convex deployment URL for server-side operations
+- `VITE_CONVEX_URL` - Same Convex URL for client-side operations (must start with VITE_)
+
+**Setup Order:**
+1. Run `npx convex dev` to get CONVEX_URL and VITE_CONVEX_URL
+2. Sign up for WorkOS and configure API keys (see WORKOS_SETUP.md)
+3. Generate SESSION_SECRET: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 ### TypeScript Configuration
 - Uses strict TypeScript with React Router type generation
@@ -80,3 +89,42 @@ Required environment variables (see `.env.example`):
 - ESLint with TypeScript, React, and accessibility rules
 - Prettier for code formatting
 - Unused variables prefixed with `_` are ignored by linting
+
+## Key Features & Implementation Notes
+
+### Multi-Tenant Architecture
+- Each user must belong to an organization (organizationId is required)
+- WorkOS handles organization creation and member management
+- Organizations are isolated in the Convex database via organizationId field
+- Use `getUsersByOrganization` query to fetch organization-specific data
+
+### Convex Database Access Patterns
+- **Server-side**: Use `convexServer` from `lib/convex.server.ts` in loaders/actions
+- **Client-side**: Use hooks from `lib/useConvex.ts` in React components
+- **Type Safety**: Auto-generated types in `convex/_generated/` provide full type safety
+- **Real-time**: Client-side queries automatically update when data changes
+
+### Authentication Implementation
+The authentication flow is split across multiple routes:
+1. `/auth/login` - Initiates WorkOS AuthKit flow
+2. `/auth/callback` - Handles OAuth callback, creates/updates user in Convex
+3. `/auth/organization-selection` - Allows users to select/create organizations
+4. `/auth/create-organization` - Organization creation form
+
+**Protected Routes**: Use `requireUser(request)` in loaders to enforce authentication
+
+### Billing System (Optional Feature)
+This template includes comprehensive Stripe billing documentation:
+- See `BILLING_ROADMAP.md` for ~100 implementation tasks
+- See `BILLING_GUIDE.md` for architecture overview
+- See `STRIPE_SETUP.md` and `WORKOS_RBAC_SETUP.md` for configuration
+- The billing system is NOT implemented by default - documentation only
+
+## Documentation Structure
+- `README.md` - Getting started and overview
+- `CLAUDE.md` - This file (AI development guidance)
+- `WORKOS_SETUP.md` - WorkOS authentication configuration
+- `CONVEX_SETUP.md` - Database setup and usage
+- `TEMPLATE_USAGE.md` - Customization and feature removal
+- `BILLING_ROADMAP.md` - Stripe billing implementation guide
+- `AGENTS.md` - AI agent documentation for complex implementations
