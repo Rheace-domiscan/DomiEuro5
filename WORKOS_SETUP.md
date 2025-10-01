@@ -108,6 +108,7 @@ For local testing without a full WorkOS setup:
 - Customize the login and dashboard pages
 - Add additional protected routes as needed
 - Set up production environment variables
+- Disable or remove the `/test-workos` diagnostic route before sharing publicly (it is dev-only by default)
 
 ## Troubleshooting
 

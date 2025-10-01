@@ -2,6 +2,64 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2025-10-01
+
+### 🎉 Major Feature - Complete Stripe Billing System
+
+This release adds comprehensive Stripe billing documentation for implementing a multi-tier subscription system with seat-based pricing, role-based access control, and flexible subscription management.
+
+### Added
+- **Billing System Documentation**
+  - Created `BILLING_ROADMAP.md` - Step-by-step implementation guide with 17 phases and ~100 tasks
+  - Created `STRIPE_SETUP.md` - Complete Stripe Dashboard configuration guide
+  - Created `WORKOS_RBAC_SETUP.md` - Role-based access control setup with 5 custom roles
+  - Created `BILLING_GUIDE.md` - System architecture and detailed workflows
+  - Created `FEATURE_GATES.md` - Tier-based feature access control implementation guide
+
+- **Subscription Tiers**
+  - Free tier: 1 seat included
+  - Starter tier: £50/month (5-19 seats)
+  - Professional tier: £250/month (20-40 seats)
+  - Additional seats: £10/seat/month
+  - Annual billing: 10x monthly price (2 months free)
+
+- **Role-Based Access Control**
+  - 5 user roles: Owner, Admin, Manager, Sales, Team Member
+  - WorkOS RBAC integration for role management
+  - Granular permission system for billing, user management, and features
+
+- **Key Features**
+  - Stripe Customer Portal integration for self-service
+  - 28-day grace period for failed payments
+  - Flexible seat management (warnings, not blocking)
+  - Scheduled downgrades at billing period end
+  - Conversion tracking for upgrade analytics
+  - Audit logging for sensitive actions
+  - Billing history tracking
+
+### Changed
+- Updated `README.md` with billing features overview and documentation links
+- Updated `TEMPLATE_USAGE.md` with billing customization and removal guides
+- Updated `CONVEX_SETUP.md` with billing schema documentation
+- Updated `WORKOS_SETUP.md` with RBAC integration notes
+
+### Technical Details
+- **Convex Schema Extensions**: Added 3 new tables (subscriptions, billingHistory, auditLog)
+- **Stripe Integration**: Webhooks, Customer Portal, subscription management
+- **Philosophy**: Never block operations - warnings and flexibility over enforcement
+- **Separation of Concerns**: Stripe handles billing, Convex handles users
+- **AI-Optimized Documentation**: Structured for solo AI-assisted development
+
+### Documentation Structure
+```
+📚 Billing Documentation Suite:
+├── BILLING_ROADMAP.md - Implementation guide (~100 tasks)
+├── STRIPE_SETUP.md - Stripe configuration
+├── WORKOS_RBAC_SETUP.md - Role configuration
+├── BILLING_GUIDE.md - System architecture
+└── FEATURE_GATES.md - Feature access control
+```
+
 ## [1.0.0] - 2025-10-01
 
 ### 🎉 Major Release - Production-Ready Template
@@ -28,6 +86,8 @@ This release marks the template as production-ready with comprehensive documenta
 
 ### Changed
 - **Documentation Accuracy**
+- Improved onboarding guidance for missing `VITE_CONVEX_URL` and `SESSION_SECRET` environment variables
+- Added reminder to disable the `/test-workos` diagnostic route before sharing the template
   - **CRITICAL FIX**: Corrected `CONVEX_SETUP.md` schema documentation (marked `workosUserId` and `organizationId` as REQUIRED)
   - Updated mutation documentation to reflect required fields
   - Clarified `.env` vs `.env.local` handling

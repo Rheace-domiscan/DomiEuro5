@@ -7,6 +7,8 @@ A production-ready, full-stack B2B SaaS starter template with enterprise authent
 This template provides everything you need to build a modern B2B SaaS application:
 
 - **🔐 Enterprise Authentication** - WorkOS integration with organization/multi-tenant support
+- **💳 Stripe Billing** - Complete subscription management with 3 tiers, seat-based pricing, and annual billing
+- **👥 Role-Based Access Control** - 5 custom roles (Owner, Admin, Manager, Sales, Team Member)
 - **📊 Real-time Database** - Convex for reactive, type-safe data operations
 - **⚡️ Modern Stack** - React Router v7, React 19, TailwindCSS v4
 - **🚀 SSR & HMR** - Server-side rendering with hot module replacement
@@ -16,7 +18,8 @@ This template provides everything you need to build a modern B2B SaaS applicatio
 ## 🏗️ Tech Stack
 
 - **Frontend**: React Router v7, React 19, TailwindCSS v4
-- **Authentication**: WorkOS (SSO, organization management, AuthKit)
+- **Authentication**: WorkOS (SSO, organization management, AuthKit, RBAC)
+- **Billing**: Stripe (subscriptions, customer portal, webhooks)
 - **Database**: Convex (real-time, serverless)
 - **Styling**: TailwindCSS with Vite plugin
 - **Build**: Vite + React Router plugin
@@ -56,12 +59,34 @@ Your application will be available at `http://localhost:5173`.
 
 ## 📚 Documentation
 
+### Core Setup
 - **[WorkOS Setup](./WORKOS_SETUP.md)** - Configure authentication and organizations
 - **[Convex Setup](./CONVEX_SETUP.md)** - Database schema and usage
 - **[Template Customization](./TEMPLATE_USAGE.md)** - How to customize or remove features
 - **[Claude Code Guide](./CLAUDE.md)** - AI assistance and development workflow
 
+### Billing Features
+- **[Billing Roadmap](./BILLING_ROADMAP.md)** - Step-by-step implementation guide (~100 tasks)
+- **[Stripe Setup](./STRIPE_SETUP.md)** - Configure Stripe products, webhooks, and portal
+- **[WorkOS RBAC Setup](./WORKOS_RBAC_SETUP.md)** - Configure 5 user roles in WorkOS
+- **[Billing Guide](./BILLING_GUIDE.md)** - System architecture and how it works
+- **[Feature Gates](./FEATURE_GATES.md)** - Implement tier-based feature access
+
 ## 🎨 Key Features
+
+### Multi-Tier Billing System
+- **3 pricing tiers:** Free (1 seat), Starter (£50/mo, 5-19 seats), Professional (£250/mo, 20-40 seats)
+- **Flexible seat pricing:** £10/seat/month for additional seats
+- **Annual billing:** 10x monthly price (2 months free)
+- **Self-service portal:** Stripe Customer Portal for subscription management
+- **Graceful downgrades:** Warnings instead of blocking, owner controls timing
+- **Failed payment handling:** 28-day grace period with automatic retries
+
+### Role-Based Access Control
+- **5 user roles:** Owner, Admin, Manager, Sales, Team Member
+- **WorkOS RBAC integration:** Roles managed in WorkOS Dashboard
+- **Permission system:** Granular control over billing, user management, and features
+- **Feature gates:** Tier-based access to premium features with upgrade prompts
 
 ### Multi-Tenant Organization Support
 - Automatic organization creation during signup

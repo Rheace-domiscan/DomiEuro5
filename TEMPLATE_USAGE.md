@@ -150,6 +150,139 @@ npm install vanilla-extract
 
 Update `vite.config.ts` to remove the Tailwind Vite plugin.
 
+## 💳 Customizing Billing (Stripe Integration)
+
+### Keeping Stripe (Recommended for SaaS)
+The template includes a complete billing system with:
+- 3 pricing tiers (Free, Starter, Professional)
+- Seat-based pricing with per-seat add-ons
+- Annual billing with discount
+- Stripe Customer Portal for self-service
+- 28-day grace period for failed payments
+
+**To customize pricing:**
+
+**1. Update tier configuration** in `app/lib/billing-constants.ts`:
+```typescript
+export const TIER_CONFIG = {
+  starter: {
+    name: 'Starter',
+    seats: { included: 5, min: 5, max: 19 },
+    price: { monthly: 5000, annual: 50000 }, // Change prices (in pence)
+  },
+  // ...
+};
+```
+
+**2. Update Stripe products:**
+- Go to Stripe Dashboard → Products
+- Update prices for each tier
+- Update price IDs in `.env`
+
+**3. Add new tier:**
+- Add to `TIER_CONFIG` in `billing-constants.ts`
+- Create product in Stripe Dashboard
+- Add to pricing page component
+- Update feature gates
+
+**To customize roles:**
+- Roles are defined in WorkOS Dashboard (see `WORKOS_RBAC_SETUP.md`)
+- Update permissions in `app/lib/permissions.ts`
+- Modify role checks in route loaders
+
+### Removing Stripe Billing
+
+If you want to remove the billing system entirely:
+
+**1. Remove Stripe Dependencies**
+```bash
+npm uninstall stripe @stripe/stripe-js
+```
+
+**2. Remove Billing Files**
+```bash
+rm -rf app/routes/webhooks/stripe.tsx
+rm -rf app/routes/settings/billing.tsx
+rm -rf app/routes/pricing.tsx
+rm -rf components/billing/
+rm -rf components/pricing/
+rm -rf components/feature-gates/
+rm app/lib/stripe.server.ts
+rm app/lib/billing-constants.ts
+rm app/lib/permissions.ts
+rm convex/subscriptions.ts
+rm convex/billingHistory.ts
+rm convex/auditLog.ts
+```
+
+**3. Remove Billing Documentation**
+```bash
+rm BILLING_ROADMAP.md
+rm STRIPE_SETUP.md
+rm WORKOS_RBAC_SETUP.md
+rm BILLING_GUIDE.md
+rm FEATURE_GATES.md
+```
+
+**4. Update Convex Schema**
+Remove billing tables from `convex/schema.ts`:
+```typescript
+// Remove these tables:
+// - subscriptions
+// - billingHistory
+// - auditLog
+
+// Remove role field from users table:
+users: defineTable({
+  // ... keep other fields
+  // Remove: role field
+})
+```
+
+**5. Update Environment Variables**
+Remove Stripe variables from `.env.example`:
+```bash
+# Remove:
+# STRIPE_SECRET_KEY
+# VITE_STRIPE_PUBLISHABLE_KEY
+# STRIPE_WEBHOOK_SECRET
+# STRIPE_PRICE_*
+```
+
+**6. Simplify Authentication**
+Update `app/lib/auth.server.ts` to remove role checks:
+```typescript
+// Remove: requireRole, requireTier helpers
+// Keep: getUser, requireUser, logout
+```
+
+**7. Update WorkOS**
+If not using RBAC:
+- Remove roles from WorkOS Dashboard
+- Update `createOrganizationMembership` calls to remove `roleSlug`
+
+### Customizing Feature Gates
+
+If keeping billing but want different feature access:
+
+**1. Define features per tier** in `app/lib/permissions.ts`:
+```typescript
+export const TIER_FEATURES = {
+  free: ['dashboard:view', 'profile:edit'],
+  starter: ['dashboard:view', 'profile:edit', 'analytics:view'],
+  professional: ['dashboard:view', 'profile:edit', 'analytics:view', 'api:access'],
+};
+```
+
+**2. Use `<FeatureGate>` component:**
+```tsx
+<FeatureGate feature="analytics:view" requiredTier="starter">
+  <AnalyticsContent />
+</FeatureGate>
+```
+
+See `FEATURE_GATES.md` for detailed guide.
+
 ## 🔄 Session Management
 
 The template uses encrypted cookie sessions via `app/lib/session.server.ts`.
@@ -245,7 +378,16 @@ Common customization questions:
   - A: Yes! WorkOS supports multiple identity providers. Configure them in your WorkOS dashboard.
 
 - **Q: How do I add role-based access control (RBAC)?**
-  - A: Add a `role` field to the user schema in Convex, then create middleware to check roles in route loaders.
+  - A: The template includes 5 roles out of the box (Owner, Admin, Manager, Sales, Team Member). See `WORKOS_RBAC_SETUP.md` for configuration.
 
 - **Q: Can I use this template for a mobile app?**
-  - A: The backend (WorkOS + Convex) can serve a mobile app, but the React Router frontend is for web. You'd need React Native or similar for mobile.
+  - A: The backend (WorkOS + Convex + Stripe) can serve a mobile app, but the React Router frontend is for web. You'd need React Native or similar for mobile.
+
+- **Q: How do I change the pricing tiers or add more tiers?**
+  - A: Update `app/lib/billing-constants.ts`, create new Stripe products, and update the pricing page component. See the "Customizing Billing" section above.
+
+- **Q: Can I use a different payment provider instead of Stripe?**
+  - A: Yes, but you'll need to replace the entire billing system. Follow the "Removing Stripe Billing" section, then integrate your preferred provider (Paddle, LemonSqueezy, etc.).
+
+- **Q: How do I implement the billing system if it's not set up yet?**
+  - A: Follow the step-by-step guide in `BILLING_ROADMAP.md`. It includes ~100 tasks covering Stripe setup, schema creation, webhooks, UI components, and testing.
