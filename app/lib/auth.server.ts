@@ -1,12 +1,17 @@
 import { redirect } from 'react-router';
 import { workos, WORKOS_CLIENT_ID, WORKOS_REDIRECT_URI } from './workos.server';
 import { getSession, commitSession, destroySession, sessionStorage } from './session.server';
+import { hasRole, hasTierAccess, type Role, type Tier } from './permissions';
+import { convexServer } from '../../lib/convex.server';
+import { api } from '../../convex/_generated/api';
 
 export interface User {
   id: string;
   email: string;
   firstName?: string;
   lastName?: string;
+  organizationId?: string;
+  role?: string;
 }
 
 /**
@@ -30,6 +35,8 @@ export interface User {
 export async function getUser(request: Request): Promise<User | null> {
   const session = await getSession(request);
   const userId = session.get('userId');
+  const organizationId = session.get('organizationId');
+  const role = session.get('role');
 
   if (!userId) {
     return null;
@@ -38,15 +45,21 @@ export async function getUser(request: Request): Promise<User | null> {
   try {
     const user = await workos.userManagement.getUser(userId);
 
-    // Note: When getting user from session, we don't have organizationId
-    // The user should already exist in Convex from the initial authentication
-    // We only sync basic user info here, not organization data
+    // Get role from session if available, otherwise fetch from Convex
+    let userRole = role;
+    if (!userRole) {
+      userRole = await convexServer.query(api.users.getUserRole, {
+        workosUserId: userId,
+      });
+    }
 
     return {
       id: user.id,
       email: user.email,
       firstName: user.firstName || undefined,
       lastName: user.lastName || undefined,
+      organizationId: organizationId || undefined,
+      role: userRole || undefined,
     };
   } catch (_error) {
     // If user doesn't exist or there's an error, clear the session
@@ -79,30 +92,141 @@ export async function requireUser(request: Request): Promise<User> {
 }
 
 /**
+ * Require specific role(s) for a route - redirects if user doesn't have required role
+ *
+ * @param request - The incoming request object
+ * @param allowedRoles - Array of roles that are allowed to access the route
+ * @returns User object (guaranteed to have one of the allowed roles)
+ * @throws Redirect to /dashboard if user doesn't have required role
+ *
+ * @example
+ * ```typescript
+ * export async function loader({ request }: Route.LoaderArgs) {
+ *   const user = await requireRole(request, ['owner', 'admin']);
+ *   // User is guaranteed to be owner or admin
+ *   return { user };
+ * }
+ * ```
+ */
+export async function requireRole(request: Request, allowedRoles: Role[]): Promise<User> {
+  const user = await requireUser(request);
+
+  if (!user.role || !hasRole(user.role, allowedRoles)) {
+    throw redirect('/dashboard');
+  }
+
+  return user;
+}
+
+/**
+ * Require minimum tier for a route - redirects if user's organization doesn't have required tier
+ *
+ * @param request - The incoming request object
+ * @param requiredTier - Minimum tier required to access the route
+ * @returns User object (guaranteed to have organization with required tier)
+ * @throws Redirect to /pricing if user doesn't have required tier
+ *
+ * @example
+ * ```typescript
+ * export async function loader({ request }: Route.LoaderArgs) {
+ *   const user = await requireTier(request, 'starter');
+ *   // User's organization is guaranteed to have Starter tier or higher
+ *   return { user };
+ * }
+ * ```
+ */
+export async function requireTier(request: Request, requiredTier: Tier): Promise<User> {
+  const user = await requireUser(request);
+
+  if (!user.organizationId) {
+    throw redirect('/auth/create-organization');
+  }
+
+  // Fetch organization's subscription from Convex
+  const subscription = await convexServer.query(api.subscriptions.getByOrganization, {
+    organizationId: user.organizationId,
+  });
+
+  if (!subscription || !hasTierAccess(subscription.tier, requiredTier)) {
+    throw redirect('/pricing');
+  }
+
+  return user;
+}
+
+/**
  * Create a new user session and redirect
  *
  * @param userId - WorkOS user ID to store in session
  * @param redirectTo - Path to redirect to after session creation (default: '/')
+ * @param organizationId - Organization ID to store in session (optional)
+ * @param role - User role to store in session (optional)
  * @returns Response with session cookie set
  *
  * @example
  * ```typescript
  * // After successful authentication
- * return createUserSession(authResponse.user.id, '/dashboard');
+ * return createUserSession(authResponse.user.id, '/dashboard', orgId, 'owner');
  * ```
  */
 export async function createUserSession(
   userId: string,
   redirectTo: string = '/',
-  _request?: Request
+  organizationId?: string,
+  role?: string
 ) {
   const session = await sessionStorage.getSession();
   session.set('userId', userId);
+
+  if (organizationId) {
+    session.set('organizationId', organizationId);
+  }
+
+  if (role) {
+    session.set('role', role);
+  }
+
   return redirect(redirectTo, {
     headers: {
       'Set-Cookie': await commitSession(session),
     },
   });
+}
+
+/**
+ * Get user's role from WorkOS and sync to Convex
+ *
+ * @param userId - WorkOS user ID
+ * @param organizationId - Organization ID
+ * @returns User's role (defaults to 'team_member' if not set in WorkOS)
+ */
+export async function syncUserRoleFromWorkOS(
+  userId: string,
+  organizationId: string
+): Promise<string> {
+  try {
+    // Get user's organization membership from WorkOS
+    const { data: memberships } = await workos.userManagement.listOrganizationMemberships({
+      userId,
+      organizationId,
+    });
+
+    // Get the role from the first membership (user should only have one membership per org)
+    const membership = memberships[0];
+    const role = membership?.role?.slug || 'team_member';
+
+    // Sync role to Convex
+    await convexServer.mutation(api.users.updateUserRole, {
+      workosUserId: userId,
+      role,
+    });
+
+    return role;
+  } catch (error) {
+    console.error('Failed to sync user role from WorkOS:', error);
+    // Return default role if sync fails
+    return 'team_member';
+  }
 }
 
 export async function logout(request: Request) {

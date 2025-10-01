@@ -1,8 +1,13 @@
 import { redirect } from 'react-router';
 import { Form, useLoaderData, useActionData } from 'react-router';
 import type { Route } from './+types/create-organization';
-import { getSession, sessionStorage, commitSession } from '~/lib/session.server';
-import { createOrganization, createOrganizationMembership } from '~/lib/auth.server';
+import { getSession } from '~/lib/session.server';
+import {
+  createOrganization,
+  createOrganizationMembership,
+  syncUserRoleFromWorkOS,
+  createUserSession,
+} from '~/lib/auth.server';
 import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
 
 // Error type for organization creation flow (handles WorkOS + Convex errors)
@@ -89,15 +94,12 @@ export async function action({ request }: Route.ActionArgs): Promise<Response | 
       organizationId: organization.id,
     });
 
-    // Step 4: Clear temporary session and create proper user session
-    const newSession = await sessionStorage.getSession();
-    newSession.set('userId', tempUserId);
+    // Step 3.5: Sync user role from WorkOS to Convex
+    // When creating an organization, the user becomes the owner by default
+    const userRole = await syncUserRoleFromWorkOS(tempUserId, organization.id);
 
-    return redirect('/', {
-      headers: {
-        'Set-Cookie': await commitSession(newSession),
-      },
-    });
+    // Step 4: Create permanent session with organizationId and role, then redirect
+    return createUserSession(tempUserId, '/', organization.id, userRole);
   } catch (error: unknown) {
     const creationError = error as OrganizationCreationError;
 

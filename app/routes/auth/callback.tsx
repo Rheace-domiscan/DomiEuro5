@@ -81,8 +81,15 @@ export async function loader({ request }: Route.LoaderArgs) {
       organizationId: authResponse.organizationId,
     });
 
-    // Step 4: Create permanent session and redirect to application
-    return createUserSession(authResponse.user.id, '/');
+    // Step 3.5: Sync user role from WorkOS to Convex
+    const { syncUserRoleFromWorkOS } = await import('~/lib/auth.server');
+    const userRole = await syncUserRoleFromWorkOS(
+      authResponse.user.id,
+      authResponse.organizationId
+    );
+
+    // Step 4: Create permanent session with organizationId and role, then redirect to application
+    return createUserSession(authResponse.user.id, '/', authResponse.organizationId, userRole);
   } catch (error: unknown) {
     const workosError = error as WorkOSError;
 

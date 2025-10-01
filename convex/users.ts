@@ -94,3 +94,39 @@ export const getUsersByOrganization = query({
       .collect();
   },
 });
+
+// Get user role by WorkOS ID
+export const getUserRole = query({
+  args: { workosUserId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_workos_user_id', q => q.eq('workosUserId', args.workosUserId))
+      .first();
+
+    return user?.role || 'team_member'; // Default to team_member if no role set
+  },
+});
+
+// Update user role
+export const updateUserRole = mutation({
+  args: {
+    workosUserId: v.string(),
+    role: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_workos_user_id', q => q.eq('workosUserId', args.workosUserId))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return await ctx.db.patch(user._id, {
+      role: args.role,
+      updatedAt: Date.now(),
+    });
+  },
+});

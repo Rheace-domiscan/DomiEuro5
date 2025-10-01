@@ -22,6 +22,7 @@ export async function createOrUpdateUserInConvex(workosUser: {
   firstName?: string;
   lastName?: string;
   organizationId: string; // Required - organization is mandatory for our application
+  role?: string; // Optional - user role from WorkOS
 }) {
   // Check if user already exists
   const existingUser = await convexServer.query(api.users.getUserByWorkosId, {
@@ -42,7 +43,7 @@ export async function createOrUpdateUserInConvex(workosUser: {
       ...userData,
     });
   } else {
-    // Create new user
+    // Create new user (role will be synced separately via updateUserRole)
     return await convexServer.mutation(api.users.createUser, userData);
   }
 }
