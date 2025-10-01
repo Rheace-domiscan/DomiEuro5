@@ -18,6 +18,16 @@ type WorkOSError = {
   organizations?: unknown[];
 };
 
+/**
+ * Authentication callback handler
+ *
+ * This is the OAuth callback route that WorkOS redirects to after authentication.
+ * Flow:
+ * 1. Receive authorization code from WorkOS
+ * 2. Exchange code for user data and organization info
+ * 3. If user has no organization: redirect to org creation (store temp session)
+ * 4. If user has organization: create/update user in Convex → create session → redirect home
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
@@ -25,7 +35,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   // Handle error case
   if (error) {
-    console.error('WorkOS authentication error:', error);
+    // Log auth errors in development for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.error('WorkOS authentication error:', error);
+    }
     return redirect('/auth/login?error=' + encodeURIComponent(error));
   }
 
@@ -35,16 +48,14 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   try {
-    // Authenticate with WorkOS
+    // Step 1: Exchange authorization code for user data
     const authResponse = await authenticateWithCode(code);
 
-    // If no organization, store auth data in session and redirect to organization creation
+    // Step 2: Check if user needs to create an organization
+    // WorkOS can return a user without an organization if org creation is required
     if (!authResponse.organizationId) {
-      console.log(
-        'User authenticated but no organization - storing session and redirecting to org creation'
-      );
-
-      // Store temporary authentication data in session
+      // Store authentication data in temporary session
+      // This allows the org creation flow to complete without re-authenticating
       const tempSession = await sessionStorage.getSession();
       tempSession.set('tempUserId', authResponse.user.id);
       tempSession.set('tempUserEmail', authResponse.user.email);
@@ -60,7 +71,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       });
     }
 
-    // Create or update user in Convex database
+    // Step 3: User has organization - sync to Convex database
+    // This creates or updates the user record with WorkOS data
     await createOrUpdateUserInConvex({
       id: authResponse.user.id,
       email: authResponse.user.email,
@@ -69,7 +81,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       organizationId: authResponse.organizationId,
     });
 
-    // Create user session and redirect to home
+    // Step 4: Create permanent session and redirect to application
     return createUserSession(authResponse.user.id, '/');
   } catch (error: unknown) {
     const workosError = error as WorkOSError;

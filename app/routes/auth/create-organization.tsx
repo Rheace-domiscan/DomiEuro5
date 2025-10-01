@@ -72,21 +72,15 @@ export async function action({ request }: Route.ActionArgs): Promise<Response | 
 
   try {
     // Step 1: Create organization in WorkOS
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Creating organization:', organizationName);
-    }
+    // This creates a new organization that the user will be part of
     const organization = await createOrganization(organizationName.trim());
 
     // Step 2: Create organization membership in WorkOS
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Creating membership for user:', tempUserId, 'in org:', organization.id);
-    }
+    // This links the authenticated user to their new organization
     await createOrganizationMembership(organization.id, tempUserId);
 
-    // Step 3: Create user in Convex database
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Creating user in Convex with organization:', organization.id);
-    }
+    // Step 3: Sync user to Convex database with organization
+    // Now we have all required fields (workosUserId + organizationId) to create the user
     await createOrUpdateUserInConvex({
       id: tempUserId,
       email: tempUserEmail,
@@ -112,14 +106,34 @@ export async function action({ request }: Route.ActionArgs): Promise<Response | 
       console.error('Organization creation failed:', creationError);
     }
 
-    // Handle specific WorkOS errors
+    // Handle specific WorkOS errors with helpful guidance
     if (creationError.message?.includes('organization already exists')) {
       return {
         error: 'An organization with this name already exists. Please choose a different name.',
       };
     }
 
-    return { error: 'Failed to create organization. Please try again.' };
+    if (
+      creationError.message?.includes('permission') ||
+      creationError.message?.includes('forbidden')
+    ) {
+      return {
+        error:
+          'Organization creation is not enabled. Please contact your WorkOS administrator or check your WorkOS dashboard settings (Organizations → Settings → Allow organization creation).',
+      };
+    }
+
+    if (creationError.message?.includes('rate limit')) {
+      return {
+        error: 'Too many requests. Please wait a moment and try again.',
+      };
+    }
+
+    // Generic error with helpful next steps
+    return {
+      error:
+        'Failed to create organization. Please try again or contact support if the problem persists. (Check WORKOS_SETUP.md for configuration help)',
+    };
   }
 }
 

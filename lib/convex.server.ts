@@ -5,7 +5,11 @@ import { api } from '../convex/_generated/api';
 const convexUrl = process.env.CONVEX_URL;
 
 if (!convexUrl) {
-  throw new Error('CONVEX_URL environment variable is required for server-side operations');
+  throw new Error(
+    'CONVEX_URL environment variable is required for server-side operations. ' +
+      'Please copy .env.example to .env and run "npx convex dev" to get your Convex URL. ' +
+      'See CONVEX_SETUP.md for detailed setup instructions.'
+  );
 }
 
 // TypeScript now knows convexUrl is defined after the check above

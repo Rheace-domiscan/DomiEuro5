@@ -9,6 +9,24 @@ export interface User {
   lastName?: string;
 }
 
+/**
+ * Get the currently authenticated user from the session
+ *
+ * @param request - The incoming request object
+ * @returns User object if authenticated, null otherwise
+ *
+ * @example
+ * ```typescript
+ * export async function loader({ request }: Route.LoaderArgs) {
+ *   const user = await getUser(request);
+ *   if (!user) {
+ *     // User is not authenticated
+ *     return { user: null };
+ *   }
+ *   return { user };
+ * }
+ * ```
+ */
 export async function getUser(request: Request): Promise<User | null> {
   const session = await getSession(request);
   const userId = session.get('userId');
@@ -36,6 +54,22 @@ export async function getUser(request: Request): Promise<User | null> {
   }
 }
 
+/**
+ * Require authentication for a route - redirects to login if not authenticated
+ *
+ * @param request - The incoming request object
+ * @returns User object (guaranteed to be authenticated)
+ * @throws Redirect to /auth/login if user is not authenticated
+ *
+ * @example
+ * ```typescript
+ * export async function loader({ request }: Route.LoaderArgs) {
+ *   const user = await requireUser(request); // Throws redirect if not authenticated
+ *   // User is guaranteed to be authenticated here
+ *   return { user };
+ * }
+ * ```
+ */
 export async function requireUser(request: Request): Promise<User> {
   const user = await getUser(request);
   if (!user) {
@@ -44,6 +78,19 @@ export async function requireUser(request: Request): Promise<User> {
   return user;
 }
 
+/**
+ * Create a new user session and redirect
+ *
+ * @param userId - WorkOS user ID to store in session
+ * @param redirectTo - Path to redirect to after session creation (default: '/')
+ * @returns Response with session cookie set
+ *
+ * @example
+ * ```typescript
+ * // After successful authentication
+ * return createUserSession(authResponse.user.id, '/dashboard');
+ * ```
+ */
 export async function createUserSession(
   userId: string,
   redirectTo: string = '/',

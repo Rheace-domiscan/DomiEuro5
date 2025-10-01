@@ -20,9 +20,13 @@ Your Remix app is now configured with WorkOS authentication! Follow these steps 
    ```
 2. For production, update this to your production domain
 
-## 4. Update Environment Variables
-1. Open the `.env` file in your project root
-2. Replace the placeholder values with your actual WorkOS credentials:
+## 4. Create and Update Environment Variables
+1. Copy the example environment file to create your local `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Open the `.env` file in your project root
+3. Replace the placeholder values with your actual WorkOS credentials:
    ```env
    WORKOS_API_KEY=your_actual_api_key_here
    WORKOS_CLIENT_ID=your_actual_client_id_here
@@ -59,10 +63,66 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - ✅ User information display
 - ✅ Logout functionality
 
+## WorkOS Dashboard Configuration
+
+### Required Settings for Organization Support
+
+1. **Enable AuthKit**
+   - Go to: WorkOS Dashboard → AuthKit
+   - Ensure AuthKit is enabled for your environment
+   - This is required for the authentication flow to work
+
+2. **Allow Organization Creation**
+   - Go to: WorkOS Dashboard → Organizations → Settings
+   - Enable "Allow users to create organizations"
+   - Without this, users will see permission errors during signup
+
+3. **Configure Identity Providers** (Optional)
+   - Go to: WorkOS Dashboard → Authentication → Connections
+   - Add providers like Google, Microsoft, GitHub, etc.
+   - If no providers are configured, users will use email/password authentication
+
+### Alternative: Organization Selection Only
+
+If you want users to join existing organizations instead of creating new ones:
+
+1. Pre-create organizations in WorkOS Dashboard → Organizations
+2. Disable "Allow users to create organizations"
+3. Modify `app/routes/auth/callback.tsx` to skip the create-organization flow
+4. Users will be presented with organization selection during authentication
+
+## Development Mode
+
+For local testing without a full WorkOS setup:
+
+1. **Use WorkOS Test Mode**
+   - WorkOS provides test API keys for development
+   - Test mode data is isolated from production
+
+2. **Test Organization Creation**
+   - Create test users with `test_` prefix emails
+   - These won't send actual emails during authentication
+
 ## Next Steps
 - Configure your WorkOS application with identity providers (Google, Microsoft, etc.)
 - Customize the login and dashboard pages
 - Add additional protected routes as needed
 - Set up production environment variables
+
+## Troubleshooting
+
+### "Organization creation is not enabled" error
+- Check WorkOS Dashboard → Organizations → Settings
+- Ensure "Allow users to create organizations" is enabled
+- Verify your API key has the correct permissions
+
+### "Session expired" errors
+- Sessions are stored in encrypted cookies
+- Ensure `SESSION_SECRET` is set in your `.env` file
+- Session expires after inactivity
+
+### Authentication redirects to login
+- Verify `WORKOS_REDIRECT_URI` matches your WorkOS dashboard configuration
+- Check that the redirect URI includes the correct protocol (http/https)
 
 Need help? Check the [WorkOS documentation](https://workos.com/docs) for more details!

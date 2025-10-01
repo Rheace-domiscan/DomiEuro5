@@ -1,11 +1,14 @@
 .DS_Store
 .env
+.env.local
 /node_modules/
 
 # React Router
 /.react-router/
 /build/
 
-/playwright-report/
+# Convex generated files
+/convex/_generated/
 
-.env.local
+# Testing
+/playwright-report/
