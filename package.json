@@ -1,6 +1,6 @@
 {
   "name": "domieuro4",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Production-ready B2B SaaS starter template with React Router, WorkOS authentication, Convex database, and Stripe billing",
   "private": true,
   "type": "module",
@@ -33,12 +33,14 @@
   "dependencies": {
     "@react-router/node": "^7.9.2",
     "@react-router/serve": "^7.9.2",
+    "@stripe/stripe-js": "^8.0.0",
     "@workos-inc/node": "^7.70.0",
     "convex": "^1.27.3",
     "isbot": "^5.1.31",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router": "^7.9.2"
+    "react-router": "^7.9.2",
+    "stripe": "^19.0.0"
   },
   "devDependencies": {
     "@react-router/dev": "^7.9.2",
