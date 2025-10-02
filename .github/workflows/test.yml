@@ -1,0 +1,71 @@
+name: Tests
+
+# Run tests on every push and pull request
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      # 3. Install dependencies (npm ci is faster and more reliable than npm install)
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Run type checking (allow to fail for now, just warn)
+      - name: Type check
+        run: npm run typecheck
+        continue-on-error: true
+
+      # 5. Run linting (allow to fail for now, just warn)
+      - name: Lint code
+        run: npm run lint
+        continue-on-error: true
+
+      # 6. Run tests (THIS MUST PASS - will fail workflow if tests fail)
+      - name: Run tests
+        run: npm run test:run
+
+      # 7. Generate coverage report (allow to fail if coverage is low)
+      - name: Generate coverage report
+        run: npm run test:coverage
+        continue-on-error: true
+
+      # 8. Upload coverage report (optional, but useful for tracking)
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+      # 9. Comment on PR with test results (optional, but nice)
+      - name: Test Summary
+        uses: test-summary/action@v2
+        if: always()
+        with:
+          paths: coverage/coverage-summary.json
+
+    # Optional: Prevent merge if tests fail
+    # GitHub will show a red X and block merging if this job fails
