@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { hasPermission, hasRole, hasTierAccess, ROLES, TIERS } from '~/lib/permissions';
+import { hasPermission, hasRole, hasTierAccess, ROLES, TIERS, type Role } from '~/lib/permissions';
 
 describe('Example Unit Tests - Permissions', () => {
   /**
@@ -112,7 +112,7 @@ describe('Example Unit Tests - Permissions', () => {
 
     it('should return false when allowed roles list is empty', () => {
       const role = ROLES.OWNER;
-      const allowedRoles: string[] = [];
+      const allowedRoles: Role[] = [];
 
       const result = hasRole(role, allowedRoles);
 

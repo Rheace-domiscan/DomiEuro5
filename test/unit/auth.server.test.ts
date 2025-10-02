@@ -7,7 +7,7 @@
  * Coverage Target: 85%+ (security-critical code)
  */
 
-import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { mockWorkOS, resetWorkOSMocks } from '../mocks/workos';
 import { mockConvexServer, resetConvexMocks } from '../mocks/convex';
 import { mockUser, mockOrganization } from '../helpers/test-data';
@@ -484,9 +484,9 @@ describe('Authentication Module (auth.server.ts)', () => {
       const newCalls = mockSession.set.mock.calls.slice(setCallsBefore);
 
       // Should only have one set call for userId
-      expect(newCalls.filter(([key]) => key === 'userId')).toHaveLength(1);
-      expect(newCalls.filter(([key]) => key === 'organizationId')).toHaveLength(0);
-      expect(newCalls.filter(([key]) => key === 'role')).toHaveLength(0);
+      expect(newCalls.filter(([key]: [string, any]) => key === 'userId')).toHaveLength(1);
+      expect(newCalls.filter(([key]: [string, any]) => key === 'organizationId')).toHaveLength(0);
+      expect(newCalls.filter(([key]: [string, any]) => key === 'role')).toHaveLength(0);
     });
   });
 

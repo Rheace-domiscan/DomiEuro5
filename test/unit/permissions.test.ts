@@ -249,8 +249,7 @@ describe('RBAC Permissions System', () => {
       });
 
       it('should return false when permission does not exist', () => {
-        // @ts-expect-error - Testing runtime behavior with invalid permission
-        expect(hasPermission(ROLES.OWNER, 'nonexistent:permission')).toBe(false);
+        expect(hasPermission(ROLES.OWNER, 'nonexistent:permission' as Permission)).toBe(false);
       });
 
       it('should handle permission without any roles (edge case)', () => {
@@ -265,8 +264,7 @@ describe('RBAC Permissions System', () => {
       });
 
       it('should be case-sensitive for permissions', () => {
-        // @ts-expect-error - Testing runtime behavior with wrong case
-        expect(hasPermission(ROLES.OWNER, 'BILLING:MANAGE')).toBe(false);
+        expect(hasPermission(ROLES.OWNER, 'BILLING:MANAGE' as Permission)).toBe(false);
       });
     });
 

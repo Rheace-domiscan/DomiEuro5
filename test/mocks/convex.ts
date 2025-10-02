@@ -290,7 +290,7 @@ export class MockConvexDatabase {
       metadata: {},
       createdAt: now,
       updatedAt: now,
-    };
+    } as any;
 
     this.subscriptions.set(id, subscription);
     return id;
@@ -310,16 +310,6 @@ export class MockConvexDatabase {
     return Array.from(this.subscriptions.values()).find(
       s => s.organizationId === organizationId
     ) || null;
-  }
-
-  /**
-   * Get subscription by organization
-   */
-  getSubscriptionByOrganization(organizationId: string) {
-    return (
-      Array.from(this.subscriptions.values()).find(s => s.organizationId === organizationId) ||
-      null
-    );
   }
 
   /**
