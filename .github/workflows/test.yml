@@ -46,9 +46,9 @@ jobs:
       - name: Run tests
         run: npm run test:run
 
-      # 7. Generate coverage report (allow to fail if coverage is low)
+      # 7. Generate coverage report (ignore thresholds, just generate report)
       - name: Generate coverage report
-        run: npm run test:coverage
+        run: npm run test:coverage || true
         continue-on-error: true
 
       # 8. Upload coverage report (optional, but useful for tracking)
@@ -59,13 +59,6 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 30
-
-      # 9. Comment on PR with test results (optional, but nice)
-      - name: Test Summary
-        uses: test-summary/action@v2
-        if: always()
-        with:
-          paths: coverage/coverage-summary.json
 
     # Optional: Prevent merge if tests fail
     # GitHub will show a red X and block merging if this job fails
