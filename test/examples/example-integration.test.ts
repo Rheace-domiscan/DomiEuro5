@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockWorkOS, resetWorkOSMocks } from '../mocks/workos';
-import { mockConvexServer, resetConvexMocks, setupConvexQueryMocks } from '../mocks/convex';
+import { mockConvexServer, resetConvexMocks } from '../mocks/convex';
 import { mockUser, mockConvexUser, mockOrganization } from '../helpers/test-data';
 
 // Mock the external dependencies

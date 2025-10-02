@@ -15,6 +15,7 @@
  * ```
  */
 
+/* eslint-disable no-undef */
 import React from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 import { ConvexProvider } from 'convex/react';
