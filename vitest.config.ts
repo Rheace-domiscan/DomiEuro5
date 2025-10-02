@@ -13,21 +13,26 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['app/**/*.{ts,tsx}', 'convex/**/*.{ts,tsx}'],
+      include: ['app/lib/**/*.{ts,tsx}'], // Only business logic, not UI/routes
       exclude: [
         'app/**/*.test.{ts,tsx}',
-        'convex/**/*.test.{ts,tsx}',
-        'convex/_generated/**',
         'app/routes/**', // Routes are integration tested
+        'app/root.tsx', // React Router root, integration tested
+        'app/routes.ts', // Route config
+        'app/types/**', // Type definitions only
+        'app/welcome/**', // UI components, should add separate UI tests
+        'app/lib/workos.server.ts', // Config only, no logic
         '**/*.d.ts',
+        // Exclude Convex - requires Convex runtime, tested via integration
+        'convex/**',
       ],
       thresholds: {
-        // Phase 5 baseline - Convex functions tested via integration, not unit tests
-        // Target: Reach 70%+ by Phase 7 when adding client-side coverage
-        lines: 42, // Current: 42.94% (lowered due to Convex functions)
-        functions: 79, // Current: 79.16%
-        branches: 91, // Current: 91.86%
-        statements: 42, // Current: 42.94% (lowered due to Convex functions)
+        // HIGH bar for business logic (app/lib/**) - these MUST be well-tested
+        // Convex/routes/UI excluded - tested differently
+        lines: 90,
+        functions: 85,
+        branches: 90,
+        statements: 90,
       },
     },
   },
