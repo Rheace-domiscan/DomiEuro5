@@ -1,6 +1,6 @@
 {
   "name": "domieuro4",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Production-ready B2B SaaS starter template with React Router, WorkOS authentication, Convex database, and Stripe billing",
   "private": true,
   "type": "module",
