@@ -190,14 +190,298 @@ export function hasPermission(role: string, permission: string): boolean {
 ```
 
 ---
-Before implementation fo phase 5, we must first set up our testing framework with Vitest.
+
+### Phase 4.9: Testing Framework Setup & Retroactive Tests (Day 2.5-3, 8-10 hours)
+
+**Goal:** Set up Vitest testing infrastructure and write comprehensive tests for all existing code from Phases 1-4 before proceeding to Phase 5 (billing/webhooks)
+
+**Dependencies:** Phases 1-4 complete (✅ already done)
+
+**Why this phase exists:**
+Phases 1-4 were implemented without tests. Before proceeding to Phase 5 (Stripe webhooks and financial transactions), we must:
+1. Set up testing framework (Vitest, mocks, helpers)
+2. Write retroactive tests for all security-critical code (auth, permissions, multi-tenancy)
+3. Achieve >80% coverage on existing code
+4. Verify Phases 1-4 actually work correctly
+5. Establish testing patterns for Phases 5-17
+
+**Note:** Retroactive testing takes longer than test-first development because we must reverse-engineer test cases and may need to refactor for testability.
+
 ---
 
-### Phase 5: Stripe Integration - Backend (Day 3-4, 8-10 hours)
+#### Part A: Testing Framework Setup (3-4 hours)
+
+- [ ] **4.9.1** Install testing dependencies
+  ```bash
+  npm install -D vitest @vitest/ui @testing-library/react @testing-library/user-event happy-dom
+  ```
+- [ ] **4.9.2** Create `vitest.config.ts` with React Router v7 and TypeScript support
+- [ ] **4.9.3** Configure test environment (path aliases ~/* → app/*, globals, happy-dom)
+- [ ] **4.9.4** Create `test/mocks/workos.ts` - Mock WorkOS SDK (@workos-inc/node)
+  - Mock `userManagement.getUser()`
+  - Mock `userManagement.listOrganizationMemberships()`
+  - Mock `userManagement.authenticateWithCode()`
+  - Mock `organizations.createOrganization()`
+  - Mock `userManagement.createOrganizationMembership()`
+- [ ] **4.9.5** Create `test/mocks/convex.ts` - Mock Convex client
+  - Mock `convexServer.query()`
+  - Mock `convexServer.mutation()`
+  - Mock database responses for users, subscriptions, billingHistory
+- [ ] **4.9.6** Create `test/mocks/stripe.ts` - Mock Stripe SDK (for Phase 5+)
+  - Mock `stripe.checkout.sessions.create()`
+  - Mock `stripe.webhooks.constructEvent()`
+  - Mock `stripe.customers.create()`
+- [ ] **4.9.7** Create `test/helpers/test-utils.tsx`
+  - `renderWithProviders()` - Wraps components in ConvexProvider and mock context
+  - `createMockRequest()` - Creates Request objects for loader/action testing
+  - `createMockSession()` - Creates mock session objects
+- [ ] **4.9.8** Create `test/helpers/test-data.ts` - Reusable test fixtures
+  - `mockUser` - Sample user object
+  - `mockOrganization` - Sample organization
+  - `mockSubscription` - Sample subscription (free, starter, pro)
+  - `mockWorkOSMembership` - Sample WorkOS membership
+- [ ] **4.9.9** Create `test/examples/example-unit.test.ts`
+  - Example unit test showing structure
+  - How to use mocks
+  - How to test pure functions
+  - Coverage best practices
+- [ ] **4.9.10** Create `test/examples/example-integration.test.ts`
+  - Example integration test showing workflow testing
+  - How to test loaders/actions
+  - How to verify database state changes
+- [ ] **4.9.11** Add npm scripts to `package.json`
+  ```json
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "test:run": "vitest run"
+  }
+  ```
+- [ ] **4.9.12** Create `test/README.md` - Testing guide for developers
+  - How to run tests
+  - How to write new tests
+  - Mock utility documentation
+  - Coverage expectations
+  - CI integration notes
+- [ ] **4.9.13** Add `.vitest` to `.gitignore`
+- [ ] **4.9.14** Run `npm test` and verify example tests pass
+- [ ] **4.9.15** Verify test UI works: `npm run test:ui`
+
+**Files to create:**
+- `vitest.config.ts`
+- `test/mocks/workos.ts`
+- `test/mocks/convex.ts`
+- `test/mocks/stripe.ts`
+- `test/helpers/test-utils.tsx`
+- `test/helpers/test-data.ts`
+- `test/examples/example-unit.test.ts`
+- `test/examples/example-integration.test.ts`
+- `test/README.md`
+
+**Files to modify:**
+- `package.json` (add test scripts and dev dependencies)
+- `.gitignore` (add .vitest)
+
+**Test commands:**
+```bash
+npm test
+npm run test:ui
+npm run test:coverage
+```
+
+**Success criteria (Part A):**
+- ✅ Vitest installed and configured
+- ✅ All mock utilities created and documented
+- ✅ Test helpers created
+- ✅ Example tests passing (2/2)
+- ✅ Test UI accessible
+- ✅ Coverage reporting works
+
+---
+
+#### Part B: Retroactive Tests for Phase 1 & 4 Code (4-6 hours)
+
+**Security-Critical Code (Highest Priority - Must be >85% coverage):**
+
+- [ ] **4.9.16** Create `test/unit/permissions.test.ts` (CRITICAL - RBAC security)
+  - Test `hasPermission()` for all role/permission combinations (25+ test cases)
+  - Test `hasRole()` validation
+  - Test `hasTierAccess()` tier hierarchy
+  - Test `getRoleName()` and `getTierName()` display helpers
+  - Target: >90% coverage (security-critical)
+
+- [ ] **4.9.17** Create `test/unit/auth.server.test.ts` (CRITICAL - Authentication security)
+  - Test `getUser()` - Session retrieval with various scenarios
+  - Test `requireUser()` - Authentication enforcement and redirects
+  - Test `requireRole()` - Role-based access control
+  - Test `requireTier()` - Subscription tier enforcement
+  - Test `createUserSession()` - Session creation with organizationId and role
+  - Test `syncUserRoleFromWorkOS()` - Role synchronization and error handling
+  - Target: >85% coverage (security-critical)
+
+- [ ] **4.9.18** Create `test/convex/users.test.ts` (CRITICAL - Multi-tenancy)
+  - Test `createUser()` - User creation with required fields
+  - Test `getUserByEmail()` and `getUserByWorkosId()` - Query functions
+  - Test `getUsersByOrganization()` - **CRITICAL multi-tenancy isolation test**
+  - Test `updateUserRole()` - Role updates and error handling
+  - Test `getUserRole()` - Role retrieval with defaults
+  - Target: >85% coverage (multi-tenancy is critical)
+
+**Supporting Code (Standard Priority - >80% coverage):**
+
+- [ ] **4.9.19** Create `test/unit/billing-constants.test.ts`
+  - Test `TIER_CONFIG` object structure and values
+  - Test `ROLES` and `PERMISSIONS` constants
+  - Test any helper functions in billing-constants.ts
+  - Target: >80% coverage
+
+**Integration Tests (Verify Workflows):**
+
+- [ ] **4.9.20** Create `test/integration/auth-flow.test.ts`
+  - Test complete auth flow: login → WorkOS callback → user creation → session
+  - Test organization selection flow
+  - Test logout flow
+
+- [ ] **4.9.21** Create `test/integration/multi-tenancy.test.ts` (CRITICAL)
+  - Test organization data isolation between multiple organizations
+  - Verify `getUsersByOrganization()` returns ONLY correct org's users
+  - **This test prevents catastrophic data breaches**
+
+- [ ] **4.9.22** Create `test/integration/role-sync.test.ts`
+  - Test role synchronization from WorkOS to Convex
+  - Test role changes and promotion scenarios
+
+**Verification & Coverage:**
+
+- [ ] **4.9.23** Run full test suite and verify all tests pass
+  ```bash
+  npm test
+  ```
+  - Expected: 80+ tests passing
+
+- [ ] **4.9.24** Generate coverage report
+  ```bash
+  npm run test:coverage -- app/lib/permissions.ts app/lib/auth.server.ts convex/users.ts
+  ```
+  - permissions.ts: >90% (security-critical)
+  - auth.server.ts: >85% (security-critical)
+  - convex/users.ts: >85% (multi-tenancy critical)
+  - billing-constants.ts: >80%
+
+- [ ] **4.9.25** Review uncovered lines and add tests if critical
+  - If coverage below target, identify why
+  - Add missing test cases
+  - Document intentionally uncovered code (if any)
+
+- [ ] **4.9.26** Verify no false positives
+  - Tests actually test something (not just placeholders)
+  - Mocks are realistic
+  - Assertions are meaningful
+  - Error cases are actually tested
+
+**Files to create:**
+- `test/unit/permissions.test.ts`
+- `test/unit/auth.server.test.ts`
+- `test/unit/billing-constants.test.ts`
+- `test/convex/users.test.ts`
+- `test/integration/auth-flow.test.ts`
+- `test/integration/multi-tenancy.test.ts`
+- `test/integration/role-sync.test.ts`
+
+**Test commands:**
+```bash
+# Run all retroactive tests
+npm test test/unit/ test/convex/ test/integration/
+
+# Coverage for security-critical code
+npm run test:coverage -- app/lib/permissions.ts app/lib/auth.server.ts convex/users.ts
+
+# Verify multi-tenancy isolation
+npm test test/integration/multi-tenancy.test.ts
+```
+
+**Success criteria (Part B):**
+- ✅ All tests passing (80+ tests)
+- ✅ Coverage >90% for permissions.ts
+- ✅ Coverage >85% for auth.server.ts
+- ✅ Coverage >85% for convex/users.ts (multi-tenancy)
+- ✅ Coverage >80% for billing-constants.ts
+- ✅ Multi-tenancy isolation proven by tests
+- ✅ Authentication security verified
+- ✅ Role-based access control verified
+- ✅ No critical bugs discovered (or bugs fixed)
+
+---
+
+#### Part C: Documentation & CI (1 hour)
+
+- [ ] **4.9.27** Update `CLAUDE.md` - Add testing section with commands and strategy
+- [ ] **4.9.28** Create `.github/workflows/test.yml` - CI workflow (optional but recommended)
+- [ ] **4.9.29** Add coverage thresholds to `vitest.config.ts`
+- [ ] **4.9.30** Update `.env.example` - Add test environment variables (if needed)
+
+**Files to create:**
+- `.github/workflows/test.yml` (optional)
+
+**Files to modify:**
+- `CLAUDE.md` (add testing section)
+- `vitest.config.ts` (add coverage thresholds)
+- `.env.example` (add test variables if needed)
+
+**Success criteria (Part C):**
+- ✅ CLAUDE.md documents testing
+- ✅ CI workflow configured (if using GitHub Actions)
+- ✅ Coverage thresholds enforced
+- ✅ Documentation complete
+
+---
+
+### Phase 4.9 Summary
+
+**Total Time:** 8-10 hours (1-1.5 days)
+
+**Total Tasks:** 30 tasks
+- Part A (Setup): 15 tasks
+- Part B (Retroactive Tests): 11 tasks
+- Part C (Documentation): 4 tasks
+
+**Total Test Files Created:** 10 files
+- 4 unit test files
+- 1 Convex test file
+- 3 integration test files
+- 2 example test files
+
+**Expected Test Count:** 80-100 tests
+
+**Coverage Targets:**
+- permissions.ts: >90%
+- auth.server.ts: >85%
+- convex/users.ts: >85%
+- billing-constants.ts: >80%
+
+**Why This Phase is Critical:**
+1. **Security:** Verifies auth, permissions, and multi-tenancy actually work
+2. **Foundation:** Sets up testing infrastructure for Phases 5-17
+3. **Risk Mitigation:** Catches bugs before financial transactions (Phase 5)
+4. **Documentation:** Provides examples for future test writing
+5. **CI/CD:** Enables automated testing on every commit
+
+**Next Step After Phase 4.9:**
+Only proceed to Phase 5 (Stripe Integration) when:
+- ✅ All 80+ tests passing
+- ✅ Coverage thresholds met
+- ✅ Multi-tenancy isolation proven
+- ✅ No critical bugs discovered (or all bugs fixed)
+
+---
+
+### Phase 5: Stripe Integration - Backend (Day 4-5, 8-10 hours)
 
 **Goal:** Implement Stripe checkout, customer creation, and webhook handling
 
-**Dependencies:** Phase 1, 2, 4 and Vitest setup complete
+**Dependencies:** Phase 1, 2, 4, and Phase 4.9 (Vitest setup and foundation tests) complete
 
 #### Tasks:
 

@@ -2,6 +2,107 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-10-02
+
+### 🎉 Major Feature - Phase 4.9: Testing Framework Setup
+
+This release introduces comprehensive testing infrastructure with Vitest before proceeding to Phase 5 (Stripe billing implementation). This ensures all authentication, permissions, and multi-tenancy code is thoroughly tested before handling financial transactions.
+
+### Added
+- **Testing Framework**
+  - Vitest test runner with React Router v7 support
+  - @vitest/ui for interactive test debugging
+  - @testing-library/react for component testing
+  - happy-dom environment for fast DOM testing
+  - @vitest/coverage-v8 for code coverage reporting
+  - @testing-library/jest-dom for DOM assertions
+
+- **Test Configuration** (`vitest.config.ts`)
+  - React Router v7 plugin integration
+  - TypeScript path alias support (~/* → app/*)
+  - Global test environment setup
+  - Coverage thresholds (80% for standard code, 85%+ for security-critical)
+  - Automatic test file discovery (*.test.{ts,tsx})
+
+- **Mock Utilities**
+  - `test/mocks/workos.ts` - Complete WorkOS SDK mock
+    - Mock authentication methods (getUser, authenticateWithCode)
+    - Mock organization management (createOrganization, listOrganizations)
+    - Mock organization memberships with role support
+    - Reset utilities for clean test state
+  - `test/mocks/convex.ts` - Convex client mock
+    - Mock query/mutation/action methods
+    - Mock database with in-memory storage
+    - Helper functions for query/mutation setup
+    - Support for multi-tenancy testing
+
+- **Test Infrastructure**
+  - `test/setup.ts` - Global test configuration
+    - Automatic cleanup after each test
+    - Mock environment variables
+    - Extended Vitest matchers
+
+- **Phase 4.9 Documentation** (BILLING_ROADMAP.md)
+  - 30-task specification for retroactive testing
+  - Part A: Testing framework setup (15 tasks)
+  - Part B: Retroactive tests for Phases 1-4 (11 tasks)
+  - Part C: Documentation and CI integration (4 tasks)
+  - Expected: 80-100 tests, >85% coverage on security code
+
+### Changed
+- **BILLING_ROADMAP.md Structure**
+  - Inserted Phase 4.9 between Phase 4 and Phase 5
+  - Added comprehensive testing requirements before Stripe integration
+  - Documented why retroactive testing is critical (financial transactions in Phase 5)
+  - Updated Phase 5 dependencies to require Phase 4.9 completion
+
+- **Package Dependencies**
+  - Added comprehensive testing stack to devDependencies
+  - Added @vitejs/plugin-react for test environment
+  - Total: 70 new packages for testing infrastructure
+
+### Technical Details
+- **Phase 4.9 Status**: 🟡 IN PROGRESS (Part A: 6/15 tasks complete)
+- **Next Steps**:
+  - Complete mock utilities (Stripe mock pending)
+  - Create test helpers and fixtures
+  - Write retroactive tests for permissions, auth, and multi-tenancy
+  - Achieve >85% coverage on security-critical code
+- **TypeScript**: 0 errors, all type checks passing
+- **Why This Phase**: Phase 5 involves Stripe webhooks and financial transactions - cannot proceed without verifying auth/permissions work correctly
+
+### Files Created
+- `vitest.config.ts` - Vitest configuration
+- `test/setup.ts` - Global test setup
+- `test/mocks/workos.ts` - WorkOS SDK mock (200+ lines)
+- `test/mocks/convex.ts` - Convex client mock (190+ lines)
+
+### Files Modified
+- `BILLING_ROADMAP.md` - Added Phase 4.9 (280+ lines)
+- `package.json` - Added 8 testing dependencies
+- `package-lock.json` - Locked testing package versions
+
+### Verification Results
+```
+✅ Vitest: Installed and configured
+✅ Test environment: happy-dom configured
+✅ Mocks: WorkOS and Convex mocks created
+✅ Coverage: Thresholds configured (80% standard, 85% security)
+⏳ Tests: Pending (Part B of Phase 4.9)
+```
+
+### Why Phase 4.9 Exists
+**Critical Security Decision**: Phases 1-4 were implemented without tests. Before proceeding to Phase 5 (Stripe webhooks handling real money), we must:
+1. Verify authentication actually works
+2. Prove permissions cannot be bypassed
+3. Confirm multi-tenancy prevents data leaks
+4. Establish testing patterns for future phases
+
+Retroactive testing takes longer than test-first development, but is essential for financial transaction safety.
+
+### Next Phase
+Ready for **Phase 4.9 Part B**: Write 80-100 retroactive tests for existing code (permissions, auth, multi-tenancy)
+
 ## [1.2.0] - 2025-10-01
 
 ### 🎉 Major Feature - Phase 4: Authentication & Permissions Middleware
