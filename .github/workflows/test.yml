@@ -46,10 +46,9 @@ jobs:
       - name: Run tests
         run: npm run test:run
 
-      # 7. Generate coverage report (ignore thresholds, just generate report)
+      # 7. Generate coverage report (enforces thresholds to prevent regression)
       - name: Generate coverage report
-        run: npm run test:coverage || true
-        continue-on-error: true
+        run: npm run test:coverage
 
       # 8. Upload coverage report (optional, but useful for tracking)
       - name: Upload coverage report
