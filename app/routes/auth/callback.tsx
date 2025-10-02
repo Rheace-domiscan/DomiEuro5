@@ -35,10 +35,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   // Handle error case
   if (error) {
-    // Log auth errors in development for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.error('WorkOS authentication error:', error);
-    }
     return redirect('/auth/login?error=' + encodeURIComponent(error));
   }
 
@@ -92,11 +88,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     return createUserSession(authResponse.user.id, '/', authResponse.organizationId, userRole);
   } catch (error: unknown) {
     const workosError = error as WorkOSError;
-
-    // Only log detailed error info in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Authentication failed:', workosError);
-    }
 
     // Check if this is an organization selection error
     if (

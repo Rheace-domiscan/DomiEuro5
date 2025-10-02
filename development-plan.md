@@ -1,6 +1,7 @@
 # Starter Hardening Plan
 
 ## 1. Environment Variable Bootstrap
+
 - Goal: Any future clone can run `npm run dev` immediately.
 - Actions:
   - `.env.example` already exists - document actual `.env` creation in README with `cp .env.example .env`
@@ -9,6 +10,7 @@
   - Add comments in `.env.example` explaining each variable's purpose and which need replacement vs safe defaults
 
 ## 2. Convex Schema and Docs Alignment (CRITICAL - Documentation Bug)
+
 - Goal: Documentation accurately reflects expectations of generated projects.
 - Actions:
   - **CRITICAL**: Fix CONVEX_SETUP.md lines 14-15 which say `workosUserId` and `organizationId` are optional, but actual schema requires them
@@ -18,6 +20,7 @@
   - Update `.gitignore` handling for `convex/_generated` and document commit strategy
 
 ## 3. WorkOS Onboarding Flow Guardrails
+
 - Goal: Make the auth journey resilient when reused in new projects.
 - Actions:
   - Improve messaging in `app/routes/auth/create-organization.tsx` to surface permission issues or disabled org creation, suggesting next steps
@@ -26,6 +29,7 @@
   - Add WorkOS development mode setup documentation and instructions for creating test organizations
 
 ## 4. Convex Development Workflow
+
 - Goal: Ensure future teams know how to point the app at a Convex instance.
 - Actions:
   - **Create missing `convex.json` configuration file** (referenced in docs but doesn't exist)
@@ -35,6 +39,7 @@
   - Clarify `.env` vs `.env.local` handling (CONVEX_SETUP.md references `.env.local` but setup uses `.env`)
 
 ## 5. Diagnostic Route Hygiene
+
 - Goal: Keep `/test-workos` useful during setup but safe to ship as a starter.
 - Actions:
   - Gate the route behind an environment check (e.g., render only when `NODE_ENV !== 'production'` or a flag is set) so future projects can leave it in place without leaking data
@@ -42,6 +47,7 @@
   - Optionally swap the full auth URL display for a copy-to-clipboard button or console log to reduce accidental exposure while still aiding setup
 
 ## 6. Code Quality Cleanup for Template Distribution
+
 - Goal: Code is production-quality and sets good example patterns for derivative projects.
 - Actions:
   - Remove all 9 console.log/console.error statements from auth routes (callback.tsx, create-organization.tsx, organization-selection.tsx, UsersDemo.tsx)
@@ -51,6 +57,7 @@
   - Consider adding JSDoc comments on key utility functions (auth helpers, Convex server operations)
 
 ## 7. Documentation Accuracy & Completeness
+
 - Goal: All documentation matches current implementation and provides clear quick-start.
 - Actions:
   - **Update README.md** - currently shows generic React Router template text, needs actual starter features
@@ -61,6 +68,7 @@
   - Ensure all files referenced in documentation actually exist
 
 ## 8. Template Portability & Customization
+
 - Goal: Easy to fork and customize for different use cases.
 - Actions:
   - Add instructions for removing WorkOS (if someone wants different auth provider)
@@ -70,6 +78,7 @@
   - Document dependency choices and rationale (why these specific packages)
 
 ## 9. Example Code & Patterns
+
 - Goal: Show best practices for common scenarios in derivative projects.
 - Actions:
   - Enhance UsersDemo.tsx with more inline comments explaining the data fetching pattern
@@ -79,6 +88,7 @@
   - Add example of handling WorkOS webhook events (if applicable)
 
 ## 10. Template Metadata & Licensing
+
 - Goal: Clear licensing and attribution for template usage.
 - Actions:
   - Add LICENSE file with appropriate license for template usage

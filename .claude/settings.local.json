@@ -1,9 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "WebSearch",
-      "WebFetch(domain:workos.com)"
-    ],
+    "allow": ["WebSearch", "WebFetch(domain:workos.com)"],
     "deny": [],
     "ask": []
   }

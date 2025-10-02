@@ -3,6 +3,7 @@
 ## Overview
 
 This roadmap guides the implementation of a complete multi-tier SaaS billing system with:
+
 - **3 tiers:** Free (1 seat), Starter (£50/mo, 5-19 seats), Professional (£250/mo, 20-40 seats)
 - **Per-seat pricing:** £10/seat/month for additional seats beyond included
 - **Annual billing:** 10x monthly price (2 months free)
@@ -27,11 +28,13 @@ Before starting implementation, ensure:
 - [ ] Environment variables configured (`.env` file exists)
 
 **Install new dependencies:**
+
 ```bash
 npm install stripe @stripe/stripe-js
 ```
 
 **Install Stripe CLI** (for webhook testing):
+
 ```bash
 # macOS
 brew install stripe/stripe-cli/stripe
@@ -66,13 +69,16 @@ curl -s https://packages.stripe.com/api/security/keypair/stripe-cli-gpg/public |
 - [ ] **1.8** Test: Query subscriptions table returns empty array
 
 **Files to create:**
+
 - `app/types/billing.ts`
 - `app/lib/billing-constants.ts`
 
 **Files to modify:**
+
 - `convex/schema.ts`
 
 **Test command:**
+
 ```bash
 # In Convex dashboard or via query
 npx convex run subscriptions:list
@@ -99,6 +105,7 @@ npx convex run subscriptions:list
 - [ ] **2.8** Test: View all products in Stripe dashboard (should show 5 products total)
 
 **Environment variables to add:**
+
 ```env
 # Stripe Configuration
 STRIPE_SECRET_KEY=sk_test_...
@@ -114,6 +121,7 @@ STRIPE_PRICE_ADDITIONAL_SEAT=price_...
 ```
 
 **Stripe Portal Configuration:**
+
 - Enable: Payment method update, invoice history, billing address update
 - Enable: Subscription updates (upgrades/downgrades)
 - Enable: Subscription cancellation (at period end)
@@ -159,13 +167,16 @@ STRIPE_PRICE_ADDITIONAL_SEAT=price_...
 - [ ] **4.8** Test: Log in, check session contains role
 
 **Files to create:**
+
 - `app/lib/permissions.ts`
 
 **Files to modify:**
+
 - `app/lib/auth.server.ts`
 - `convex/users.ts`
 
 **Key code snippet** (`app/lib/permissions.ts`):
+
 ```typescript
 export const ROLES = {
   OWNER: 'owner',
@@ -199,6 +210,7 @@ export function hasPermission(role: string, permission: string): boolean {
 
 **Why this phase exists:**
 Phases 1-4 were implemented without tests. Before proceeding to Phase 5 (Stripe webhooks and financial transactions), we must:
+
 1. Set up testing framework (Vitest, mocks, helpers)
 2. Write retroactive tests for all security-critical code (auth, permissions, multi-tenancy)
 3. Achieve >80% coverage on existing code
@@ -216,7 +228,7 @@ Phases 1-4 were implemented without tests. Before proceeding to Phase 5 (Stripe 
   npm install -D vitest @vitest/ui @testing-library/react @testing-library/user-event happy-dom
   ```
 - [ ] **4.9.2** Create `vitest.config.ts` with React Router v7 and TypeScript support
-- [ ] **4.9.3** Configure test environment (path aliases ~/* → app/*, globals, happy-dom)
+- [ ] **4.9.3** Configure test environment (path aliases ~/_ → app/_, globals, happy-dom)
 - [ ] **4.9.4** Create `test/mocks/workos.ts` - Mock WorkOS SDK (@workos-inc/node)
   - Mock `userManagement.getUser()`
   - Mock `userManagement.listOrganizationMemberships()`
@@ -270,6 +282,7 @@ Phases 1-4 were implemented without tests. Before proceeding to Phase 5 (Stripe 
 - [ ] **4.9.15** Verify test UI works: `npm run test:ui`
 
 **Files to create:**
+
 - `vitest.config.ts`
 - `test/mocks/workos.ts`
 - `test/mocks/convex.ts`
@@ -281,10 +294,12 @@ Phases 1-4 were implemented without tests. Before proceeding to Phase 5 (Stripe 
 - `test/README.md`
 
 **Files to modify:**
+
 - `package.json` (add test scripts and dev dependencies)
 - `.gitignore` (add .vitest)
 
 **Test commands:**
+
 ```bash
 npm test
 npm run test:ui
@@ -292,6 +307,7 @@ npm run test:coverage
 ```
 
 **Success criteria (Part A):**
+
 - ✅ Vitest installed and configured
 - ✅ All mock utilities created and documented
 - ✅ Test helpers created
@@ -372,16 +388,20 @@ npm run test:coverage
 **Verification & Coverage:**
 
 - [x] **4.9.23** Run full test suite and verify all tests pass
+
   ```bash
   npm test
   ```
+
   - Expected: 80+ tests passing
   - ✅ **COMPLETED:** 284 tests passing (114 permissions + 48 auth + 52 billing + 26 session + 12 multi-tenancy + 32 other)
 
 - [x] **4.9.24** Generate coverage report
+
   ```bash
   npm run test:coverage -- app/lib/permissions.ts app/lib/auth.server.ts convex/users.ts
   ```
+
   - permissions.ts: >90% (security-critical)
   - auth.server.ts: >85% (security-critical)
   - convex/users.ts: >85% (multi-tenancy critical)
@@ -402,6 +422,7 @@ npm run test:coverage
   - Error cases are actually tested
 
 **Files created:**
+
 - ✅ `test/unit/permissions.test.ts` (114 tests)
 - ✅ `test/unit/auth.server.test.ts` (48 tests)
 - ✅ `test/unit/billing-constants.test.ts` (52 tests)
@@ -411,6 +432,7 @@ npm run test:coverage
 - ✅ Auth flow and role sync tested via unit tests
 
 **Test commands:**
+
 ```bash
 # Run all retroactive tests
 npm test test/unit/ test/convex/ test/integration/
@@ -423,6 +445,7 @@ npm test test/integration/multi-tenancy.test.ts
 ```
 
 **Success criteria (Part B):**
+
 - ✅ All tests passing (284 tests total)
 - ✅ Coverage 100% for permissions.ts (target >90%)
 - ✅ Coverage 100% for auth.server.ts (target >85%)
@@ -444,14 +467,17 @@ npm test test/integration/multi-tenancy.test.ts
 - [x] **4.9.30** Update `.env.example` - Add test environment variables (if needed)
 
 **Files to create:**
+
 - `.github/workflows/test.yml` (optional)
 
 **Files to modify:**
+
 - `CLAUDE.md` (add testing section)
 - `vitest.config.ts` (add coverage thresholds)
 - `.env.example` (add test variables if needed)
 
 **Success criteria (Part C):**
+
 - ✅ CLAUDE.md documents testing
 - ✅ CI workflow configured (GitHub Actions at `.github/workflows/test.yml`)
 - ✅ Coverage thresholds enforced (vitest.config.ts lines 24-30)
@@ -466,11 +492,13 @@ npm test test/integration/multi-tenancy.test.ts
 **Total Time:** 8-10 hours (1-1.5 days)
 
 **Total Tasks:** 30 tasks
+
 - Part A (Setup): 15 tasks
 - Part B (Retroactive Tests): 11 tasks
 - Part C (Documentation): 4 tasks
 
 **Total Test Files Created:** 10 files
+
 - 4 unit test files
 - 1 Convex test file
 - 3 integration test files
@@ -479,12 +507,14 @@ npm test test/integration/multi-tenancy.test.ts
 **Expected Test Count:** 80-100 tests
 
 **Coverage Targets:**
+
 - permissions.ts: >90%
 - auth.server.ts: >85%
 - convex/users.ts: >85%
 - billing-constants.ts: >80%
 
 **Why This Phase is Critical:**
+
 1. **Security:** Verifies auth, permissions, and multi-tenancy actually work
 2. **Foundation:** Sets up testing infrastructure for Phases 5-17
 3. **Risk Mitigation:** Catches bugs before financial transactions (Phase 5)
@@ -493,6 +523,7 @@ npm test test/integration/multi-tenancy.test.ts
 
 **Next Step After Phase 4.9:**
 ✅ **PHASE 4.9 COMPLETE** - Ready to proceed to Phase 5 (Stripe Integration):
+
 - ✅ All 284 tests passing
 - ✅ Coverage thresholds exceeded (100% on critical security code)
 - ✅ Multi-tenancy isolation proven by 12 integration tests
@@ -500,6 +531,7 @@ npm test test/integration/multi-tenancy.test.ts
 - ✅ Overall coverage: 51.61% (up from 34.2%)
 
 **IMPORTANT FOR PHASE 5+:** Each new feature implementation should include tests as you go. Follow this pattern:
+
 1. Write the feature code
 2. Write tests for the feature (aim for 80%+ coverage)
 3. Run tests and verify they pass
@@ -562,18 +594,21 @@ See Phase 5 tasks below for specific testing guidance.
   ```bash
   npm run test:coverage -- app/lib/stripe.server.ts app/routes/webhooks/stripe.tsx convex/subscriptions.ts
   ```
+
   - All Phase 5 tests passing
   - stripe.server.ts: >80%
   - webhooks/stripe.tsx: >85% (financial critical)
   - subscriptions.ts: >80%
 
 **Files to create:**
+
 - `app/lib/stripe.server.ts`
 - `app/routes/webhooks/stripe.tsx`
 - `convex/subscriptions.ts`
 - `convex/billingHistory.ts`
 
 **Stripe CLI testing:**
+
 ```bash
 # Forward webhooks to local dev server
 stripe listen --forward-to localhost:5173/webhooks/stripe
@@ -602,6 +637,7 @@ stripe trigger checkout.session.completed
 - [ ] **6.8** Test: Click "Upgrade to Starter" → Redirects to Stripe Checkout
 
 **Files to create:**
+
 - `app/routes/pricing.tsx`
 - `components/pricing/PricingTable.tsx`
 - `components/pricing/PricingCard.tsx`
@@ -650,6 +686,7 @@ stripe trigger checkout.session.completed
   - Target: >80% coverage
 
 **Files to create:**
+
 - `app/routes/settings/billing.tsx`
 - `components/billing/BillingOverview.tsx`
 - `components/billing/SeatManagement.tsx`
@@ -683,11 +720,13 @@ stripe trigger checkout.session.completed
 - [ ] **8.11** Test: Manager tries to access /settings/team → Redirected
 
 **Files to create:**
+
 - `app/routes/settings/team.tsx`
 - `components/team/TeamTable.tsx`
 - `components/team/InviteUserModal.tsx`
 
 **Files to modify:**
+
 - `convex/users.ts`
 
 **Route:** `/settings/team` (protected: owner/admin only, hidden from others)
@@ -712,6 +751,7 @@ stripe trigger checkout.session.completed
 - [ ] **9.8** Test: Starter user visits /dashboard/analytics → Sees content
 
 **Files to create:**
+
 - `components/feature-gates/FeatureGate.tsx`
 - `components/feature-gates/LockedFeature.tsx`
 - `app/routes/dashboard/analytics.tsx`
@@ -720,6 +760,7 @@ stripe trigger checkout.session.completed
 - `public/assets/feature-previews/api.png` (placeholder)
 
 **Key logic:**
+
 ```typescript
 <FeatureGate feature="analytics" requiredTier="starter">
   <AnalyticsContent />
@@ -746,14 +787,17 @@ stripe trigger checkout.session.completed
 - [ ] **10.8** Test: Update payment during grace → Grace period ends
 
 **Files to modify:**
+
 - `app/routes/webhooks/stripe.tsx`
 - `convex/subscriptions.ts`
 
 **Files to create:**
+
 - `components/billing/GracePeriodBanner.tsx`
 - `convex/crons.ts` (if doesn't exist)
 
 **Convex cron:**
+
 ```typescript
 export default cronJobs;
 cronJobs.daily('check grace periods', { hourUTC: 10 }, internal.billing.checkGracePeriods);
@@ -776,13 +820,16 @@ cronJobs.daily('check grace periods', { hourUTC: 10 }, internal.billing.checkGra
 - [ ] **11.5** Test: Cancel subscription → Owner has read-only, others blocked
 
 **Files to modify:**
+
 - `app/routes/webhooks/stripe.tsx`
 - `app/lib/auth.server.ts`
 
 **Files to create:**
+
 - `components/billing/ReactivateBanner.tsx`
 
 **Behavior:**
+
 - Owner: Read-only access (can view data, cannot edit)
 - Others: Completely blocked, see "Contact your owner" message
 
@@ -805,9 +852,11 @@ cronJobs.daily('check grace periods', { hourUTC: 10 }, internal.billing.checkGra
 - [ ] **12.7** Test: Owner transfers to admin → Roles swap correctly
 
 **Files to create:**
+
 - `app/routes/settings/team/transfer-ownership.tsx`
 
 **Files to modify:**
+
 - `convex/auditLog.ts` (create if doesn't exist)
 
 **Route:** `/settings/team/transfer-ownership` (owner only)
@@ -828,6 +877,7 @@ cronJobs.daily('check grace periods', { hourUTC: 10 }, internal.billing.checkGra
 - [ ] **13.4** Send custom emails for: Welcome, seat added, user removed, ownership transfer
 
 **Files to create:**
+
 - `app/lib/email.server.ts`
 
 **Note:** For v1, use Stripe's built-in emails. For custom branding, integrate SendGrid/Resend in v2.
@@ -853,6 +903,7 @@ cronJobs.daily('check grace periods', { hourUTC: 10 }, internal.billing.checkGra
 - [ ] **14.9** Test: Visit /legal/terms → Sees template with disclaimer
 
 **Files to create:**
+
 - `app/routes/legal/_layout.tsx`
 - `app/routes/legal/terms.tsx`
 - `app/routes/legal/privacy.tsx`
@@ -879,12 +930,15 @@ cronJobs.daily('check grace periods', { hourUTC: 10 }, internal.billing.checkGra
 - [ ] **15.4** Test: Free user upgrades from analytics page → Tracks feature
 
 **Files to modify:**
+
 - `convex/subscriptions.ts`
 
 **Files to create:**
+
 - `convex/analytics.ts`
 
 **Data tracked:**
+
 - When user created free account
 - When they upgraded
 - Which feature page they were on when upgrading
@@ -908,13 +962,16 @@ cronJobs.daily('check grace periods', { hourUTC: 10 }, internal.billing.checkGra
 - [ ] **16.6** Test all webhooks with Stripe CLI triggers
 
 **Files to create:**
+
 - `components/dev/TestModeBanner.tsx`
 
 **Files to modify:**
+
 - `app/root.tsx` (add test mode banner)
 - `app/lib/stripe.server.ts` (add production check)
 
 **Test commands:**
+
 ```bash
 # Forward webhooks locally
 stripe listen --forward-to localhost:5173/webhooks/stripe
@@ -944,12 +1001,14 @@ stripe trigger invoice.payment_failed
 - [ ] **17.7** Update `CONVEX_SETUP.md` - Document subscription schema
 
 **Files to create:**
+
 - `STRIPE_SETUP.md`
 - `WORKOS_RBAC_SETUP.md`
 - `BILLING_GUIDE.md`
 - `FEATURE_GATES.md`
 
 **Files to modify:**
+
 - `README.md`
 - `TEMPLATE_USAGE.md`
 - `CONVEX_SETUP.md`
@@ -979,7 +1038,12 @@ export const TIER_CONFIG = {
     name: 'Professional',
     seats: { included: 20, min: 20, max: 40 },
     price: { monthly: 25000, annual: 250000 }, // in pence
-    features: ['features:basic', 'features:analytics', 'features:api_unlimited', 'features:priority_support'],
+    features: [
+      'features:basic',
+      'features:analytics',
+      'features:api_unlimited',
+      'features:priority_support',
+    ],
   },
 };
 
@@ -988,13 +1052,13 @@ export const PER_SEAT_PRICE = 1000; // £10 in pence
 
 ### Role Permissions Matrix
 
-| Role | Add Seats | Invite Users | Manage Billing | Transfer Ownership | View Billing | Product Access |
-|------|-----------|--------------|----------------|-------------------|--------------|----------------|
-| Owner | ✅ | ✅ | ✅ | ✅ | ✅ | Full |
-| Admin | ✅ | ✅ | ❌ | ❌ | ✅ (read-only) | Full |
-| Manager | ❌ | ❌ | ❌ | ❌ | ❌ | Full features |
-| Sales | ❌ | ❌ | ❌ | ❌ | ❌ | Sales features |
-| Team Member | ❌ | ❌ | ❌ | ❌ | ❌ | Basic features |
+| Role        | Add Seats | Invite Users | Manage Billing | Transfer Ownership | View Billing   | Product Access |
+| ----------- | --------- | ------------ | -------------- | ------------------ | -------------- | -------------- |
+| Owner       | ✅        | ✅           | ✅             | ✅                 | ✅             | Full           |
+| Admin       | ✅        | ✅           | ❌             | ❌                 | ✅ (read-only) | Full           |
+| Manager     | ❌        | ❌           | ❌             | ❌                 | ❌             | Full features  |
+| Sales       | ❌        | ❌           | ❌             | ❌                 | ❌             | Sales features |
+| Team Member | ❌        | ❌           | ❌             | ❌                 | ❌             | Basic features |
 
 ### Key Stripe Webhooks
 
@@ -1061,12 +1125,14 @@ After implementing each phase, create tests following this structure:
 ### Phase-Specific Testing Priorities
 
 **Phase 6 (Pricing Page):**
+
 - Test PricingTable renders all 3 tiers correctly
 - Test monthly/annual toggle switches prices
 - Test "Get Started" buttons create checkout sessions
 - Coverage target: >70% (mostly presentational)
 
 **Phase 8 (Team Management):**
+
 - Test route protection (owner/admin only)
 - Test invite flow creates WorkOS membership
 - Test seat usage display accuracy
@@ -1074,18 +1140,21 @@ After implementing each phase, create tests following this structure:
 - Coverage target: >85% (security-critical)
 
 **Phase 9 (Feature Gates):**
+
 - Test FeatureGate component enforces tier access
 - Test LockedFeature displays upgrade CTA
 - Test conversion tracking captures feature triggers
 - Coverage target: >80%
 
 **Phase 10 (Grace Period & Account Locking):**
+
 - Test grace period calculation (28 days)
 - Test account locking after grace period
 - Test owner read-only access during grace period
 - Coverage target: >90% (financial critical)
 
 **Phase 11-17 (Remaining Features):**
+
 - Follow the same unit + integration testing pattern
 - Prioritize testing financial operations (>85% coverage)
 - Prioritize testing access control (>85% coverage)
@@ -1122,6 +1191,7 @@ npm run test:coverage -- app/routes/settings/[feature].tsx
 Before marking implementation complete, verify these scenarios:
 
 ### Basic Flows
+
 - [ ] Free user upgrades to Starter via /pricing → Checkout succeeds → Billing dashboard accessible
 - [ ] Starter user adds 5 extra seats → Prorated charge appears → Seat count updates
 - [ ] Pro user downgrades to Starter → Schedule created → No immediate blocking
@@ -1129,32 +1199,38 @@ Before marking implementation complete, verify these scenarios:
 - [ ] Admin invites team member → Team member cannot see billing/team pages
 
 ### Role Restrictions
+
 - [ ] Manager tries to access /settings/billing → Redirected to /dashboard
 - [ ] Manager tries to access /settings/team → Redirected to /dashboard
 - [ ] Sales user sees only sales-specific features
 - [ ] Team member has basic product access only
 
 ### Payment Failures
+
 - [ ] Failed payment → Grace period starts → Email sent
 - [ ] Update card during grace period → Grace period ends immediately
 - [ ] 28 days pass → Account locked → Owner has read-only access
 
 ### Cancellation
+
 - [ ] Owner cancels subscription → Scheduled for period end
 - [ ] Period ends → Owner has read-only → Other users completely blocked
 - [ ] Owner clicks "Reactivate" → New checkout session → Full access restored
 
 ### Feature Gates
+
 - [ ] Free user visits /dashboard/analytics → Sees upgrade prompt with preview image
 - [ ] Starter user visits /dashboard/analytics → Sees full content
 - [ ] Upgrade from analytics page → Conversion tracked correctly
 
 ### Ownership Transfer
+
 - [ ] Owner transfers to admin → Roles swap in WorkOS → Event logged in auditLog
 - [ ] Both users receive confirmation email
 - [ ] New owner can manage billing
 
 ### Webhooks
+
 - [ ] All 8 key webhooks tested with Stripe CLI
 - [ ] Webhook signature verification working
 - [ ] Events logged in billingHistory table
@@ -1183,17 +1259,20 @@ Ready for production? Complete these steps:
 If something breaks in production:
 
 ### Webhook Failures
+
 1. Check Stripe webhook dashboard for errors
 2. Verify webhook signature secret matches `.env`
 3. Check server logs for detailed error messages
 4. If broken: Disable webhook in Stripe → Fix → Re-enable
 
 ### Schema Migration Issues
+
 1. Convex maintains schema history
 2. Rollback: `npx convex deploy --version <previous-version>`
 3. Data persists, only schema changes revert
 
 ### Stripe Configuration Errors
+
 1. Check product IDs match `.env` variables
 2. Verify Customer Portal settings (downgrades at period end)
 3. Test in Stripe test mode before fixing live

@@ -3,10 +3,12 @@
 Your Remix app is now configured with WorkOS authentication! Follow these steps to complete the setup:
 
 ## 1. Create a WorkOS Account
+
 1. Go to [workos.com](https://workos.com) and create an account
 2. Create a new project in your WorkOS dashboard
 
 ## 2. Configure WorkOS Application
+
 1. In your WorkOS dashboard, go to "Applications"
 2. Create a new application or select an existing one
 3. Note down your:
@@ -14,6 +16,7 @@ Your Remix app is now configured with WorkOS authentication! Follow these steps 
    - **Client ID** (found in your application settings)
 
 ## 3. Set Up Redirect URI
+
 1. In your WorkOS application settings, add the redirect URI:
    ```
    http://localhost:5173/auth/callback
@@ -21,6 +24,7 @@ Your Remix app is now configured with WorkOS authentication! Follow these steps 
 2. For production, update this to your production domain
 
 ## 4. Create and Update Environment Variables
+
 1. Copy the example environment file to create your local `.env`:
    ```bash
    cp .env.example .env
@@ -35,12 +39,15 @@ Your Remix app is now configured with WorkOS authentication! Follow these steps 
    ```
 
 ## 5. Generate Session Secret
+
 Generate a random string for the session secret. You can use:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 ## 6. Test the Integration
+
 1. Start your development server:
    ```bash
    npm run dev
@@ -50,12 +57,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 4. You should be redirected to WorkOS for authentication
 
 ## Available Routes
+
 - `/` - Home page (shows auth state)
 - `/auth/login` - Login page
 - `/auth/logout` - Logout endpoint
 - `/dashboard` - Protected route (requires authentication)
 
 ## Features Included
+
 - ✅ WorkOS OAuth integration
 - ✅ Session management with secure cookies
 - ✅ Protected routes
@@ -104,6 +113,7 @@ For local testing without a full WorkOS setup:
    - These won't send actual emails during authentication
 
 ## Next Steps
+
 - Configure your WorkOS application with identity providers (Google, Microsoft, etc.)
 - Customize the login and dashboard pages
 - Add additional protected routes as needed
@@ -113,16 +123,19 @@ For local testing without a full WorkOS setup:
 ## Troubleshooting
 
 ### "Organization creation is not enabled" error
+
 - Check WorkOS Dashboard → Organizations → Settings
 - Ensure "Allow users to create organizations" is enabled
 - Verify your API key has the correct permissions
 
 ### "Session expired" errors
+
 - Sessions are stored in encrypted cookies
 - Ensure `SESSION_SECRET` is set in your `.env` file
 - Session expires after inactivity
 
 ### Authentication redirects to login
+
 - Verify `WORKOS_REDIRECT_URI` matches your WorkOS dashboard configuration
 - Check that the redirect URI includes the correct protocol (http/https)
 

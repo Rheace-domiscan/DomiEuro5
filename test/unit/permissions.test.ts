@@ -507,7 +507,11 @@ describe('RBAC Permissions System', () => {
     });
 
     it('should maintain owner-only permissions', () => {
-      const ownerOnlyPermissions: Permission[] = ['billing:manage', 'org:transfer_ownership', 'org:manage'];
+      const ownerOnlyPermissions: Permission[] = [
+        'billing:manage',
+        'org:transfer_ownership',
+        'org:manage',
+      ];
 
       ownerOnlyPermissions.forEach(permission => {
         expect(hasPermission(ROLES.OWNER, permission)).toBe(true);

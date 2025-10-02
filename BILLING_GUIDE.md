@@ -109,6 +109,7 @@ UI updates based on new tier (reactive Convex queries)
 - **Use case:** Trial, individual users, demos
 
 **Limitations:**
+
 - Cannot add seats (must upgrade to Starter)
 - Limited feature access
 - No billing dashboard access
@@ -122,6 +123,7 @@ UI updates based on new tier (reactive Convex queries)
 - **Features:** Analytics, limited API access, basic features
 
 **Upgrade path:**
+
 - Need more than 19 seats? → Upgrade to Professional
 
 ### Professional Tier
@@ -133,6 +135,7 @@ UI updates based on new tier (reactive Convex queries)
 - **Features:** All features, unlimited API, priority support
 
 **Upgrade path:**
+
 - Need more than 40 seats? → Contact sales for Enterprise
 
 ### Configuration
@@ -173,23 +176,25 @@ export const TIER_CONFIG = {
 A **seat** represents capacity for one active user in an organization.
 
 **Example:** Starter plan with 10 seats
+
 - **Included:** 5 seats (part of £50/month base)
 - **Additional:** 5 extra seats (5 × £10 = £50/month)
 - **Total cost:** £100/month
 
 ### Seat States
 
-| State | Description | Example |
-|-------|-------------|---------|
-| **Within limit** | Active users ≤ total seats | 10 users, 10 seats ✅ |
-| **Over limit** | Active users > total seats | 15 users, 10 seats ⚠️ |
-| **At max** | Total seats = tier max | 19 seats on Starter (can't add more) |
+| State            | Description                | Example                              |
+| ---------------- | -------------------------- | ------------------------------------ |
+| **Within limit** | Active users ≤ total seats | 10 users, 10 seats ✅                |
+| **Over limit**   | Active users > total seats | 15 users, 10 seats ⚠️                |
+| **At max**       | Total seats = tier max     | 19 seats on Starter (can't add more) |
 
 ### Over-Limit Behavior
 
 **The system NEVER blocks operations when over limit.**
 
 Instead:
+
 1. ⚠️ Banner shows to owner/admin: "You have 15 users but 10 seats"
 2. 💡 Options presented:
    - Add 5 more seats (£50/month)
@@ -198,6 +203,7 @@ Instead:
 4. ⏰ Owner decides timing (no deadline, no enforcement)
 
 **Why this approach?**
+
 - Real-world flexibility (employees leaving soon, seasonal staff, etc.)
 - No surprise lockouts
 - Owner maintains control
@@ -205,6 +211,7 @@ Instead:
 ### Adding Seats
 
 **Flow:**
+
 1. Owner/admin clicks "Add Seats" button
 2. Modal shows: "Add 5 seats for £X.XX (prorated)"
 3. Uses Stripe invoice preview API for exact amount
@@ -213,6 +220,7 @@ Instead:
 6. UI updates to show new seat count
 
 **Proration example:**
+
 - Current: 10 seats on Starter (£100/month)
 - Add: 3 seats mid-month (15 days remaining)
 - Charge: £15 immediately (£30/month × 0.5 months)
@@ -223,6 +231,7 @@ Instead:
 Seats **do not auto-reduce** when users leave.
 
 **Manual reduction:**
+
 1. Owner deactivates user in `/settings/team`
 2. Seat count unchanged (still paying for unused seats)
 3. Owner manually reduces seats in billing dashboard if desired
@@ -236,13 +245,13 @@ Seats **do not auto-reduce** when users leave.
 
 ### 5 Roles Defined in WorkOS
 
-| Role | Billing | Seats | Users | Features |
-|------|---------|-------|-------|----------|
-| **Owner** | Full | Add | Invite (any role) | All |
-| **Admin** | View | Add | Invite (any role) | All |
-| **Manager** | None | None | None | All |
-| **Sales** | None | None | None | Sales only |
-| **Team Member** | None | None | None | Basic only |
+| Role            | Billing | Seats | Users             | Features   |
+| --------------- | ------- | ----- | ----------------- | ---------- |
+| **Owner**       | Full    | Add   | Invite (any role) | All        |
+| **Admin**       | View    | Add   | Invite (any role) | All        |
+| **Manager**     | None    | None  | None              | All        |
+| **Sales**       | None    | None  | None              | Sales only |
+| **Team Member** | None    | None  | None              | Basic only |
 
 ### Permission Checks
 
@@ -267,14 +276,17 @@ if (!hasPermission(user.role, 'billing:manage')) {
 ### Role Assignment
 
 **Auto-assigned:**
+
 - First user creating org → `owner`
 - Invited users → Role chosen by inviter
 
 **Change role:**
+
 - Owner/admin can promote/demote via `/settings/team`
 - Updates WorkOS membership + syncs to Convex
 
 **Transfer ownership:**
+
 - Owner can transfer to admin via `/settings/team/transfer-ownership`
 - Old owner becomes admin, new user becomes owner
 - Logged in audit log
@@ -408,6 +420,7 @@ Owner decides timing (no deadline)
 ### Why No Blocking?
 
 Real-world scenarios:
+
 - 5 employees leaving end of month (wait to deactivate)
 - Seasonal workers (reduce in off-season)
 - M&A activity (users transferring to different org)
@@ -424,12 +437,14 @@ Real-world scenarios:
 When a payment fails (card declined, insufficient funds, etc.):
 
 **Automatic Stripe retries:**
+
 - Retry 1: 3 days after failure
 - Retry 2: 5 days after retry 1
 - Retry 3: 7 days after retry 2
 - Final: 7 days after retry 3
 
 **Our grace period (parallel):**
+
 - Duration: 28 days from first failure
 - Access: Full (no restrictions)
 - Emails: Every 3 days to billing email
@@ -491,16 +506,16 @@ All users: Full access restored
 
 ### 8 Critical Webhooks
 
-| Event | Trigger | Action |
-|-------|---------|--------|
-| `checkout.session.completed` | User completes checkout | Create subscription in Convex |
-| `customer.subscription.created` | Stripe creates subscription | Sync details to Convex |
-| `customer.subscription.updated` | Tier/seats change | Update subscription in Convex |
-| `subscription_schedule.created` | Downgrade scheduled | Store pending downgrade |
-| `invoice.payment_succeeded` | Payment succeeds | Record in billing history, end grace period |
-| `invoice.payment_failed` | Payment fails | Start grace period, send email |
-| `customer.subscription.deleted` | Subscription cancelled | Set read-only mode |
-| `customer.updated` | Billing email changed | Update in Convex |
+| Event                           | Trigger                     | Action                                      |
+| ------------------------------- | --------------------------- | ------------------------------------------- |
+| `checkout.session.completed`    | User completes checkout     | Create subscription in Convex               |
+| `customer.subscription.created` | Stripe creates subscription | Sync details to Convex                      |
+| `customer.subscription.updated` | Tier/seats change           | Update subscription in Convex               |
+| `subscription_schedule.created` | Downgrade scheduled         | Store pending downgrade                     |
+| `invoice.payment_succeeded`     | Payment succeeds            | Record in billing history, end grace period |
+| `invoice.payment_failed`        | Payment fails               | Start grace period, send email              |
+| `customer.subscription.deleted` | Subscription cancelled      | Set read-only mode                          |
+| `customer.updated`              | Billing email changed       | Update in Convex                            |
 
 ### Webhook Handler Pattern
 
@@ -511,11 +526,7 @@ export async function action({ request }: Route.ActionArgs) {
   const body = await request.text();
 
   // 1. Verify signature (security)
-  const event = stripe.webhooks.constructEvent(
-    body,
-    sig,
-    process.env.STRIPE_WEBHOOK_SECRET
-  );
+  const event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
 
   // 2. Handle event type
   switch (event.type) {
@@ -547,6 +558,7 @@ export async function action({ request }: Route.ActionArgs) {
 ### Webhook Security
 
 **Always verify signatures:**
+
 ```typescript
 try {
   const event = stripe.webhooks.constructEvent(body, sig, secret);
@@ -655,6 +667,7 @@ Seat count updated: "8 / 8 seats"
 **Scenario:** Payment failed, grace period active, user upgrades to higher tier
 
 **Handling:**
+
 - Upgrade proceeds normally
 - New subscription replaces old (Stripe handles)
 - Grace period cleared (no longer needed)
@@ -665,6 +678,7 @@ Seat count updated: "8 / 8 seats"
 **Scenario:** Pro with 30 users, downgrades to Starter (5 included, 19 max)
 
 **Handling:**
+
 - Downgrade allowed (always)
 - After effective date: Banner shows "25 users over limit"
 - Owner can:
@@ -678,6 +692,7 @@ Seat count updated: "8 / 8 seats"
 **Scenario:** Payment fails, retries also fail, grace period active, another billing cycle starts
 
 **Handling:**
+
 - Grace period countdown continues (doesn't reset)
 - Multiple unpaid invoices accumulate in Stripe
 - After 28 days: Lock account
@@ -689,6 +704,7 @@ Seat count updated: "8 / 8 seats"
 **Scenario:** Owner transfers ownership but then leaves company
 
 **Handling:**
+
 - Ownership transfer happens first (old owner → admin, new user → owner)
 - Then owner can deactivate their own account
 - New owner receives confirmation email
@@ -700,6 +716,7 @@ Seat count updated: "8 / 8 seats"
 **Scenario:** Owner cancels subscription, later decides to reactivate
 
 **Handling:**
+
 - Cancellation scheduled at period end
 - User has until end of period to "undo" (Stripe supports this)
 - If period ends: accessStatus = 'read_only'
@@ -713,6 +730,7 @@ Seat count updated: "8 / 8 seats"
 **Scenario:** Starter annual (£500), 6 months in, upgrades to Pro annual (£2,500)
 
 **Handling:**
+
 - Stripe calculates:
   - Unused credit: £250 (6 months of £500)
   - New pro-rated charge: £1,250 (6 months of £2,500)
@@ -725,6 +743,7 @@ Seat count updated: "8 / 8 seats"
 **Scenario:** Admin A adds 5 seats, Admin B adds 3 seats at same time
 
 **Handling:**
+
 - Both API calls succeed (Stripe handles concurrency)
 - Two separate invoice line items
 - Two webhooks fire (processed sequentially)

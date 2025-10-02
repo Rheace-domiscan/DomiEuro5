@@ -95,25 +95,30 @@ The Customer Portal lets users manage their subscriptions, payment methods, and 
 Enable these features:
 
 #### **Invoice history**
+
 - ✅ Enable
 - Allows customers to view past invoices
 
 #### **Update payment method**
+
 - ✅ Enable
 - Allows customers to update their card
 
 #### **Customer information**
+
 - ✅ Enable
 - Allowed updates: `Billing address`
 - Allows customers to update billing address
 
 #### **Subscription cancel**
+
 - ✅ Enable
 - **Cancellation behavior:** `At the end of the billing period`
 - **Cancellation reasons:** ✅ Enable
 - Prevents immediate loss of access
 
 #### **Subscription update**
+
 - ✅ Enable
 - **Update behavior:** `Schedule downgrades at period end`
   - This is CRITICAL - ensures downgrades don't happen immediately
@@ -125,6 +130,7 @@ Enable these features:
   - ✅ Professional Plan - Annual
 
 #### **Subscription pause** (Optional)
+
 - ❌ Disable (not needed for this use case)
 
 ### 2.2 Customize Branding (Optional)
@@ -225,12 +231,12 @@ STRIPE_PRICE_ADDITIONAL_SEAT=price_...
 
 ### 5.2 Stripe Test Cards
 
-| Scenario | Card Number | Expected Behavior |
-|----------|-------------|-------------------|
-| Successful payment | `4242 4242 4242 4242` | Payment succeeds |
-| Payment declined | `4000 0000 0000 0002` | Card declined |
+| Scenario           | Card Number           | Expected Behavior        |
+| ------------------ | --------------------- | ------------------------ |
+| Successful payment | `4242 4242 4242 4242` | Payment succeeds         |
+| Payment declined   | `4000 0000 0000 0002` | Card declined            |
 | Insufficient funds | `4000 0000 0000 9995` | Insufficient funds error |
-| 3D Secure required | `4000 0027 6000 3184` | Triggers authentication |
+| 3D Secure required | `4000 0027 6000 3184` | Triggers authentication  |
 
 ### 5.3 Trigger Webhook Events Manually
 
@@ -261,6 +267,7 @@ When ready for production:
    - Copy **Publishable key** (starts with `pk_live_`)
 
 2. **Update `.env`:**
+
    ```env
    STRIPE_SECRET_KEY=sk_live_...  # Replace test key
    VITE_STRIPE_PUBLISHABLE_KEY=pk_live_...  # Replace test key
@@ -294,6 +301,7 @@ When ready for production:
 **Problem:** No webhook events showing in logs
 
 **Solutions:**
+
 1. Check Stripe CLI is running: `stripe listen --forward-to localhost:5173/webhooks/stripe`
 2. Verify endpoint URL matches: `http://localhost:5173/webhooks/stripe`
 3. Check webhook signature verification in code
@@ -304,6 +312,7 @@ When ready for production:
 **Problem:** `Invalid API key provided` error
 
 **Solutions:**
+
 1. Verify `STRIPE_SECRET_KEY` in `.env` starts with `sk_test_` (test) or `sk_live_` (live)
 2. Check no extra spaces in `.env` value
 3. Restart dev server after changing `.env`
@@ -313,6 +322,7 @@ When ready for production:
 **Problem:** User redirected to portal but sees "No active subscription"
 
 **Solutions:**
+
 1. Verify subscription created in Stripe Dashboard → Customers
 2. Check `stripeCustomerId` stored correctly in Convex
 3. Ensure customer has at least one active subscription
@@ -322,6 +332,7 @@ When ready for production:
 **Problem:** Checkout succeeds but webhook doesn't fire
 
 **Solutions:**
+
 1. Check Stripe CLI is running (`stripe listen`)
 2. Verify webhook endpoint route exists: `app/routes/webhooks/stripe.tsx`
 3. Check webhook signature verification passes
@@ -332,6 +343,7 @@ When ready for production:
 **Problem:** Adding seats charges full amount instead of prorated
 
 **Solutions:**
+
 1. Verify `proration_behavior: 'create_prorations'` set in portal config
 2. Check subscription is set to prorate in Stripe
 3. Use Stripe's invoice preview API to verify prorated amount
@@ -341,6 +353,7 @@ When ready for production:
 ## Security Best Practices
 
 ### ✅ Do's:
+
 - ✅ Always verify webhook signatures with `STRIPE_WEBHOOK_SECRET`
 - ✅ Use environment variables for all secrets (never hardcode)
 - ✅ Keep test and live keys separate
@@ -349,6 +362,7 @@ When ready for production:
 - ✅ Set up fraud detection rules in Stripe Radar
 
 ### ❌ Don'ts:
+
 - ❌ Never commit API keys to Git
 - ❌ Never use live keys in development
 - ❌ Never skip webhook signature verification
@@ -360,6 +374,7 @@ When ready for production:
 ## Quick Reference
 
 ### Stripe Dashboard Links
+
 - **Products:** https://dashboard.stripe.com/products
 - **Customers:** https://dashboard.stripe.com/customers
 - **Subscriptions:** https://dashboard.stripe.com/subscriptions
@@ -369,6 +384,7 @@ When ready for production:
 - **Logs:** https://dashboard.stripe.com/logs
 
 ### Stripe CLI Commands
+
 ```bash
 # Login
 stripe login
@@ -390,6 +406,7 @@ stripe subscriptions list
 ```
 
 ### Test Mode Indicators
+
 - Test API keys start with: `sk_test_`, `pk_test_`
 - Test webhook secrets start with: `whsec_test_`
 - Test mode toggle: Top right of Stripe Dashboard (orange = test)

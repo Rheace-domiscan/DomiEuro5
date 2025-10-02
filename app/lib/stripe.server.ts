@@ -9,7 +9,7 @@
  */
 
 import Stripe from 'stripe';
-import { TIER_CONFIG, calculateSubscriptionCost } from '~/lib/billing-constants';
+import { TIER_CONFIG } from '~/lib/billing-constants';
 import type { SubscriptionTier } from '~/types/billing';
 
 /**
@@ -47,7 +47,12 @@ validateStripeConfig();
  *
  * Uses the latest Stripe API version and Node.js SDK
  */
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY is required');
+}
+
+export const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-09-30.clover',
   typescript: true,
 });
@@ -244,10 +249,7 @@ export async function createBillingPortalSession(
  * @returns Verified Stripe event object
  * @throws Error if signature is invalid
  */
-export function verifyWebhookSignature(
-  payload: string | Buffer,
-  signature: string
-): Stripe.Event {
+export function verifyWebhookSignature(payload: string | Buffer, signature: string): Stripe.Event {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {

@@ -32,7 +32,6 @@ export async function action({ request }: ActionFunctionArgs) {
     const signature = request.headers.get('stripe-signature');
 
     if (!signature) {
-      console.error('[Stripe Webhook] Missing stripe-signature header');
       return new Response('Missing signature', { status: 400 });
     }
 
@@ -42,11 +41,8 @@ export async function action({ request }: ActionFunctionArgs) {
       event = verifyWebhookSignature(payload, signature);
     } catch (err) {
       const error = err as Error;
-      console.error('[Stripe Webhook] Signature verification failed:', error.message);
       return new Response(`Webhook Error: ${error.message}`, { status: 400 });
     }
-
-    console.log(`[Stripe Webhook] Processing event: ${event.type} (${event.id})`);
 
     // Route to appropriate handler
     switch (event.type) {
@@ -79,15 +75,15 @@ export async function action({ request }: ActionFunctionArgs) {
         break;
 
       default:
-        console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+        // Unhandled event type - no action needed
+        break;
     }
 
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    console.error('[Stripe Webhook] Error processing webhook:', error);
+  } catch (_error) {
     return new Response('Webhook handler failed', { status: 500 });
   }
 }
@@ -108,29 +104,21 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
   const { organizationId, tier, seats } = session.metadata || {};
 
   if (!organizationId || !tier || !seats) {
-    console.error('[Checkout Completed] Missing required metadata:', session.metadata);
     return;
   }
 
   // Get subscription details
   const subscriptionId = session.subscription as string;
   if (!subscriptionId) {
-    console.error('[Checkout Completed] No subscription ID in session');
     return;
   }
 
-  console.log(
-    `[Checkout Completed] Creating subscription for org ${organizationId}, tier ${tier}`
-  );
-
   // Check if subscription already exists
-  const existing = await convexServer.query(
-    'subscriptions:getByStripeSubscriptionId' as any,
-    { stripeSubscriptionId: subscriptionId }
-  );
+  const existing = await convexServer.query('subscriptions:getByStripeSubscriptionId' as any, {
+    stripeSubscriptionId: subscriptionId,
+  });
 
   if (existing) {
-    console.log('[Checkout Completed] Subscription already exists, skipping');
     return;
   }
 
@@ -174,18 +162,15 @@ async function handleSubscriptionCreated(event: Stripe.Event) {
   const { organizationId, tier } = subscription.metadata || {};
 
   if (!organizationId) {
-    console.error('[Subscription Created] Missing organizationId in metadata');
     return;
   }
 
   // Check if already exists
-  const existing = await convexServer.query(
-    'subscriptions:getByStripeSubscriptionId' as any,
-    { stripeSubscriptionId: subscription.id }
-  );
+  const existing = await convexServer.query('subscriptions:getByStripeSubscriptionId' as any, {
+    stripeSubscriptionId: subscription.id,
+  });
 
   if (existing) {
-    console.log('[Subscription Created] Already exists, updating instead');
     await updateSubscriptionFromStripe(subscription, existing._id);
     return;
   }
@@ -225,13 +210,11 @@ async function handleSubscriptionCreated(event: Stripe.Event) {
 async function handleSubscriptionUpdated(event: Stripe.Event) {
   const subscription = event.data.object as Stripe.Subscription;
 
-  const existing = await convexServer.query(
-    'subscriptions:getByStripeSubscriptionId' as any,
-    { stripeSubscriptionId: subscription.id }
-  );
+  const existing = await convexServer.query('subscriptions:getByStripeSubscriptionId' as any, {
+    stripeSubscriptionId: subscription.id,
+  });
 
   if (!existing) {
-    console.error('[Subscription Updated] Subscription not found in database');
     return;
   }
 
@@ -260,13 +243,11 @@ async function handleSubscriptionScheduleCreated(event: Stripe.Event) {
     return;
   }
 
-  const existing = await convexServer.query(
-    'subscriptions:getByStripeSubscriptionId' as any,
-    { stripeSubscriptionId: subscriptionId }
-  );
+  const existing = await convexServer.query('subscriptions:getByStripeSubscriptionId' as any, {
+    stripeSubscriptionId: subscriptionId,
+  });
 
   if (!existing) {
-    console.error('[Schedule Created] Subscription not found');
     return;
   }
 
@@ -303,13 +284,11 @@ async function handleInvoicePaymentSucceeded(event: Stripe.Event) {
     return;
   }
 
-  const existing = await convexServer.query(
-    'subscriptions:getByStripeSubscriptionId' as any,
-    { stripeSubscriptionId: subscriptionId }
-  );
+  const existing = await convexServer.query('subscriptions:getByStripeSubscriptionId' as any, {
+    stripeSubscriptionId: subscriptionId,
+  });
 
   if (!existing) {
-    console.error('[Payment Succeeded] Subscription not found');
     return;
   }
 
@@ -348,13 +327,11 @@ async function handleInvoicePaymentFailed(event: Stripe.Event) {
     return;
   }
 
-  const existing = await convexServer.query(
-    'subscriptions:getByStripeSubscriptionId' as any,
-    { stripeSubscriptionId: subscriptionId }
-  );
+  const existing = await convexServer.query('subscriptions:getByStripeSubscriptionId' as any, {
+    stripeSubscriptionId: subscriptionId,
+  });
 
   if (!existing) {
-    console.error('[Payment Failed] Subscription not found');
     return;
   }
 
@@ -386,13 +363,11 @@ async function handleInvoicePaymentFailed(event: Stripe.Event) {
 async function handleSubscriptionDeleted(event: Stripe.Event) {
   const subscription = event.data.object as Stripe.Subscription;
 
-  const existing = await convexServer.query(
-    'subscriptions:getByStripeSubscriptionId' as any,
-    { stripeSubscriptionId: subscription.id }
-  );
+  const existing = await convexServer.query('subscriptions:getByStripeSubscriptionId' as any, {
+    stripeSubscriptionId: subscription.id,
+  });
 
   if (!existing) {
-    console.error('[Subscription Deleted] Subscription not found');
     return;
   }
 

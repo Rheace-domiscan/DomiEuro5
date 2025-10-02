@@ -34,6 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a React Router v7 application with WorkOS authentication and Convex database integration.
 
 ### Tech Stack
+
 - **Frontend**: React Router v7, React 19, TailwindCSS v4
 - **Authentication**: WorkOS (SSO, organization management, AuthKit, RBAC)
 - **Billing**: Stripe (subscriptions, customer portal, webhooks) - optional feature
@@ -44,6 +45,7 @@ This is a React Router v7 application with WorkOS authentication and Convex data
 - **Language**: TypeScript (strict mode)
 
 ### Key Directories
+
 - `app/` - React Router application code
   - `routes/` - File-based routing with auth routes, dashboard, etc.
   - `lib/` - Server-side utilities (auth, sessions, WorkOS integration)
@@ -57,6 +59,7 @@ This is a React Router v7 application with WorkOS authentication and Convex data
   - `examples/` - Example tests for reference
 
 ### Authentication Flow
+
 The app uses WorkOS for authentication with organization support:
 
 1. **Login**: Users authenticate via WorkOS AuthKit
@@ -66,6 +69,7 @@ The app uses WorkOS for authentication with organization support:
 5. **Role Sync**: User roles are synced from WorkOS to Convex on every login
 
 **Key Auth Files:**
+
 - `app/lib/auth.server.ts` - Main authentication logic and WorkOS integration
 - `app/lib/session.server.ts` - Session management
 - `app/lib/workos.server.ts` - WorkOS client configuration
@@ -74,7 +78,9 @@ The app uses WorkOS for authentication with organization support:
 ### Database Schema (Convex)
 
 #### Users Table
+
 Required fields:
+
 - `email`, `name`, `workosUserId`, `organizationId` (all required)
 - `createdAt`, `updatedAt`, `isActive`
 - `role` (optional) - RBAC role from WorkOS ('owner', 'admin', 'manager', 'sales', 'member')
@@ -82,6 +88,7 @@ Required fields:
 Indexes: email, workosUserId, organizationId, createdAt
 
 #### Subscriptions Table (for billing)
+
 - `organizationId`, `stripeCustomerId`, `stripeSubscriptionId`
 - `tier` ('free', 'starter', 'professional')
 - `status` ('active', 'canceled', 'past_due', 'trialing', 'paused')
@@ -91,10 +98,12 @@ Indexes: email, workosUserId, organizationId, createdAt
 - Conversion tracking (upgradedFrom, upgradedAt, upgradeTriggerFeature)
 
 #### Other Tables
+
 - `billingHistory` - Payment events and subscription changes
 - `auditLog` - User actions and system events
 
 **Key Database Files:**
+
 - `convex/schema.ts` - Database schema definition
 - `convex/users.ts` - User CRUD operations
 - `convex/subscriptions.ts` - Subscription management
@@ -102,20 +111,24 @@ Indexes: email, workosUserId, organizationId, createdAt
 - `lib/ConvexProvider.tsx` - Convex React provider
 
 ### Environment Variables
+
 Required environment variables (see `.env.example`):
+
 - `WORKOS_API_KEY` - WorkOS API key (required for auth)
 - `WORKOS_CLIENT_ID` - WorkOS client ID (required for auth)
 - `WORKOS_REDIRECT_URI` - OAuth redirect URI (e.g., http://localhost:5173/auth/callback)
 - `SESSION_SECRET` - Session encryption secret (required)
 - `CONVEX_URL` - Convex deployment URL for server-side operations
-- `VITE_CONVEX_URL` - Same Convex URL for client-side operations (must start with VITE_)
+- `VITE_CONVEX_URL` - Same Convex URL for client-side operations (must start with VITE\_)
 
 **Setup Order:**
+
 1. Run `npx convex dev` to get CONVEX_URL and VITE_CONVEX_URL
 2. Sign up for WorkOS and configure API keys (see WORKOS_SETUP.md)
 3. Generate SESSION_SECRET: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 ### TypeScript Configuration
+
 - Uses strict TypeScript with React Router type generation
 - Path alias: `~/*` maps to `./app/*`
 - Includes Convex types and Vite client types
@@ -123,6 +136,7 @@ Required environment variables (see `.env.example`):
 - No non-null assertions (`!`) - use runtime validation instead
 
 ### Code Quality
+
 - ESLint with TypeScript, React, and accessibility rules
 - Prettier for code formatting
 - Unused variables prefixed with `_` are ignored by linting
@@ -131,6 +145,7 @@ Required environment variables (see `.env.example`):
 ## Key Features & Implementation Notes
 
 ### Multi-Tenant Architecture
+
 - Each user must belong to an organization (organizationId is required)
 - WorkOS handles organization creation and member management
 - Organizations are isolated in the Convex database via organizationId field
@@ -138,6 +153,7 @@ Required environment variables (see `.env.example`):
 - **CRITICAL**: All queries must filter by organizationId to prevent data leaks
 
 ### Role-Based Access Control (RBAC)
+
 The app implements 5 user roles with hierarchical permissions:
 
 1. **Owner** - Full access including billing and ownership transfer
@@ -147,30 +163,36 @@ The app implements 5 user roles with hierarchical permissions:
 5. **Team Member** (slug: 'member') - Basic product access
 
 **Permission System** (`app/lib/permissions.ts`):
+
 - `hasPermission(role, permission)` - Check specific permission
 - `hasRole(role, allowedRoles)` - Check if role is in allowed list
 - `hasTierAccess(currentTier, requiredTier)` - Check subscription tier access
 
 **Authentication Middleware** (`app/lib/auth.server.ts`):
+
 - `requireUser(request)` - Require authenticated user
 - `requireRole(request, allowedRoles)` - Require specific role(s)
 - `requireTier(request, requiredTier)` - Require subscription tier
 - `syncUserRoleFromWorkOS(workosUserId)` - Sync role from WorkOS to Convex
 
 **Role Management**:
+
 - Roles are configured in WorkOS Dashboard
 - Roles are synced to Convex on every login
 - Default role is 'member' for new users
 - Organization creator is automatically assigned 'owner' role
 
 ### Convex Database Access Patterns
+
 - **Server-side**: Use `convexServer` from `lib/convex.server.ts` in loaders/actions
 - **Client-side**: Use hooks from `lib/useConvex.ts` in React components
 - **Type Safety**: Auto-generated types in `convex/_generated/` provide full type safety
 - **Real-time**: Client-side queries automatically update when data changes
 
 ### Authentication Implementation
+
 The authentication flow is split across multiple routes:
+
 1. `/auth/login` - Initiates WorkOS AuthKit flow
 2. `/auth/callback` - Handles OAuth callback, creates/updates user in Convex
 3. `/auth/organization-selection` - Allows users to select/create organizations
@@ -179,21 +201,26 @@ The authentication flow is split across multiple routes:
 **Protected Routes**: Use `requireUser(request)` in loaders to enforce authentication
 
 ### Testing Strategy
+
 The codebase has comprehensive test coverage (205 tests passing):
 
 **Unit Tests** (`test/unit/`):
+
 - `permissions.test.ts` - 114 tests for RBAC system (100% coverage)
 - `auth.server.test.ts` - 48 tests for authentication (100% coverage)
 
 **Integration Tests** (`test/integration/`):
+
 - `multi-tenancy.test.ts` - 12 CRITICAL tests verifying organization isolation
 
 **Mocks** (`test/mocks/`):
+
 - `workos.ts` - Complete WorkOS SDK mock with auth and org management
 - `convex.ts` - Convex client mock with in-memory database
 - `stripe.ts` - Stripe SDK mock for billing tests
 
 **Test Patterns**:
+
 - AAA pattern: Arrange, Act, Assert
 - Use `describe()` to group related tests
 - Use `it.each()` for testing multiple scenarios
@@ -202,18 +229,22 @@ The codebase has comprehensive test coverage (205 tests passing):
 - See `test/examples/` for reference implementations
 
 **Coverage Requirements**:
+
 - Security-critical code (auth, permissions): 100% coverage
 - Standard business logic: 80% coverage minimum
 - Routes are tested via integration tests (not unit tests)
 
 ### Billing System (Optional Feature)
+
 This template includes comprehensive Stripe billing documentation:
+
 - See `BILLING_ROADMAP.md` for ~100 implementation tasks
 - See `BILLING_GUIDE.md` for architecture overview
 - See `STRIPE_SETUP.md` and `WORKOS_RBAC_SETUP.md` for configuration
 - The billing system is NOT implemented by default - documentation only
 
 **Billing Features** (when implemented):
+
 - 3 pricing tiers: Free (1 seat), Starter (£50/mo, 5-19 seats), Professional (£250/mo, 20-40 seats)
 - Seat-based pricing: £10/seat/month for additional seats
 - Annual billing: 10x monthly price (2 months free)
@@ -224,6 +255,7 @@ This template includes comprehensive Stripe billing documentation:
 ## Development Philosophy
 
 ### Security First
+
 - Never use `any` types - use proper typing
 - Never use non-null assertions - use runtime validation
 - All authentication must check organizationId (multi-tenancy)
@@ -231,12 +263,14 @@ This template includes comprehensive Stripe billing documentation:
 - Environment variables must be validated at runtime
 
 ### Type Safety
+
 - Leverage TypeScript's type inference
 - Use auto-generated Convex types from `convex/_generated/`
 - Import types from official SDKs (WorkOS, Stripe)
 - Use React Router's `Session` type for session management
 
 ### Testing Requirements
+
 - Write tests for all new business logic
 - Achieve 80%+ coverage for standard code, 100% for security-critical code
 - Mock external dependencies (WorkOS, Convex, Stripe)
@@ -244,12 +278,14 @@ This template includes comprehensive Stripe billing documentation:
 - Use `test/examples/` as reference for writing tests
 
 ### Error Handling
+
 - Provide helpful error messages for development
 - Mask sensitive errors in production
 - Log errors with context (but not sensitive data)
 - Validate environment variables at startup
 
 ## Documentation Structure
+
 - `README.md` - Getting started and overview
 - `CLAUDE.md` - This file (AI development guidance)
 - `WORKOS_SETUP.md` - WorkOS authentication configuration

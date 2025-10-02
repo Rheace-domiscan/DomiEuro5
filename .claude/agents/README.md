@@ -5,17 +5,20 @@ This directory contains enhanced AI agent prompts for implementing the billing s
 ## Available Agents
 
 ### 1. Implementation Agent
+
 **File:** `billing-implementation.md`
 
 **Purpose:** Implements a single phase of the billing roadmap with full automation, manual task identification, testing, and documentation updates.
 
 **Usage:**
+
 ```
 implement phase 1 of billing roadmap
 implement phase 5
 ```
 
 **What it does:**
+
 - ✅ Reads phase specification from BILLING_ROADMAP.md
 - ✅ Checks prerequisites and dependencies
 - ✅ Separates manual vs automated tasks
@@ -27,17 +30,20 @@ implement phase 5
 - ✅ Provides comprehensive summary
 
 ### 2. Verification Agent
+
 **File:** `billing-verification.md`
 
 **Purpose:** Verifies a phase is completely and correctly implemented before allowing progression to the next phase.
 
 **Usage:**
+
 ```
 verify phase 1 of billing roadmap
 verify phase 5
 ```
 
 **What it does:**
+
 - ✅ Checks all files exist and are correct
 - ✅ Runs TypeScript compilation
 - ✅ Runs linting checks
@@ -55,11 +61,13 @@ verify phase 5
 ### Standard Phase Implementation Flow
 
 **Step 1: Implement**
+
 ```
 Claude, implement phase 1 of billing roadmap
 ```
 
 The agent will:
+
 1. Check prerequisites
 2. Implement automated tasks
 3. Pause for manual tasks
@@ -68,11 +76,13 @@ The agent will:
 **Step 2: Complete Manual Tasks**
 
 Follow agent's instructions for:
+
 - Stripe Dashboard configuration
 - WorkOS Dashboard setup
 - Environment variable addition
 
 Then say:
+
 ```
 manual tasks complete
 ```
@@ -80,23 +90,27 @@ manual tasks complete
 **Step 3: Agent Completes Phase**
 
 Agent will:
+
 - Run tests
 - Update documentation
 - Create commit
 - Provide summary
 
 **Step 4: Verify**
+
 ```
 Claude, verify phase 1 of billing roadmap
 ```
 
 The agent will run comprehensive checks and either:
+
 - ✅ **PASS** - Safe to proceed to next phase
 - ❌ **FAIL** - Fix issues and re-verify
 
 **Step 5: Fix Issues (if verification failed)**
 
 Address each failed check, then:
+
 ```
 verify phase 1 of billing roadmap
 ```
@@ -104,6 +118,7 @@ verify phase 1 of billing roadmap
 **Step 6: Proceed to Next Phase**
 
 Once verification passes:
+
 ```
 implement phase 2 of billing roadmap
 ```
@@ -113,18 +128,21 @@ Repeat for all 17 phases.
 ## Enhanced Features
 
 ### Prerequisite Checking
+
 - Verifies previous phases complete
 - Checks dependencies installed
 - Ensures Convex connected
 - Validates environment setup
 
 ### Manual Task Handling
+
 - Identifies Stripe Dashboard tasks
 - Identifies WorkOS Dashboard tasks
 - Provides step-by-step instructions
 - Pauses until user confirms completion
 
 ### Comprehensive Testing
+
 - TypeScript compilation
 - ESLint checks
 - Convex deployment verification
@@ -132,12 +150,14 @@ Repeat for all 17 phases.
 - Stripe CLI webhook testing (where applicable)
 
 ### Documentation Updates
+
 - Automatically updates .env.example
 - Updates README.md when needed
 - Updates TEMPLATE_USAGE.md
 - Keeps package.json synchronized
 
 ### Quality Gates
+
 - Zero TypeScript errors required
 - Linting must pass
 - All tests must succeed
@@ -145,6 +165,7 @@ Repeat for all 17 phases.
 - No regressions allowed
 
 ### Audit Trail
+
 - Creates verification reports in `.claude/verification-reports/`
 - Git commits after each phase
 - Detailed pass/fail reporting
@@ -154,25 +175,25 @@ Repeat for all 17 phases.
 
 Some phases depend on previous phases:
 
-| Phase | Depends On | Why |
-|-------|------------|-----|
-| 1 | None | Foundation |
-| 2 | None | Stripe setup (manual) |
-| 3 | None | WorkOS setup (manual) |
-| 4 | 3 | Needs WorkOS roles |
-| 5 | 1, 2, 4 | Needs schema, Stripe products, permissions |
-| 6 | 5 | Needs checkout session creation |
-| 7 | 5, 6 | Needs Stripe integration |
-| 8 | 4, 7 | Needs permissions and billing |
-| 9 | 4, 6 | Needs permissions and pricing |
-| 10 | 5 | Needs webhooks |
-| 11 | 10 | Needs grace period logic |
-| 12 | 4, 8 | Needs permissions and team management |
-| 13 | 5 | Needs Stripe integration |
-| 14 | None | Independent |
-| 15 | 5, 9 | Needs subscriptions and feature gates |
-| 16 | 2, 5 | Needs Stripe CLI and webhooks |
-| 17 | All | Documentation phase |
+| Phase | Depends On | Why                                        |
+| ----- | ---------- | ------------------------------------------ |
+| 1     | None       | Foundation                                 |
+| 2     | None       | Stripe setup (manual)                      |
+| 3     | None       | WorkOS setup (manual)                      |
+| 4     | 3          | Needs WorkOS roles                         |
+| 5     | 1, 2, 4    | Needs schema, Stripe products, permissions |
+| 6     | 5          | Needs checkout session creation            |
+| 7     | 5, 6       | Needs Stripe integration                   |
+| 8     | 4, 7       | Needs permissions and billing              |
+| 9     | 4, 6       | Needs permissions and pricing              |
+| 10    | 5          | Needs webhooks                             |
+| 11    | 10         | Needs grace period logic                   |
+| 12    | 4, 8       | Needs permissions and team management      |
+| 13    | 5          | Needs Stripe integration                   |
+| 14    | None       | Independent                                |
+| 15    | 5, 9       | Needs subscriptions and feature gates      |
+| 16    | 2, 5       | Needs Stripe CLI and webhooks              |
+| 17    | All        | Documentation phase                        |
 
 Agents automatically check dependencies before starting.
 
@@ -282,25 +303,33 @@ Phase 2 ready for verification.
 ## Troubleshooting
 
 ### Agent says "Prerequisites failed"
+
 **Fix:** Complete the blocking prerequisite phase first.
 
 ### Agent says "Manual tasks incomplete"
+
 **Fix:** Follow the agent's step-by-step instructions, then say "manual tasks complete".
 
 ### Verification fails with TypeScript errors
+
 **Fix:** Address each error listed, then re-run verification.
 
 ### Verification fails with missing files
+
 **Fix:** Re-run implementation agent for that phase.
 
 ### Agent blocked on Convex deployment
+
 **Fix:**
+
 1. Check `npx convex dev` is running
 2. Check `.env` has CONVEX_URL
 3. Run `npx convex deploy` manually
 
 ### Agent blocked on Stripe CLI
+
 **Fix:**
+
 1. Install Stripe CLI: `brew install stripe/stripe-cli/stripe`
 2. Login: `stripe login`
 3. Re-run phase
@@ -318,16 +347,19 @@ Phase 2 ready for verification.
 ## Files Generated
 
 ### During Implementation
+
 - Code files (as specified in roadmap)
 - Git commits (one per phase)
 - Documentation updates
 
 ### During Verification
+
 - `.claude/verification-reports/phase-[X]-[date].md` - Audit trail
 
 ## Reference Documentation
 
 Agents automatically reference:
+
 - `BILLING_ROADMAP.md` - Phase specifications
 - `BILLING_GUIDE.md` - Architecture patterns
 - `STRIPE_SETUP.md` - Stripe configuration
@@ -339,6 +371,7 @@ You don't need to tell agents to check these - they do it automatically.
 ## Estimated Timeline
 
 With these agents:
+
 - **Phase 1-4:** ~1-2 days (foundation)
 - **Phase 5-9:** ~3-4 days (core billing)
 - **Phase 10-13:** ~2-3 days (advanced features)
@@ -349,6 +382,7 @@ With these agents:
 ## Support
 
 If agents get stuck or confused:
+
 1. Check the agent's error message
 2. Reference BILLING_ROADMAP.md for context
 3. Fix the blocking issue
@@ -357,6 +391,7 @@ If agents get stuck or confused:
 ---
 
 **Ready to start?**
+
 ```
 implement phase 1 of billing roadmap
 ```

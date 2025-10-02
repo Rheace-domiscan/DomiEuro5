@@ -57,7 +57,7 @@ This release completes Phase 5 of the billing roadmap, implementing the complete
 - **Comprehensive Test Coverage** (30 tests passing)
   - **test/unit/stripe.server.test.ts** (28 tests)
     - Stripe client configuration and environment validation
-    - Test mode detection (sk_test_ vs sk_live_)
+    - Test mode detection (sk*test* vs sk*live*)
     - Price ID retrieval for all tiers
     - Customer creation with metadata
     - Checkout session creation (base seats + additional seats)
@@ -77,8 +77,8 @@ This release completes Phase 5 of the billing roadmap, implementing the complete
 
 - **convex/subscriptions.ts** - Expanded from placeholder (33 lines) to full CRUD (390 lines)
 - **package.json** / **package-lock.json** - Added `stripe@19.0.0` and `@stripe/stripe-js@8.0.0`
-- **test/unit/*.test.ts** - Fixed TypeScript errors and mock configuration issues
-- **convex/_generated/api.d.ts** - Auto-generated Convex API types updated
+- **test/unit/\*.test.ts** - Fixed TypeScript errors and mock configuration issues
+- **convex/\_generated/api.d.ts** - Auto-generated Convex API types updated
 
 ### Fixed
 
@@ -95,6 +95,7 @@ This release completes Phase 5 of the billing roadmap, implementing the complete
 ### Technical Details
 
 **Stripe Integration Architecture:**
+
 - **Security-first**: All webhooks verify signatures before processing (CSRF protection)
 - **Idempotency**: Stripe event IDs prevent duplicate processing
 - **Multi-tenancy**: All queries filter by organizationId (data isolation)
@@ -102,6 +103,7 @@ This release completes Phase 5 of the billing roadmap, implementing the complete
 - **Test coverage**: 28 unit tests + manual Stripe CLI verification
 
 **Grace Period Flow (28 Days):**
+
 ```
 Payment fails → invoice.payment_failed webhook
   ↓
@@ -114,6 +116,7 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
 ```
 
 **Subscription Lifecycle:**
+
 ```
 1. Checkout → checkout.session.completed → Create subscription
 2. Payment → invoice.payment_succeeded → Log payment, end grace if needed
@@ -123,6 +126,7 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
 ```
 
 ### Files Created
+
 - `app/lib/stripe.server.ts` (314 lines)
 - `app/routes/webhooks/stripe.tsx` (443 lines)
 - `convex/billingHistory.ts` (144 lines)
@@ -131,6 +135,7 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
 - `test/convex/subscriptions.test.ts` (placeholder, 52 lines)
 
 ### Files Modified
+
 - `convex/subscriptions.ts` - Expanded to 390 lines (from 33)
 - `test/examples/example-unit.test.ts` - Fixed type errors
 - `test/mocks/convex.ts` - Fixed duplicate methods and type issues
@@ -155,7 +160,9 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
 ### Environment Setup Required
 
 **Before Testing Phase 5:**
+
 1. Add Stripe test API keys to `.env`:
+
    ```env
    STRIPE_SECRET_KEY=sk_test_...
    VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
@@ -163,12 +170,14 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
    ```
 
 2. Install Stripe CLI for webhook testing:
+
    ```bash
    brew install stripe/stripe-cli/stripe
    stripe login
    ```
 
 3. Forward webhooks to local server:
+
    ```bash
    stripe listen --forward-to localhost:5173/webhooks/stripe
    ```
@@ -183,6 +192,7 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
 ### Manual Testing Checklist
 
 **Required Manual Tests (via Stripe CLI):**
+
 - [ ] `checkout.session.completed` → Subscription created in Convex
 - [ ] `invoice.payment_succeeded` → Payment logged, grace period ended
 - [ ] `invoice.payment_failed` → Grace period started (28 days)
@@ -194,12 +204,14 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
 ### Next Phase
 
 **Phase 6: Pricing Page** (Day 5, 4-5 hours)
+
 - Create public pricing page with 3-tier comparison
 - Implement monthly/annual toggle
 - Wire "Get Started" buttons to Stripe checkout sessions
 - Add responsive pricing cards with TailwindCSS
 
 **Phase 7: Billing Dashboard** (Day 5-6, 5-6 hours)
+
 - Protected billing management page (owner/admin only)
 - Current plan display and seat management
 - Billing history table
@@ -208,6 +220,7 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
 ### Why This Release Matters
 
 **Financial Transaction Safety:**
+
 - ✅ All webhook handlers verify Stripe signatures (prevents unauthorized requests)
 - ✅ Idempotency prevents duplicate charges from retried webhooks
 - ✅ Grace period gives customers 28 days to resolve payment issues
@@ -215,6 +228,7 @@ Option 2: 28 days pass → Cron job sets accessStatus: 'locked'
 - ✅ Comprehensive error handling prevents crashes during payment processing
 
 **Development Confidence:**
+
 - ✅ 28 unit tests verify Stripe API interactions work correctly
 - ✅ Manual testing guide ensures webhook handlers process events properly
 - ✅ TypeScript catches type errors at compile time
@@ -260,6 +274,7 @@ This release completes the final task of Phase 4.9 Part C by adding GitHub Actio
 ### Technical Details
 
 **CI/CD Workflow Configuration:**
+
 - **Trigger events**: Push to master/main/develop, all pull requests
 - **Node.js version**: 20.x (latest LTS)
 - **Package manager**: npm (with caching for faster builds)
@@ -267,6 +282,7 @@ This release completes the final task of Phase 4.9 Part C by adding GitHub Actio
 - **Free tier**: 2,000 minutes/month (GitHub Actions)
 
 **Quality Check Strategy:**
+
 ```yaml
 Type Check:  continue-on-error: true  (warns but doesn't block)
 Lint:        continue-on-error: true  (warns but doesn't block)
@@ -275,6 +291,7 @@ Coverage:    continue-on-error: true  (warns if below 80%)
 ```
 
 **Why This Design:**
+
 - Type errors won't block rapid iteration during Phase 5 implementation
 - Lint warnings can be addressed incrementally
 - Tests MUST pass to ensure security/financial code integrity
@@ -303,14 +320,17 @@ Coverage:    continue-on-error: true  (warns if below 80%)
 ```
 
 ### Files Created
+
 - `.github/workflows/test.yml` - CI/CD workflow configuration (66 lines)
 
 ### Files Modified
+
 - `BILLING_ROADMAP.md` - Marked Phase 4.9 Part C tasks as complete
 
 ### What This Means for Development
 
 **Before CI:**
+
 ```
 Developer workflow:
 1. Write code
@@ -320,6 +340,7 @@ Developer workflow:
 ```
 
 **After CI:**
+
 ```
 Developer workflow:
 1. Write code
@@ -334,6 +355,7 @@ Developer workflow:
 **Ready for Phase 5: Stripe Integration - Backend**
 
 With Phase 4.9 100% complete, we now have:
+
 1. ✅ Testing infrastructure (Vitest, mocks, helpers)
 2. ✅ Security verification (284 tests, 100% coverage on auth/permissions)
 3. ✅ Multi-tenancy proven (12 isolation tests)
@@ -341,6 +363,7 @@ With Phase 4.9 100% complete, we now have:
 5. ✅ Testing patterns established (examples, documentation)
 
 **Phase 5 tasks (8-10 hours):**
+
 - Create `app/lib/stripe.server.ts` - Stripe client
 - Implement 7 webhook handlers (checkout, subscriptions, payments)
 - Create `convex/subscriptions.ts` - Subscription CRUD
@@ -350,6 +373,7 @@ With Phase 4.9 100% complete, we now have:
 ### Why This Release Matters
 
 **CI/CD provides:**
+
 - 🛡️ **Safety net** - Can't accidentally push broken tests
 - 🔒 **Security** - Auth/permissions verified on every commit
 - 💰 **Financial integrity** - Payment code will be tested automatically in Phase 5
@@ -362,15 +386,15 @@ The template is now **production-ready** with enterprise-grade automated testing
 
 **Foundation Template Readiness: 100%** ✅
 
-| Component | Status | Coverage |
-|-----------|--------|----------|
-| Authentication | ✅ Complete | 100% |
-| Permissions (RBAC) | ✅ Complete | 100% |
-| Multi-tenancy | ✅ Complete | Verified |
-| Session Management | ✅ Complete | 92% |
-| Testing Infrastructure | ✅ Complete | - |
-| CI/CD Automation | ✅ Complete | - |
-| Documentation | ✅ Complete | - |
+| Component              | Status      | Coverage |
+| ---------------------- | ----------- | -------- |
+| Authentication         | ✅ Complete | 100%     |
+| Permissions (RBAC)     | ✅ Complete | 100%     |
+| Multi-tenancy          | ✅ Complete | Verified |
+| Session Management     | ✅ Complete | 92%      |
+| Testing Infrastructure | ✅ Complete | -        |
+| CI/CD Automation       | ✅ Complete | -        |
+| Documentation          | ✅ Complete | -        |
 
 **Billing Template Readiness: 25%** (Phase 1-4.9 complete, Phases 5-17 pending)
 
@@ -383,6 +407,7 @@ Ready to proceed with Stripe integration (Phase 5).
 This release completes Phase 4.9 Part B with comprehensive retroactive tests, bringing total test count to **284 tests** (up from 205) and overall coverage to **51.61%** (up from 34.2%). All missing Phase 4.9 tests have been implemented, and the roadmap has been updated with explicit testing guidance for Phase 5 and beyond.
 
 ### Test Suite Summary
+
 - ✅ **284 tests passing** (79 new tests added)
 - 🟢 **52 billing constants tests** (83.57% coverage) - CRITICAL for Phase 5 Stripe integration
 - 🟢 **26 session management tests** (92% coverage) - CRITICAL security verification
@@ -390,6 +415,7 @@ This release completes Phase 4.9 Part B with comprehensive retroactive tests, br
 - ⚡ **< 1 second** total test execution time
 
 ### Coverage Achievements
+
 - **Overall coverage**: 51.61% (up from 34.2%)
 - ✅ `app/lib/permissions.ts`: **100%** (114 tests)
 - ✅ `app/lib/auth.server.ts`: **100%** (48 tests)
@@ -457,6 +483,7 @@ This release completes Phase 4.9 Part B with comprehensive retroactive tests, br
 ### Technical Details
 
 **Coverage Improvements:**
+
 ```
 File                         | Before | After
 -----------------------------|--------|--------
@@ -466,16 +493,19 @@ Overall project coverage     | 34.2%  | 51.61%
 ```
 
 **Test Distribution:**
+
 - Unit tests: 240 tests (permissions 114 + auth 48 + billing 52 + session 26)
 - Integration tests: 12 tests (multi-tenancy)
 - Example tests: 32 tests (documentation)
 
 **Why Convex Functions Not Directly Tested:**
+
 - Convex functions require Convex runtime environment (not available in Vitest)
 - convex-test library has compatibility issues with React Router v7 and Vite
 - **Solution**: Integration tests (multi-tenancy.test.ts) use MockConvexDatabase to test Convex behavior comprehensively
 
 ### Verification Results
+
 ```
 ✅ 284 tests passing (up from 205)
 ✅ 100% coverage on auth.server.ts (security-critical)
@@ -487,11 +517,13 @@ Overall project coverage     | 34.2%  | 51.61%
 ```
 
 ### Files Created
+
 - `test/unit/billing-constants.test.ts` (52 tests, 400+ lines)
 - `test/unit/session.server.test.ts` (26 tests, 350+ lines)
 - `test/convex/users.test.ts` (placeholder with documentation)
 
 ### Files Modified
+
 - `BILLING_ROADMAP.md` - Updated with Phase 4.9 completion and Phase 5+ testing tasks
 - `CLAUDE.md` - Updated with testing documentation reference
 
@@ -499,12 +531,14 @@ Overall project coverage     | 34.2%  | 51.61%
 
 **Phase 5: Stripe Integration - Backend**
 With Phase 4.9 complete, we can now safely implement Stripe billing:
+
 1. ✅ All security-critical code tested (100% coverage)
 2. ✅ Billing constants validated (83.57% coverage)
 3. ✅ Pricing calculations verified for Stripe integration
 4. ✅ Testing patterns established for future phases
 
 **Testing Philosophy Going Forward:**
+
 - Financial operations (Stripe webhooks, payments): >85% coverage required
 - Security operations (access control, multi-tenancy): >85% coverage required
 - Standard features (UI, workflows): >80% coverage required
@@ -513,6 +547,7 @@ With Phase 4.9 complete, we can now safely implement Stripe billing:
 ### Why This Release Matters
 
 Phase 4.9 was implemented retroactively because Phases 1-4 were built without tests. This release:
+
 1. ✅ Validates all pricing calculations before handling real money
 2. ✅ Verifies session security before storing sensitive data
 3. ✅ Establishes testing patterns for all future billing phases
@@ -527,6 +562,7 @@ Phase 4.9 was implemented retroactively because Phases 1-4 were built without te
 This release completes Phase 4.9 Parts A & B, delivering comprehensive test coverage for all security-critical authentication, permissions, and multi-tenancy code. This milestone was required before proceeding to Phase 5 (Stripe billing with real financial transactions).
 
 ### Test Suite Summary
+
 - ✅ **205 tests passing** across 5 test files
 - 🟢 **114 RBAC permission tests** (100% coverage on permissions.ts)
 - 🟢 **48 authentication tests** (100% coverage on auth.server.ts)
@@ -535,6 +571,7 @@ This release completes Phase 4.9 Parts A & B, delivering comprehensive test cove
 - ⚡ **< 1 second** total test execution time
 
 ### Security Coverage Achievements
+
 - ✅ `app/lib/auth.server.ts`: **100% coverage** (authentication logic)
 - ✅ `app/lib/permissions.ts`: **100% coverage** (RBAC system)
 - ✅ Multi-tenancy data isolation: **Fully verified** (no data leaks between organizations)
@@ -604,6 +641,7 @@ This release completes Phase 4.9 Parts A & B, delivering comprehensive test cove
 ### Technical Details
 
 **Coverage Report:**
+
 ```
 File                  | Coverage
 ---------------------|----------
@@ -615,11 +653,13 @@ convex/subscriptions.ts  | 0% (not implemented yet)
 ```
 
 **Why Some 0% Coverage:**
+
 - `billing-constants.ts`: Static configuration, no logic to test
 - `convex/users.ts`: Tool limitation (convex-test incompatible with Vite)
 - Convex functions tested via integration tests instead
 
 **Test Execution Performance:**
+
 - Total duration: 799ms
 - Transform time: 365ms
 - Collection time: 638ms
@@ -627,6 +667,7 @@ convex/subscriptions.ts  | 0% (not implemented yet)
 - All tests run in parallel for maximum speed
 
 ### Verification Results
+
 ```
 ✅ 205 tests passing
 ✅ 100% coverage on security-critical code (auth, permissions)
@@ -638,6 +679,7 @@ convex/subscriptions.ts  | 0% (not implemented yet)
 ```
 
 ### Files Created
+
 - `test/unit/permissions.test.ts` (114 tests, 700+ lines)
 - `test/unit/auth.server.test.ts` (48 tests, 900+ lines)
 - `test/integration/multi-tenancy.test.ts` (12 tests, 600+ lines)
@@ -645,6 +687,7 @@ convex/subscriptions.ts  | 0% (not implemented yet)
 - `test/README.md` (Testing guide, 700+ lines)
 
 ### Files Modified
+
 - `test/mocks/convex.ts` - Added MockConvexDatabase class with createUser/createSubscription
 - `.gitignore` - Added `/.vitest/` and `/coverage/`
 - `package.json` - Added 5 test scripts
@@ -653,6 +696,7 @@ convex/subscriptions.ts  | 0% (not implemented yet)
 ### Next Steps
 
 **Phase 4.9 Part C (Remaining):**
+
 - Update CLAUDE.md with testing section
 - Update billing-implementation.md with test writing guidance
 - Update billing-verification.md with test verification steps
@@ -664,6 +708,7 @@ With 100% coverage on authentication and permissions, we can now safely implemen
 ### Why This Phase Was Critical
 
 Phases 1-4 were built without tests. Before handling real money in Phase 5:
+
 1. ✅ Verified authentication actually works
 2. ✅ Proved permissions cannot be bypassed
 3. ✅ Confirmed multi-tenancy prevents data leaks between organizations
@@ -678,6 +723,7 @@ Phases 1-4 were built without tests. Before handling real money in Phase 5:
 This release introduces comprehensive testing infrastructure with Vitest before proceeding to Phase 5 (Stripe billing implementation). This ensures all authentication, permissions, and multi-tenancy code is thoroughly tested before handling financial transactions.
 
 ### Added
+
 - **Testing Framework**
   - Vitest test runner with React Router v7 support
   - @vitest/ui for interactive test debugging
@@ -688,10 +734,10 @@ This release introduces comprehensive testing infrastructure with Vitest before 
 
 - **Test Configuration** (`vitest.config.ts`)
   - React Router v7 plugin integration
-  - TypeScript path alias support (~/* → app/*)
+  - TypeScript path alias support (~/_ → app/_)
   - Global test environment setup
   - Coverage thresholds (80% for standard code, 85%+ for security-critical)
-  - Automatic test file discovery (*.test.{ts,tsx})
+  - Automatic test file discovery (\*.test.{ts,tsx})
 
 - **Mock Utilities**
   - `test/mocks/workos.ts` - Complete WorkOS SDK mock
@@ -719,6 +765,7 @@ This release introduces comprehensive testing infrastructure with Vitest before 
   - Expected: 80-100 tests, >85% coverage on security code
 
 ### Changed
+
 - **BILLING_ROADMAP.md Structure**
   - Inserted Phase 4.9 between Phase 4 and Phase 5
   - Added comprehensive testing requirements before Stripe integration
@@ -731,6 +778,7 @@ This release introduces comprehensive testing infrastructure with Vitest before 
   - Total: 70 new packages for testing infrastructure
 
 ### Technical Details
+
 - **Phase 4.9 Status**: 🟡 IN PROGRESS (Part A: 6/15 tasks complete)
 - **Next Steps**:
   - Complete mock utilities (Stripe mock pending)
@@ -741,17 +789,20 @@ This release introduces comprehensive testing infrastructure with Vitest before 
 - **Why This Phase**: Phase 5 involves Stripe webhooks and financial transactions - cannot proceed without verifying auth/permissions work correctly
 
 ### Files Created
+
 - `vitest.config.ts` - Vitest configuration
 - `test/setup.ts` - Global test setup
 - `test/mocks/workos.ts` - WorkOS SDK mock (200+ lines)
 - `test/mocks/convex.ts` - Convex client mock (190+ lines)
 
 ### Files Modified
+
 - `BILLING_ROADMAP.md` - Added Phase 4.9 (280+ lines)
 - `package.json` - Added 8 testing dependencies
 - `package-lock.json` - Locked testing package versions
 
 ### Verification Results
+
 ```
 ✅ Vitest: Installed and configured
 ✅ Test environment: happy-dom configured
@@ -761,7 +812,9 @@ This release introduces comprehensive testing infrastructure with Vitest before 
 ```
 
 ### Why Phase 4.9 Exists
+
 **Critical Security Decision**: Phases 1-4 were implemented without tests. Before proceeding to Phase 5 (Stripe webhooks handling real money), we must:
+
 1. Verify authentication actually works
 2. Prove permissions cannot be bypassed
 3. Confirm multi-tenancy prevents data leaks
@@ -770,6 +823,7 @@ This release introduces comprehensive testing infrastructure with Vitest before 
 Retroactive testing takes longer than test-first development, but is essential for financial transaction safety.
 
 ### Next Phase
+
 Ready for **Phase 4.9 Part B**: Write 80-100 retroactive tests for existing code (permissions, auth, multi-tenancy)
 
 ## [1.2.0] - 2025-10-01
@@ -779,6 +833,7 @@ Ready for **Phase 4.9 Part B**: Write 80-100 retroactive tests for existing code
 This release completes Phase 4 of the billing roadmap, implementing role-based access control (RBAC) middleware and tier-based feature gating for the billing system.
 
 ### Added
+
 - **Permission System** (`app/lib/permissions.ts`)
   - Complete RBAC configuration with 5 user roles (owner, admin, manager, sales, member)
   - 3-tier subscription system (free, starter, professional)
@@ -798,6 +853,7 @@ This release completes Phase 4 of the billing roadmap, implementing role-based a
   - Role field added to users table schema
 
 ### Changed
+
 - **Role Synchronization**
   - Auth callback now syncs user roles from WorkOS on every login
   - Organization creation automatically assigns 'owner' role to creator
@@ -810,6 +866,7 @@ This release completes Phase 4 of the billing roadmap, implementing role-based a
   - Enhanced error logging for organization creation failures
 
 ### Fixed
+
 - **Critical Bugs**
   - Fixed missing `roleSlug` parameter in organization membership creation (causing silent failures)
   - Fixed role slug mismatch between code ('team_member') and WorkOS ('member')
@@ -817,6 +874,7 @@ This release completes Phase 4 of the billing roadmap, implementing role-based a
   - Fixed TypeScript errors in organization creation error handling
 
 ### Technical Details
+
 - **Phase 4 Status**: ✅ COMPLETE - All 8 tasks verified
 - **Dependencies**: Phase 3 (WorkOS RBAC Setup) prerequisite confirmed
 - **TypeScript**: 0 errors, all type checks passing
@@ -825,6 +883,7 @@ This release completes Phase 4 of the billing roadmap, implementing role-based a
 - **Manual Testing**: ✅ Login flow tested, role syncing confirmed
 
 ### Verification Results
+
 ```
 ✅ Files: 1 created, 3 modified
 ✅ TypeScript: 0 errors
@@ -835,27 +894,32 @@ This release completes Phase 4 of the billing roadmap, implementing role-based a
 ```
 
 ### Files Modified
+
 - `app/lib/permissions.ts` - Created permission system
 - `app/lib/auth.server.ts` - Added middleware and role sync
 - `convex/users.ts` - Added role queries/mutations
 - `convex/schema.ts` - Added role field to users table
 
 ### Next Phase
+
 Ready for **Phase 5: Stripe Integration - Backend** (webhook handling, checkout sessions, subscription management)
 
 ## [1.1.1] - 2025-10-01
 
 ### Added
+
 - **Dependencies**
   - Added `stripe@^19.0.0` - Stripe SDK for server-side billing integration
   - Added `@stripe/stripe-js@^8.0.0` - Stripe.js library for client-side payment flows
 
 ### Changed
+
 - Completed Phase 2 verification of billing roadmap (Stripe Products Setup)
 - All Stripe products and prices configured in Stripe Dashboard
 - Environment variables validated and configured for Stripe integration
 
 ### Technical Details
+
 - **Phase 2 Status**: ✅ VERIFIED - All 8 tasks complete
 - **Dependencies**: Ready for Phase 5+ implementation (Stripe backend integration)
 - **TypeScript**: 0 errors, all type checks passing
@@ -868,6 +932,7 @@ Ready for **Phase 5: Stripe Integration - Backend** (webhook handling, checkout 
 This release adds comprehensive Stripe billing documentation for implementing a multi-tier subscription system with seat-based pricing, role-based access control, and flexible subscription management.
 
 ### Added
+
 - **Billing System Documentation**
   - Created `BILLING_ROADMAP.md` - Step-by-step implementation guide with 17 phases and ~100 tasks
   - Created `STRIPE_SETUP.md` - Complete Stripe Dashboard configuration guide
@@ -897,12 +962,14 @@ This release adds comprehensive Stripe billing documentation for implementing a 
   - Billing history tracking
 
 ### Changed
+
 - Updated `README.md` with billing features overview and documentation links
 - Updated `TEMPLATE_USAGE.md` with billing customization and removal guides
 - Updated `CONVEX_SETUP.md` with billing schema documentation
 - Updated `WORKOS_SETUP.md` with RBAC integration notes
 
 ### Technical Details
+
 - **Convex Schema Extensions**: Added 3 new tables (subscriptions, billingHistory, auditLog)
 - **Stripe Integration**: Webhooks, Customer Portal, subscription management
 - **Philosophy**: Never block operations - warnings and flexibility over enforcement
@@ -910,6 +977,7 @@ This release adds comprehensive Stripe billing documentation for implementing a 
 - **AI-Optimized Documentation**: Structured for solo AI-assisted development
 
 ### Documentation Structure
+
 ```
 📚 Billing Documentation Suite:
 ├── BILLING_ROADMAP.md - Implementation guide (~100 tasks)
@@ -926,6 +994,7 @@ This release adds comprehensive Stripe billing documentation for implementing a 
 This release marks the template as production-ready with comprehensive documentation, hardened security, and complete feature set for B2B SaaS applications.
 
 ### Added
+
 - **Documentation**
   - Created comprehensive `TEMPLATE_USAGE.md` for customization and portability
   - Created `LICENSE` file (MIT License)
@@ -944,6 +1013,7 @@ This release marks the template as production-ready with comprehensive documenta
   - Improved error messages with helpful setup guidance
 
 ### Changed
+
 - **Documentation Accuracy**
 - Improved onboarding guidance for missing `VITE_CONVEX_URL` and `SESSION_SECRET` environment variables
 - Added reminder to disable the `/test-workos` diagnostic route before sharing the template
@@ -969,12 +1039,14 @@ This release marks the template as production-ready with comprehensive documenta
   - Improved project discoverability
 
 ### Fixed
+
 - Missing `convex.json` configuration file (referenced in docs but didn't exist)
 - Incorrect schema documentation in `CONVEX_SETUP.md` (fields marked optional when required)
 - Inconsistent environment variable naming in documentation
 - Missing `.env` creation steps in setup guides
 
 ### Documentation Structure
+
 ```
 📚 Complete Documentation Suite:
 ├── README.md - Quick-start, features, troubleshooting
@@ -986,6 +1058,7 @@ This release marks the template as production-ready with comprehensive documenta
 ```
 
 ### Technical Improvements
+
 - All TypeScript checks passing ✅
 - ESLint warnings reduced to 5 (development-only console logs)
 - Comprehensive inline documentation
@@ -993,6 +1066,7 @@ This release marks the template as production-ready with comprehensive documenta
 - Security-hardened debug routes
 
 ### Template Features
+
 - 🔐 Enterprise authentication with WorkOS
 - 📊 Real-time database with Convex
 - 🏢 Multi-tenant organization support
@@ -1004,27 +1078,33 @@ This release marks the template as production-ready with comprehensive documenta
 ## [0.2.2] - 2025-10-01
 
 ### Removed
+
 - Removed Playwright tooling (`@playwright/test`, `@playwright/mcp`) to simplify project dependencies
 
 ### Changed
+
 - Updated project documentation with agent setup guidance
 
 ## [0.2.1] - 2025-09-30
 
 ### Added
+
 - Documented in-repo onboarding for multi-agent workflows via `AGENTS.md`
 - Added Claude-specific quickstart guidance in `CLAUDE.md`
 
 ### Changed
+
 - Brought in Playwright tooling (`@playwright/test`, `@playwright/mcp`) to prep end-to-end coverage
 
 ### Known Issues
+
 - ESLint `no-console` warnings remain in auth flows and `components/UsersDemo.tsx`
 - Generated Playwright reports (`playwright-report/`) are not yet ignored
 
 ## [0.2.0] - 2025-09-29
 
 ### Fixed
+
 - ✅ **Code Quality & Type Safety**
   - Fixed all TypeScript `any` types with proper type definitions
   - Replaced all non-null assertions (`!`) with runtime validation
@@ -1045,12 +1125,14 @@ This release marks the template as production-ready with comprehensive documenta
   - Configured ignore patterns for unused parameters
 
 ### Technical Details
+
 - **Error Handling**: Created `WorkOSError` and `OrganizationCreationError` types
 - **Runtime Validation**: Added checks for `CONVEX_URL` and `VITE_CONVEX_URL`
 - **Type Narrowing**: Leveraged TypeScript control flow analysis
 - **Development Experience**: Conditional logging for development vs production
 
 ### Improvements
+
 - Reduced linting issues from 1,747 to 0 errors and 9 warnings
 - All remaining warnings are intentional (flow tracking and demo code)
 - Enhanced code maintainability with proper typing
@@ -1059,6 +1141,7 @@ This release marks the template as production-ready with comprehensive documenta
 ## [0.1.0] - 2025-09-28
 
 ### Added
+
 - ✅ **Initial Remix App Setup**
   - Created new React Router app (modern Remix evolution)
   - Configured TypeScript and Tailwind CSS
@@ -1083,6 +1166,7 @@ This release marks the template as production-ready with comprehensive documenta
   - Server-side user validation
 
 ### Technical Implementation
+
 - **Authentication Flow**: OAuth with WorkOS AuthKit
 - **Session Management**: React Router cookie sessions
 - **Protected Routes**: Server-side authentication checks
@@ -1090,12 +1174,14 @@ This release marks the template as production-ready with comprehensive documenta
 - **Documentation**: Complete setup guide for WorkOS integration
 
 ### Development Environment
+
 - **Dev Server**: Runs on configurable ports (default 5174)
 - **Type Safety**: Full TypeScript integration
 - **Build Process**: Production-ready Vite builds
 - **Hot Reload**: Development server with automatic updates
 
 ### Files Created
+
 - `app/lib/workos.server.ts` - WorkOS configuration
 - `app/lib/session.server.ts` - Session management
 - `app/lib/auth.server.ts` - Authentication utilities
@@ -1107,6 +1193,7 @@ This release marks the template as production-ready with comprehensive documenta
 - `WORKOS_SETUP.md` - Complete setup guide
 
 ### Next Steps
+
 - Configure WorkOS application with identity providers
 - Add additional authentication providers (Google, Microsoft, etc.)
 - Implement user profile management

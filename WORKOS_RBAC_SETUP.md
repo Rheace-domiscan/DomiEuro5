@@ -8,13 +8,13 @@ This guide walks through configuring Role-Based Access Control (RBAC) in WorkOS 
 
 The billing system uses **5 custom roles** to control access to features and billing:
 
-| Role | Billing Access | User Management | Product Access |
-|------|----------------|-----------------|----------------|
-| **Owner** | Full (manage) | Full (invite anyone) | Full features |
-| **Admin** | Read-only | Full (invite anyone) | Full features |
-| **Manager** | None | None | Full features |
-| **Sales** | None | None | Sales features only |
-| **Team Member** | None | None | Basic features only |
+| Role            | Billing Access | User Management      | Product Access      |
+| --------------- | -------------- | -------------------- | ------------------- |
+| **Owner**       | Full (manage)  | Full (invite anyone) | Full features       |
+| **Admin**       | Read-only      | Full (invite anyone) | Full features       |
+| **Manager**     | None           | None                 | Full features       |
+| **Sales**       | None           | None                 | Sales features only |
+| **Team Member** | None           | None                 | Basic features only |
 
 ---
 
@@ -46,6 +46,7 @@ The billing system uses **5 custom roles** to control access to features and bil
 3. Click **Create role**
 
 **Permissions to assign** (we'll define these in code, not WorkOS):
+
 - Full billing control
 - Full user management
 - Can transfer ownership
@@ -61,6 +62,7 @@ The billing system uses **5 custom roles** to control access to features and bil
 3. Click **Create role**
 
 **Permissions:**
+
 - Read-only billing access
 - Full user management
 - Can add seats
@@ -76,6 +78,7 @@ The billing system uses **5 custom roles** to control access to features and bil
 3. Click **Create role**
 
 **Permissions:**
+
 - No billing access
 - No user management
 - All product features
@@ -90,6 +93,7 @@ The billing system uses **5 custom roles** to control access to features and bil
 3. Click **Create role**
 
 **Permissions:**
+
 - No billing access
 - No user management
 - Sales features only
@@ -104,6 +108,7 @@ The billing system uses **5 custom roles** to control access to features and bil
 3. Click **Create role**
 
 **Permissions:**
+
 - No billing access
 - No user management
 - Basic features only
@@ -120,6 +125,7 @@ The **default role** is automatically assigned to new organization members.
 4. Click **Save**
 
 **Why team_member?**
+
 - Safest default (least permissions)
 - Admins/owners can promote users as needed
 
@@ -273,6 +279,7 @@ export async function action({ request }: Route.ActionArgs) {
 ## Role Management Best Practices
 
 ### ✅ Do's:
+
 - ✅ Always use **immutable role slugs** (lowercase, no spaces)
 - ✅ Assign explicit roles (don't rely on defaults for important permissions)
 - ✅ Sync WorkOS roles to Convex on every login (roles can change)
@@ -281,6 +288,7 @@ export async function action({ request }: Route.ActionArgs) {
 - ✅ Test role changes in WorkOS test environment first
 
 ### ❌ Don'ts:
+
 - ❌ Don't change role slugs after creation (immutable)
 - ❌ Don't store roles only in session (sync to database)
 - ❌ Don't allow role elevation without verification
@@ -332,6 +340,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 **Problem:** User has role in WorkOS but app doesn't recognize it
 
 **Solutions:**
+
 1. Check authentication callback syncs role to Convex
 2. Verify role stored in session: `session.get('role')`
 3. Check Convex user record has correct role
@@ -342,6 +351,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 **Problem:** New members don't get `team_member` role
 
 **Solutions:**
+
 1. Verify default role set in **User Management → Settings**
 2. Check if explicit role provided in `createOrganizationMembership()` (overrides default)
 3. Ensure WorkOS environment is in correct mode (test vs production)
@@ -351,6 +361,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 **Problem:** User should have access but gets permission denied
 
 **Solutions:**
+
 1. Verify role slug matches exactly (case-sensitive in code)
 2. Check permission definition includes the role
 3. Test `hasPermission()` function with user's role
@@ -361,6 +372,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 **Problem:** First user becomes `team_member` instead of `owner`
 
 **Solutions:**
+
 1. Verify `roleSlug: 'owner'` passed to `createOrganizationMembership()`
 2. Check if default role overriding explicit assignment
 3. Ensure organization creation route handles role assignment

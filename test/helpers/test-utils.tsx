@@ -62,9 +62,7 @@ export function renderWithProviders(
   const { convexClient, ...renderOptions } = options || {};
 
   return render(ui, {
-    wrapper: ({ children }) => (
-      <AllProviders convexClient={convexClient}>{children}</AllProviders>
-    ),
+    wrapper: ({ children }) => <AllProviders convexClient={convexClient}>{children}</AllProviders>,
     ...renderOptions,
   });
 }

@@ -307,9 +307,9 @@ export class MockConvexDatabase {
    * Get subscription by organization
    */
   getSubscriptionByOrganization(organizationId: string) {
-    return Array.from(this.subscriptions.values()).find(
-      s => s.organizationId === organizationId
-    ) || null;
+    return (
+      Array.from(this.subscriptions.values()).find(s => s.organizationId === organizationId) || null
+    );
   }
 
   /**

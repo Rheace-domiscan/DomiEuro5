@@ -12,7 +12,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockWorkOS, resetWorkOSMocks } from '../mocks/workos';
 import { mockConvexServer, resetConvexMocks, MockConvexDatabase } from '../mocks/convex';
-import { mockUser, mockOrganization, mockOrganization2, createMockUser } from '../helpers/test-data';
+import {
+  mockUser,
+  mockOrganization,
+  mockOrganization2,
+  createMockUser,
+} from '../helpers/test-data';
 
 // Mock WorkOS
 vi.mock('@workos-inc/node', () => ({

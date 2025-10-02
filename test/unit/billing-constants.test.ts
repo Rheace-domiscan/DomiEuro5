@@ -214,9 +214,7 @@ describe('Billing Constants', () => {
       expect(TIER_CONFIG.professional.features).toContain('features:basic');
 
       // Starter should have more features than free
-      expect(TIER_CONFIG.starter.features.length).toBeGreaterThan(
-        TIER_CONFIG.free.features.length
-      );
+      expect(TIER_CONFIG.starter.features.length).toBeGreaterThan(TIER_CONFIG.free.features.length);
 
       // Professional should have more features than starter
       expect(TIER_CONFIG.professional.features.length).toBeGreaterThan(

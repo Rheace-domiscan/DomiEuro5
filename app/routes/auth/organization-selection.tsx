@@ -55,11 +55,7 @@ export async function action({ request }: { request: Request }) {
 
     // Create user session and redirect to home
     return createUserSession(authResponse.user.id, '/');
-  } catch (error) {
-    // Only log detailed error info in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Organization selection failed:', error);
-    }
+  } catch (_error) {
     return redirect('/auth/login?error=' + encodeURIComponent('Organization selection failed'));
   }
 }

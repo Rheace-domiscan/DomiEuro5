@@ -251,9 +251,7 @@ describe('Stripe Server Utilities', () => {
     });
 
     it('should handle Stripe API errors during checkout creation', async () => {
-      mockStripe.checkout.sessions.create.mockRejectedValue(
-        new Error('Checkout creation failed')
-      );
+      mockStripe.checkout.sessions.create.mockRejectedValue(new Error('Checkout creation failed'));
       const { createCheckoutSession } = await import('~/lib/stripe.server');
 
       await expect(
@@ -428,8 +426,6 @@ describe('Stripe Environment Validation', () => {
 
     await expect(async () => {
       await import('~/lib/stripe.server');
-    }).rejects.toThrow(
-      'VITE_STRIPE_PUBLISHABLE_KEY is a test key. Production requires a live key'
-    );
+    }).rejects.toThrow('VITE_STRIPE_PUBLISHABLE_KEY is a test key. Production requires a live key');
   });
 });

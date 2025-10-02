@@ -24,9 +24,9 @@ export default defineConfig({
       thresholds: {
         // Current baseline - prevent regression, increase as Phase 5+ adds coverage
         // Target: Reach 70%+ by Phase 7, 80%+ by Phase 11
-        lines: 51,      // Current: 51.61%
-        functions: 72,  // Current: 72.22%
-        branches: 90,   // Current: 90.8%
+        lines: 51, // Current: 51.61%
+        functions: 72, // Current: 72.22%
+        branches: 90, // Current: 90.8%
         statements: 51, // Current: 51.61%
       },
     },

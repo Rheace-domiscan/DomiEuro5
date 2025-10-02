@@ -103,11 +103,6 @@ export async function action({ request }: Route.ActionArgs): Promise<Response | 
   } catch (error: unknown) {
     const creationError = error as OrganizationCreationError;
 
-    // Only log detailed error info in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Organization creation failed:', creationError);
-    }
-
     // Handle specific WorkOS errors with helpful guidance
     if (creationError.message?.includes('organization already exists')) {
       return {

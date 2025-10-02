@@ -7,6 +7,7 @@ This guide explains how to implement tier-based feature access control using the
 ## Overview
 
 **Feature gates** restrict access to features based on:
+
 - **Subscription tier** (Free, Starter, Professional)
 - **User role** (Owner, Admin, Manager, Sales, Team Member)
 
@@ -73,29 +74,25 @@ Features are defined in `app/lib/permissions.ts`:
 
 ```typescript
 export const TIER_FEATURES = {
-  free: [
-    'features:basic',
-    'dashboard:view',
-    'profile:edit',
-  ],
+  free: ['features:basic', 'dashboard:view', 'profile:edit'],
   starter: [
     'features:basic',
     'dashboard:view',
     'profile:edit',
-    'analytics:view',              // ← New in Starter
-    'api:access',                   // ← New in Starter
-    'api:limited',                  // ← Limited to 100 calls/day
+    'analytics:view', // ← New in Starter
+    'api:access', // ← New in Starter
+    'api:limited', // ← Limited to 100 calls/day
   ],
   professional: [
     'features:basic',
     'dashboard:view',
     'profile:edit',
     'analytics:view',
-    'analytics:export',             // ← New in Pro
+    'analytics:export', // ← New in Pro
     'api:access',
-    'api:unlimited',                // ← Unlimited in Pro
-    'support:priority',             // ← New in Pro
-    'integrations:advanced',        // ← New in Pro
+    'api:unlimited', // ← Unlimited in Pro
+    'support:priority', // ← New in Pro
+    'integrations:advanced', // ← New in Pro
   ],
 } as const;
 ```
@@ -238,16 +235,16 @@ Combine tier + role requirements:
 ```typescript
 interface FeatureGateProps {
   // Required
-  feature: string;              // Feature slug (e.g., 'analytics:view')
+  feature: string; // Feature slug (e.g., 'analytics:view')
   requiredTier: 'free' | 'starter' | 'professional';
-  children: React.ReactNode;    // Content to show when access granted
+  children: React.ReactNode; // Content to show when access granted
 
   // Optional
-  requiredRole?: string[];      // Roles allowed (default: all)
-  featureTitle?: string;        // Title for locked state
-  featureDescription?: string;  // Description for locked state
-  previewImage?: string;        // Preview image path
-  fallback?: React.ReactNode;   // Custom locked UI (overrides default)
+  requiredRole?: string[]; // Roles allowed (default: all)
+  featureTitle?: string; // Title for locked state
+  featureDescription?: string; // Description for locked state
+  previewImage?: string; // Preview image path
+  fallback?: React.ReactNode; // Custom locked UI (overrides default)
 }
 ```
 
@@ -275,11 +272,11 @@ Shows the upgrade prompt when users don't have access.
 
 ```typescript
 interface LockedFeatureProps {
-  featureTitle: string;         // e.g., "Analytics Dashboard"
-  featureDescription: string;   // Benefits of the feature
+  featureTitle: string; // e.g., "Analytics Dashboard"
+  featureDescription: string; // Benefits of the feature
   requiredTier: 'starter' | 'professional';
-  previewImage?: string;        // Optional preview
-  ctaText?: string;             // Custom CTA (default: "Upgrade to {tier}")
+  previewImage?: string; // Optional preview
+  ctaText?: string; // Custom CTA (default: "Upgrade to {tier}")
 }
 ```
 
@@ -314,13 +311,13 @@ export const TIER_FEATURES = {
 
   starter: [
     // ... existing starter features ...
-    'reports:basic',  // ← Add new feature
+    'reports:basic', // ← Add new feature
   ],
 
   professional: [
     // ... existing pro features ...
     'reports:basic',
-    'reports:advanced',  // ← Pro gets advanced version
+    'reports:advanced', // ← Pro gets advanced version
   ],
 };
 ```
@@ -362,7 +359,7 @@ import { FeatureBadge } from '~/components/feature-gates/FeatureBadge';
 <NavLink to="/dashboard/reports">
   Reports
   <FeatureBadge feature="reports:basic" />
-</NavLink>
+</NavLink>;
 ```
 
 **Result:** Free users see "Starter" badge next to Reports link.
@@ -392,10 +389,7 @@ const hasAccess = hasFeatureAccess(subscription.tier, 'analytics:view');
 
 ```typescript
 // app/lib/feature-access.server.ts
-export async function requireFeatureAccess(
-  request: Request,
-  feature: string
-) {
+export async function requireFeatureAccess(request: Request, feature: string) {
   const user = await requireUser(request);
   const subscription = await getOrgSubscription(user.organizationId);
 
@@ -465,7 +459,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 ```typescript
 // convex/analytics.ts
 export const getConversionMetrics = query({
-  handler: async (ctx) => {
+  handler: async ctx => {
     const subscriptions = await ctx.db
       .query('subscriptions')
       .filter(q => q.neq(q.field('conversionTracking'), undefined))
@@ -603,6 +597,7 @@ test('starter user sees analytics content', async ({ page }) => {
 **Problem:** User has paid tier but still sees locked feature
 
 **Solutions:**
+
 1. Check subscription synced to Convex: Query `subscriptions` table
 2. Verify tier matches: `subscription.tier === 'starter'`
 3. Check feature definition includes tier: `TIER_FEATURES.starter`
@@ -613,6 +608,7 @@ test('starter user sees analytics content', async ({ page }) => {
 **Problem:** Locked feature shows broken image
 
 **Solutions:**
+
 1. Verify image path correct: `/assets/feature-previews/analytics.png`
 2. Check image exists in `public/assets/feature-previews/`
 3. Verify file extension matches (`.png`, `.jpg`, etc.)
@@ -623,6 +619,7 @@ test('starter user sees analytics content', async ({ page }) => {
 **Problem:** Upgrades not tracked to features
 
 **Solutions:**
+
 1. Verify session stores `upgrade_trigger_feature`
 2. Check checkout success URL includes `?feature=` param
 3. Ensure webhook syncs `conversionTracking` to subscription

@@ -60,12 +60,14 @@ Your application will be available at `http://localhost:5173`.
 ## 📚 Documentation
 
 ### Core Setup
+
 - **[WorkOS Setup](./WORKOS_SETUP.md)** - Configure authentication and organizations
 - **[Convex Setup](./CONVEX_SETUP.md)** - Database schema and usage
 - **[Template Customization](./TEMPLATE_USAGE.md)** - How to customize or remove features
 - **[Claude Code Guide](./CLAUDE.md)** - AI assistance and development workflow
 
 ### Billing Features
+
 - **[Billing Roadmap](./BILLING_ROADMAP.md)** - Step-by-step implementation guide (~100 tasks)
 - **[Stripe Setup](./STRIPE_SETUP.md)** - Configure Stripe products, webhooks, and portal
 - **[WorkOS RBAC Setup](./WORKOS_RBAC_SETUP.md)** - Configure 5 user roles in WorkOS
@@ -75,6 +77,7 @@ Your application will be available at `http://localhost:5173`.
 ## 🎨 Key Features
 
 ### Multi-Tier Billing System
+
 - **3 pricing tiers:** Free (1 seat), Starter (£50/mo, 5-19 seats), Professional (£250/mo, 20-40 seats)
 - **Flexible seat pricing:** £10/seat/month for additional seats
 - **Annual billing:** 10x monthly price (2 months free)
@@ -83,24 +86,28 @@ Your application will be available at `http://localhost:5173`.
 - **Failed payment handling:** 28-day grace period with automatic retries
 
 ### Role-Based Access Control
+
 - **5 user roles:** Owner, Admin, Manager, Sales, Team Member
 - **WorkOS RBAC integration:** Roles managed in WorkOS Dashboard
 - **Permission system:** Granular control over billing, user management, and features
 - **Feature gates:** Tier-based access to premium features with upgrade prompts
 
 ### Multi-Tenant Organization Support
+
 - Automatic organization creation during signup
 - Organization selection for existing members
 - User-organization relationship management
 - Isolated data per organization
 
 ### Secure Authentication Flow
+
 1. User signs in via WorkOS AuthKit
 2. Organization creation or selection
 3. User synced to Convex database
 4. Secure session management with encrypted cookies
 
 ### Real-Time Database
+
 - Type-safe Convex queries and mutations
 - Automatic React hooks generation
 - Server-side and client-side data access
@@ -161,6 +168,7 @@ npm run build
 ```
 
 The build output will be in the `build/` directory:
+
 - `build/client/` - Static assets
 - `build/server/` - Server-side code
 
@@ -203,6 +211,7 @@ Make sure to deploy the output of `npm run build`
 ### Environment Variables for Production
 
 Before deploying, ensure you have production values for:
+
 - `WORKOS_API_KEY` - Production WorkOS API key
 - `WORKOS_CLIENT_ID` - Production WorkOS client ID
 - `WORKOS_REDIRECT_URI` - Production callback URL (e.g., `https://yourdomain.com/auth/callback`)
@@ -213,21 +222,25 @@ Before deploying, ensure you have production values for:
 ## 🔧 Troubleshooting
 
 ### "CONVEX_URL environment variable is required"
+
 - Run `npx convex dev` to initialize Convex and get your deployment URL
 - Add the URL to your `.env` file as both `CONVEX_URL` and `VITE_CONVEX_URL`
 
 ### "WORKOS_API_KEY environment variable is required"
+
 - Sign up at [workos.com](https://workos.com)
 - Create a project and application
 - Copy your API key and Client ID to `.env`
 - See [WORKOS_SETUP.md](./WORKOS_SETUP.md) for detailed instructions
 
 ### Authentication redirects to login repeatedly
+
 - Check that your `WORKOS_REDIRECT_URI` matches your WorkOS dashboard configuration
 - Ensure `SESSION_SECRET` is set in your `.env` file
 - Verify AuthKit is enabled in your WorkOS dashboard
 
 ### TypeScript errors about missing Convex types
+
 - Run `npx convex codegen` to regenerate types
 - Ensure `convex/_generated/` directory exists
 

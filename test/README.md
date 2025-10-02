@@ -68,14 +68,15 @@ npm test -- -t "RBAC"
 
 The project enforces the following coverage thresholds:
 
-| Metric       | Threshold | Security-Critical Code |
-|-------------|-----------|------------------------|
-| Lines       | 80%       | 85%+                   |
-| Functions   | 80%       | 85%+                   |
-| Branches    | 80%       | 85%+                   |
-| Statements  | 80%       | 85%+                   |
+| Metric     | Threshold | Security-Critical Code |
+| ---------- | --------- | ---------------------- |
+| Lines      | 80%       | 85%+                   |
+| Functions  | 80%       | 85%+                   |
+| Branches   | 80%       | 85%+                   |
+| Statements | 80%       | 85%+                   |
 
 **Security-critical code includes:**
+
 - Authentication logic (`app/lib/auth.server.ts`)
 - Permission system (`app/lib/permissions.ts`)
 - Multi-tenancy isolation (`convex/users.ts`)
@@ -115,6 +116,7 @@ describe('hasPermission()', () => {
 ```
 
 **Unit Test Structure (AAA Pattern):**
+
 1. **Arrange**: Set up test data and preconditions
 2. **Act**: Execute the function being tested
 3. **Assert**: Verify the result matches expectations
@@ -355,14 +357,14 @@ The `test/helpers/test-data.ts` file provides reusable test fixtures.
 
 ```typescript
 import {
-  mockUser,           // Owner user
-  mockAdminUser,      // Admin user
-  mockManagerUser,    // Manager user
-  mockSalesUser,      // Sales user
-  mockMemberUser,     // Team member user
-  mockOrganization,   // Test organization
-  mockConvexUser,     // Convex database user
-  allMockUsers,       // All user roles
+  mockUser, // Owner user
+  mockAdminUser, // Admin user
+  mockManagerUser, // Manager user
+  mockSalesUser, // Sales user
+  mockMemberUser, // Team member user
+  mockOrganization, // Test organization
+  mockConvexUser, // Convex database user
+  allMockUsers, // All user roles
   allMockSubscriptions, // All subscription tiers
 } from '../helpers/test-data';
 ```
@@ -409,16 +411,19 @@ open coverage/index.html
 ### Coverage Priorities
 
 **🔴 Critical (85%+ coverage required):**
+
 - `app/lib/auth.server.ts` - Authentication logic
 - `app/lib/permissions.ts` - RBAC permission checks
 - `convex/users.ts` - Multi-tenancy isolation
 
 **🟡 High Priority (80%+ coverage required):**
+
 - `app/lib/session.server.ts` - Session management
 - `app/lib/workos.server.ts` - WorkOS integration
 - `convex/subscriptions.ts` - Billing data (when implemented)
 
 **🟢 Standard (80% coverage target):**
+
 - All other application code
 - Utility functions
 - React components
@@ -490,15 +495,23 @@ beforeEach(() => {
 ❌ **Bad**: Vague test names
 
 ```typescript
-it('works', () => { /* ... */ });
-it('test permissions', () => { /* ... */ });
+it('works', () => {
+  /* ... */
+});
+it('test permissions', () => {
+  /* ... */
+});
 ```
 
 ✅ **Good**: Clear, descriptive names
 
 ```typescript
-it('should return true when owner has billing:manage permission', () => { /* ... */ });
-it('should throw error when user lacks permission', () => { /* ... */ });
+it('should return true when owner has billing:manage permission', () => {
+  /* ... */
+});
+it('should throw error when user lacks permission', () => {
+  /* ... */
+});
 ```
 
 ### 5. Test Error Cases
@@ -512,9 +525,7 @@ describe('authenticateWithCode()', () => {
   });
 
   it('should throw error with invalid code', async () => {
-    mockWorkOS.userManagement.authenticateWithCode.mockRejectedValue(
-      new Error('Invalid code')
-    );
+    mockWorkOS.userManagement.authenticateWithCode.mockRejectedValue(new Error('Invalid code'));
 
     await expect(authenticate('invalid')).rejects.toThrow('Invalid code');
   });
@@ -559,12 +570,16 @@ it('should only return users from the same organization', async () => {
   const org2Users = await getUsersByOrganization('org_456');
 
   // Verify no data leakage
-  expect(org1Users).not.toContainEqual(expect.objectContaining({
-    organizationId: 'org_456',
-  }));
-  expect(org2Users).not.toContainEqual(expect.objectContaining({
-    organizationId: 'org_123',
-  }));
+  expect(org1Users).not.toContainEqual(
+    expect.objectContaining({
+      organizationId: 'org_456',
+    })
+  );
+  expect(org2Users).not.toContainEqual(
+    expect.objectContaining({
+      organizationId: 'org_123',
+    })
+  );
 });
 ```
 

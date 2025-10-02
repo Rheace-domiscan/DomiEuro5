@@ -35,7 +35,8 @@ vi.mock('react-router', async () => {
     redirect: vi.fn((path: string, init?: unknown) => {
       const error: any = new Error(`Redirect to ${path}`);
       error.status = 302;
-      error.headers = init && typeof init === 'object' && 'headers' in init ? (init as any).headers : {};
+      error.headers =
+        init && typeof init === 'object' && 'headers' in init ? (init as any).headers : {};
       throw error;
     }),
   };
@@ -318,7 +319,9 @@ describe('Authentication Module (auth.server.ts)', () => {
 
       mockConvexServer.query.mockResolvedValue(null);
 
-      await expect(authModule.requireRole(request, ['owner'])).rejects.toThrow('Redirect to /dashboard');
+      await expect(authModule.requireRole(request, ['owner'])).rejects.toThrow(
+        'Redirect to /dashboard'
+      );
     });
 
     it('should redirect to login if not authenticated', async () => {
@@ -326,7 +329,9 @@ describe('Authentication Module (auth.server.ts)', () => {
 
       mockSession.get.mockReturnValue(undefined);
 
-      await expect(authModule.requireRole(request, ['owner'])).rejects.toThrow('Redirect to /auth/login');
+      await expect(authModule.requireRole(request, ['owner'])).rejects.toThrow(
+        'Redirect to /auth/login'
+      );
     });
   });
 
@@ -441,7 +446,9 @@ describe('Authentication Module (auth.server.ts)', () => {
 
       mockConvexServer.query.mockResolvedValue(null);
 
-      await expect(authModule.requireTier(request, 'starter')).rejects.toThrow('Redirect to /pricing');
+      await expect(authModule.requireTier(request, 'starter')).rejects.toThrow(
+        'Redirect to /pricing'
+      );
     });
   });
 
@@ -690,9 +697,7 @@ describe('Authentication Module (auth.server.ts)', () => {
       );
 
       expect(result).toEqual(mockAuthResponse);
-      expect(
-        mockWorkOS.userManagement.authenticateWithOrganizationSelection
-      ).toHaveBeenCalledWith({
+      expect(mockWorkOS.userManagement.authenticateWithOrganizationSelection).toHaveBeenCalledWith({
         clientId: 'test_client_id',
         pendingAuthenticationToken: 'pending_token_123',
         organizationId: mockOrganization.id,

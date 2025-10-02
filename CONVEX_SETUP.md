@@ -1,11 +1,13 @@
 # Convex Database Setup - DomiEuro
 
 ## Overview
+
 This project now includes a fully configured Convex database with a `users` table that integrates with WorkOS authentication.
 
 ## Database Schema
 
 ### Users Table
+
 - **email**: string (indexed) - User's email address
 - **name**: string - User's display name
 - **createdAt**: number (timestamp, indexed) - Creation timestamp
@@ -16,6 +18,7 @@ This project now includes a fully configured Convex database with a `users` tabl
 - **role**: string - User role (owner, admin, manager, sales, team_member) - synced from WorkOS RBAC
 
 ### Subscriptions Table (Billing System)
+
 - **organizationId**: string (indexed) - Organization this subscription belongs to
 - **tier**: 'free' | 'starter' | 'professional' - Current subscription tier
 - **stripeStatus**: Stripe subscription status (active, past_due, unpaid, canceled, null)
@@ -44,6 +47,7 @@ This project now includes a fully configured Convex database with a `users` tabl
 - **updatedAt**: number (timestamp) - Last update timestamp
 
 ### BillingHistory Table
+
 - **organizationId**: string (indexed) - Organization this event belongs to
 - **eventType**: string - Type of billing event (invoice.paid, subscription.updated, etc.)
 - **amount**: number - Amount in pence
@@ -57,6 +61,7 @@ This project now includes a fully configured Convex database with a `users` tabl
 - **createdAt**: number (timestamp, indexed) - Event timestamp
 
 ### AuditLog Table
+
 - **organizationId**: string (indexed) - Organization this log belongs to
 - **eventType**: string - Type of event (ownership.transferred, role.changed, etc.)
 - **performedBy**: string (indexed) - User ID who performed the action
@@ -69,6 +74,7 @@ This project now includes a fully configured Convex database with a `users` tabl
 ## Available Functions
 
 ### User Queries
+
 - `getAllUsers()` - Get all users
 - `getUserByEmail(email)` - Get user by email address
 - `getUserByWorkosId(workosUserId)` - Get user by WorkOS ID
@@ -76,6 +82,7 @@ This project now includes a fully configured Convex database with a `users` tabl
 - `getUserRole(userId, organizationId)` - Get user's role in organization
 
 ### User Mutations
+
 - `createUser({ email, name, workosUserId, organizationId, role })` - Create new user (workosUserId and organizationId are REQUIRED)
 - `updateUser({ id, name?, email?, isActive?, role? })` - Update user
 - `updateUserRole({ userId, organizationId, role })` - Update user's role
@@ -85,12 +92,14 @@ This project now includes a fully configured Convex database with a `users` tabl
 **Note**: When creating users, both `workosUserId` and `organizationId` are required fields. The authentication flow automatically handles user creation after successful WorkOS authentication.
 
 ### Subscription Queries (Billing)
+
 - `getSubscription(organizationId)` - Get organization's subscription
 - `getSubscriptionsByTier(tier)` - Get all subscriptions of a specific tier
 - `getSubscriptionsInGracePeriod()` - Get subscriptions in grace period
 - `getSubscriptionMetrics()` - Get subscription analytics (MRR, churn, etc.)
 
 ### Subscription Mutations (Billing)
+
 - `createSubscription({ organizationId, tier, ... })` - Create new subscription
 - `updateSubscription({ organizationId, tier?, seats?, ... })` - Update subscription
 - `syncStripeSubscription({ organizationId, stripeData })` - Sync from Stripe webhook
@@ -99,38 +108,47 @@ This project now includes a fully configured Convex database with a `users` tabl
 - `lockSubscription({ organizationId })` - Lock account after grace period expires
 
 ### Billing History Queries
+
 - `getBillingHistory(organizationId)` - Get all billing events for organization
 - `getBillingHistoryByDateRange(organizationId, startDate, endDate)` - Get events in date range
 - `getInvoiceHistory(organizationId)` - Get paid invoices only
 
 ### Billing History Mutations
+
 - `logBillingEvent({ organizationId, eventType, amount, ... })` - Log billing event
 - `logStripeWebhook({ organizationId, eventType, stripeData })` - Log webhook event
 
 ### Audit Log Queries
+
 - `getAuditLog(organizationId)` - Get all audit events for organization
 - `getAuditLogByUser(userId)` - Get events performed by user
 - `getAuditLogByType(eventType)` - Get events of specific type (e.g., ownership.transferred)
 
 ### Audit Log Mutations
+
 - `logAuditEvent({ organizationId, eventType, performedBy, metadata })` - Log audit event
 
 ## Setup Steps
 
 1. **Environment Variables**
+
    ```bash
    cp .env.example .env
    ```
+
    Add your Convex deployment URL to `.env` (you'll get this URL in the next step):
+
    ```
    CONVEX_URL=https://your-deployment.convex.cloud
    VITE_CONVEX_URL=https://your-deployment.convex.cloud
    ```
 
 2. **Initialize Convex Development Environment**
+
    ```bash
    npx convex dev
    ```
+
    This will:
    - Create a new Convex deployment (if you don't have one)
    - Provide you with the deployment URL to add to your `.env` file
@@ -146,21 +164,19 @@ This project now includes a fully configured Convex database with a `users` tabl
 ## Usage in Your Application
 
 1. **Wrap Your App with ConvexProvider**
+
    ```tsx
-   import { ConvexClientProvider } from "./lib/ConvexProvider";
+   import { ConvexClientProvider } from './lib/ConvexProvider';
 
    function App() {
-     return (
-       <ConvexClientProvider>
-         {/* Your app components */}
-       </ConvexClientProvider>
-     );
+     return <ConvexClientProvider>{/* Your app components */}</ConvexClientProvider>;
    }
    ```
 
 2. **Use the Database Hooks**
+
    ```tsx
-   import { useGetAllUsers, useCreateUser } from "./lib/useConvex";
+   import { useGetAllUsers, useCreateUser } from './lib/useConvex';
 
    function MyComponent() {
      const users = useGetAllUsers();
@@ -169,10 +185,10 @@ This project now includes a fully configured Convex database with a `users` tabl
      const handleCreate = () => {
        // Note: workosUserId and organizationId are REQUIRED
        createUser({
-         email: "user@example.com",
-         name: "New User",
-         workosUserId: "user_123",  // From WorkOS authentication
-         organizationId: "org_456"   // From WorkOS authentication
+         email: 'user@example.com',
+         name: 'New User',
+         workosUserId: 'user_123', // From WorkOS authentication
+         organizationId: 'org_456', // From WorkOS authentication
        });
      };
 
@@ -187,6 +203,7 @@ This project now includes a fully configured Convex database with a `users` tabl
    ```
 
 ## Files Created
+
 - `convex.json` - Convex configuration
 - `convex/schema.ts` - Database schema definition
 - `convex/users.ts` - User CRUD operations
@@ -196,10 +213,13 @@ This project now includes a fully configured Convex database with a `users` tabl
 - `components/UsersDemo.tsx` - Demo component for testing
 
 ## Type Safety
+
 All database operations are fully type-safe with TypeScript. The Convex CLI automatically generates types based on your schema and functions.
 
 ## Generated Files & Version Control
+
 The `convex/_generated/` directory contains TypeScript types auto-generated by Convex:
+
 - **Should you commit it?** It's recommended to add `convex/_generated/` to `.gitignore` and regenerate types after cloning
 - **When are types generated?** Automatically when running `npx convex dev` or manually with `npx convex codegen`
 - **What if types are missing?** Run `npx convex codegen` to regenerate them
@@ -207,6 +227,7 @@ The `convex/_generated/` directory contains TypeScript types auto-generated by C
 ## Important Notes
 
 ### User Management
+
 - The authentication flow automatically creates users in Convex after successful WorkOS authentication
 - Both `workosUserId` and `organizationId` are required fields - you cannot create users without these
 - User creation happens server-side in the auth callback route (`app/routes/auth/callback.tsx`)
@@ -214,6 +235,7 @@ The `convex/_generated/` directory contains TypeScript types auto-generated by C
 - User roles are synced from WorkOS RBAC - manage roles in WorkOS Dashboard (see `WORKOS_RBAC_SETUP.md`)
 
 ### Billing System
+
 - The `subscriptions`, `billingHistory`, and `auditLog` tables are part of the billing system
 - Subscriptions are synced from Stripe via webhooks - don't manually edit subscription data
 - Billing history is append-only for audit compliance - events are never deleted
@@ -221,7 +243,9 @@ The `convex/_generated/` directory contains TypeScript types auto-generated by C
 - See `BILLING_GUIDE.md` for system architecture and `BILLING_ROADMAP.md` for implementation
 
 ### Schema Implementation
+
 To implement the billing schema:
+
 1. Follow the step-by-step guide in `BILLING_ROADMAP.md` (Phase 1)
 2. The schema will be created during implementation
 3. Schema changes require running `npx convex deploy` to apply

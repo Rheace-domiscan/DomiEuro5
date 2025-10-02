@@ -1,9 +1,11 @@
 # Billing Implementation Agent
 
 ## Purpose
+
 This agent implements a single phase of the billing roadmap from `BILLING_ROADMAP.md`. It handles code generation, manual task identification, testing, and documentation updates.
 
 ## Trigger
+
 User says: "implement phase [X] of billing roadmap" or "implement phase [X]"
 
 ## Instructions
@@ -25,20 +27,24 @@ User says: "implement phase [X] of billing roadmap" or "implement phase [X]"
 Before starting, verify:
 
 **Phase Dependencies:**
+
 - If phase lists dependencies (e.g., "Dependencies: Phase 1, 2 complete"), check those phases are done
 - Look for evidence: files exist, schema deployed, features working
 - If dependencies missing: **STOP and report what's blocking you**
 
 **Environment Check:**
+
 - Run `npm run typecheck` - must pass before starting
 - Check `node_modules` exists - if not, run `npm install`
 - Verify `.env` file exists with required variables from previous phases
 
 **Convex Check:**
+
 - If phase modifies Convex schema, verify `convex/_generated/` directory exists
 - Run `npx convex dev` is running (check for convex process)
 
 **Report Prerequisites:**
+
 ```
 ✅ Prerequisites Check:
 - Dependencies: Phase [X-1] complete
@@ -56,12 +62,14 @@ If any prerequisite fails, **STOP** and tell user what needs fixing.
 Parse all tasks and categorize:
 
 **Automated Tasks (you will code these):**
+
 - Creating files (`Create app/...`)
 - Modifying files (`Update convex/...`)
 - Adding code/logic
 - Running commands (`npm install`, `npx convex deploy`)
 
 **Manual Tasks (user must do these):**
+
 - "in Stripe Dashboard"
 - "in WorkOS Dashboard"
 - "Configure Stripe..."
@@ -69,6 +77,7 @@ Parse all tasks and categorize:
 - Any task requiring external service access
 
 **List to user:**
+
 ```
 📋 Phase [X] Task Breakdown:
 
@@ -104,6 +113,7 @@ For each automated task:
    - Imports resolve
 
 **Code Quality Standards:**
+
 - Follow existing project patterns (check similar files)
 - Use TypeScript strict mode
 - Add JSDoc comments for exported functions
@@ -111,18 +121,21 @@ For each automated task:
 - Use existing constants from `billing-constants.ts`
 
 **For Convex Changes:**
+
 - After modifying `convex/schema.ts`, run `npx convex deploy`
 - Verify deployment succeeds
 - Run `npx convex codegen` to regenerate types
 - Check for TypeScript errors after regeneration
 
 **For Route Creation:**
+
 - Follow React Router v7 patterns
 - Export loader/action functions if needed
 - Add proper error boundaries
 - Use `requireUser`, `requireRole`, or `requireTier` for auth
 
 **For Component Creation:**
+
 - Use TailwindCSS v4 for styling
 - Make components responsive (mobile-first)
 - Add proper TypeScript props interfaces
@@ -190,23 +203,27 @@ After user confirms manual tasks complete:
 **Common test patterns:**
 
 **TypeScript Check:**
+
 ```bash
 npm run typecheck
 ```
 
 **Convex Query Test:**
+
 ```bash
 npx convex run subscriptions:list
 # Expected: [] (empty array for new tables)
 ```
 
 **Stripe CLI Test (if applicable):**
+
 ```bash
 stripe listen --forward-to localhost:5173/webhooks/stripe
 stripe trigger checkout.session.completed
 ```
 
 **Route Access Test:**
+
 ```bash
 # Start dev server if not running
 npm run dev
@@ -214,6 +231,7 @@ npm run dev
 ```
 
 **Report format:**
+
 ```
 ✅ Test Results:
 
@@ -231,18 +249,21 @@ npm run dev
 Check if phase requires documentation updates:
 
 **Files to potentially update:**
+
 - `README.md` - If adding major features
 - `TEMPLATE_USAGE.md` - If adding customization options
 - `.env.example` - If adding environment variables
 - `package.json` - If adding dependencies
 
 **For each update:**
+
 1. Read the current file
 2. Find the appropriate section
 3. Add new content following existing format
 4. Preserve existing content (don't delete)
 
 **Example: Adding to README.md**
+
 - Find "## Features" section
 - Add new feature with icon and description
 - Match existing formatting
@@ -343,6 +364,7 @@ Part of billing roadmap implementation (Phase [X]/17)
    - Suggest adding to .env if missing
 
 **When Blocked:**
+
 ```
 ⚠️  Blocked on Phase [X], Task [X.Y]
 
@@ -372,6 +394,7 @@ Part of billing roadmap implementation (Phase [X]/17)
 ## Context Awareness
 
 **You have access to:**
+
 - `BILLING_ROADMAP.md` - Master implementation plan
 - `BILLING_GUIDE.md` - Architecture and workflows
 - `STRIPE_SETUP.md` - Stripe configuration guide
@@ -383,6 +406,7 @@ Part of billing roadmap implementation (Phase [X]/17)
 ## Success Criteria
 
 Phase is complete when:
+
 - ✅ All automated tasks implemented
 - ✅ User confirmed manual tasks done
 - ✅ All tests passing
