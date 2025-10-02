@@ -160,6 +160,37 @@ export class MockConvexDatabase {
   private users: Map<string, typeof mockConvexUser> = new Map();
   private subscriptions: Map<string, typeof mockConvexSubscription> = new Map();
   private billingHistory: Map<string, typeof mockConvexBillingHistory> = new Map();
+  private nextId: number = 1;
+
+  /**
+   * Create a user in the mock database
+   */
+  createUser(data: {
+    email: string;
+    name: string;
+    workosUserId: string;
+    organizationId: string;
+    role?: string;
+  }): string {
+    const id = `jx7_user_${this.nextId++}`;
+    const now = Date.now();
+
+    const user = {
+      _id: id as any,
+      _creationTime: now,
+      email: data.email,
+      name: data.name,
+      workosUserId: data.workosUserId,
+      organizationId: data.organizationId,
+      role: data.role || 'member',
+      createdAt: now,
+      updatedAt: now,
+      isActive: true,
+    };
+
+    this.users.set(id, user);
+    return id;
+  }
 
   /**
    * Add a user to the mock database
@@ -183,6 +214,13 @@ export class MockConvexDatabase {
   }
 
   /**
+   * Get user by email
+   */
+  getUserByEmail(email: string) {
+    return Array.from(this.users.values()).find(u => u.email === email) || null;
+  }
+
+  /**
    * Get users by organization
    */
   getUsersByOrganization(organizationId: string) {
@@ -192,10 +230,86 @@ export class MockConvexDatabase {
   }
 
   /**
+   * Deactivate a user
+   */
+  deactivateUser(userId: string) {
+    const user = this.users.get(userId);
+    if (user) {
+      user.isActive = false;
+      user.updatedAt = Date.now();
+    }
+  }
+
+  /**
+   * Update user organization
+   */
+  updateUserOrganization(userId: string, newOrganizationId: string) {
+    const user = this.users.get(userId);
+    if (user) {
+      user.organizationId = newOrganizationId;
+      user.updatedAt = Date.now();
+    }
+  }
+
+  /**
+   * Create a subscription in the mock database
+   */
+  createSubscription(data: {
+    organizationId: string;
+    tier: string;
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+  }): string {
+    const id = `jx7_sub_${this.nextId++}`;
+    const now = Date.now();
+
+    const subscription = {
+      _id: id as any,
+      _creationTime: now,
+      organizationId: data.organizationId,
+      tier: data.tier as any,
+      stripeCustomerId: data.stripeCustomerId || null,
+      stripeSubscriptionId: data.stripeSubscriptionId || null,
+      stripeStatus: null,
+      billingInterval: null,
+      seats: {
+        included: 1,
+        current: 1,
+        limit: 1,
+      },
+      pricing: {
+        basePriceMonthly: 0,
+        basePriceAnnual: 0,
+        perSeatPrice: 0,
+      },
+      status: {
+        accessStatus: 'active' as const,
+        gracePeriodEndsAt: null,
+      },
+      currentPeriod: null,
+      metadata: {},
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.subscriptions.set(id, subscription);
+    return id;
+  }
+
+  /**
    * Add a subscription to the mock database
    */
   addSubscription(subscription: typeof mockConvexSubscription) {
     this.subscriptions.set(subscription._id, subscription);
+  }
+
+  /**
+   * Get subscription by organization
+   */
+  getSubscriptionByOrganization(organizationId: string) {
+    return Array.from(this.subscriptions.values()).find(
+      s => s.organizationId === organizationId
+    ) || null;
   }
 
   /**

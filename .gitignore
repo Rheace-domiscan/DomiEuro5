@@ -12,3 +12,5 @@
 
 # Testing
 /playwright-report/
+/.vitest/
+/coverage/
