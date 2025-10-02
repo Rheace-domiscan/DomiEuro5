@@ -669,7 +669,22 @@ stripe trigger checkout.session.completed
 
 **Testing Tasks for Phase 7:**
 
-- [ ] **7.12** Create `test/integration/billing-dashboard.test.ts` (CRITICAL - Access Control)
+- [ ] **7.12** ⚠️ **TECH DEBT: Add Convex Unit Tests** (HIGH PRIORITY - See test/TECH_DEBT.md)
+  - Remove `convex/**` exclusion from `vitest.config.ts` coverage
+  - Create `test/unit/convex-subscriptions.test.ts` with unit tests for:
+    - Subscription creation and update logic
+    - Grace period calculation and expiration
+    - Seat availability checks
+    - Pending downgrade scheduling
+    - Subscription statistics
+  - Create `test/unit/convex-billingHistory.test.ts` for:
+    - Event deduplication (idempotency checks)
+    - Billing event creation
+  - Target: 80%+ coverage for Convex business logic
+  - **Why:** Currently Convex excluded from coverage (integration tested only)
+  - **Risk:** Before production, Convex logic must have isolated unit tests
+
+- [ ] **7.13** Create `test/integration/billing-dashboard.test.ts` (CRITICAL - Access Control)
   - Test route protection: Only owner/admin can access `/settings/billing`
   - Test manager/sales/member redirected to `/dashboard`
   - Test BillingOverview displays correct subscription data
@@ -678,7 +693,7 @@ stripe trigger checkout.session.completed
   - Mock Convex queries for subscription and billing history
   - Target: >85% coverage (access control is security-critical)
 
-- [ ] **7.13** Create `test/unit/billing-components.test.tsx`
+- [ ] **7.14** Create `test/unit/billing-components.test.tsx`
   - Test BillingOverview component rendering
   - Test SeatWarningBanner appears when over seat limit
   - Test "Manage Billing" button generates correct Stripe portal URL

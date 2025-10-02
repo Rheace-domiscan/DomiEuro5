@@ -23,7 +23,12 @@ export default defineConfig({
         'app/welcome/**', // UI components, should add separate UI tests
         'app/lib/workos.server.ts', // Config only, no logic
         '**/*.d.ts',
-        // Exclude Convex - requires Convex runtime, tested via integration
+        // TODO [PHASE 7]: Add Convex unit tests and remove this exclusion
+        // Currently Convex functions tested via integration tests only:
+        // - test/integration/multi-tenancy.test.ts
+        // - test/integration/stripe-webhooks.test.ts
+        // This is TECH DEBT - Convex business logic should have unit tests
+        // See: test/TECH_DEBT.md for tracking and implementation plan
         'convex/**',
       ],
       thresholds: {

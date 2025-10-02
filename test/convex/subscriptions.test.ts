@@ -1,7 +1,10 @@
 /**
  * Convex Subscriptions Tests
  *
- * Tests for convex/subscriptions.ts
+ * ⚠️ TECH DEBT: This file is a placeholder
+ * ⚠️ See: test/TECH_DEBT.md for implementation plan (Phase 7 target)
+ *
+ * Tests for convex/subscriptions.ts:
  * - Subscription CRUD operations
  * - Multi-tenancy isolation
  * - Grace period management
@@ -13,51 +16,40 @@
 import { describe, it, expect } from 'vitest';
 
 /**
- * NOTE: Convex functions are tested via integration tests
+ * ⚠️ WARNING: TECH DEBT - Convex functions need unit tests
  *
- * The convex/subscriptions.ts functions interact with the Convex database,
- * which is best tested via integration tests using MockConvexDatabase.
+ * Current State:
+ * - Convex functions are tested via integration tests ONLY
+ * - This is a temporary solution for Phase 5 delivery
+ * - Unit tests should be added in Phase 7 (before production)
  *
- * See test/integration/multi-tenancy.test.ts for comprehensive multi-tenancy
- * isolation tests that verify subscription queries filter by organizationId correctly.
+ * Why This Exists:
+ * - Convex functions require Convex runtime context
+ * - Integration tests provide good coverage for now
+ * - But unit tests would be faster and better isolated
  *
- * Key subscription functions tested elsewhere:
- * - getByOrganization() - Tested in multi-tenancy.test.ts
- * - create() - Tested in stripe-webhooks.test.ts
- * - update() - Tested in stripe-webhooks.test.ts
- * - updateStatus() - Tested in stripe-webhooks.test.ts
- * - startGracePeriod() - Tested in stripe-webhooks.test.ts
- * - endGracePeriod() - Tested in stripe-webhooks.test.ts
+ * Current Testing Coverage:
+ * ✅ test/integration/multi-tenancy.test.ts - Organization isolation
+ * ✅ test/integration/stripe-webhooks.test.ts - Subscription lifecycle
+ * ✅ test/unit/billing-constants.test.ts - Business logic calculations
+ *
+ * What's Missing:
+ * ❌ Direct unit tests for Convex business logic
+ * ❌ Isolated tests for grace period calculations
+ * ❌ Isolated tests for seat availability checks
+ *
+ * 📋 Action Required (Phase 7):
+ * See test/TECH_DEBT.md for complete implementation plan
  */
 
 describe('Convex Subscriptions', () => {
-  it('should have subscription functions tested via integration tests', () => {
-    // This test serves as documentation that subscription functions
-    // are comprehensively tested in integration tests rather than unit tests.
-    //
-    // Integration tests provide better coverage for database operations
-    // because they test actual query behavior, multi-tenancy isolation,
-    // and data persistence.
-    //
-    // See:
-    // - test/integration/multi-tenancy.test.ts (organization isolation)
-    // - test/integration/stripe-webhooks.test.ts (subscription lifecycle)
+  it('[PLACEHOLDER] Unit tests tracked in TECH_DEBT.md (Phase 7)', () => {
+    // This placeholder reminds us that proper unit tests are needed
+    // See test/TECH_DEBT.md for:
+    // - Why Convex tests are excluded from coverage
+    // - Timeline for implementing proper unit tests (Phase 7)
+    // - Checklist of tests to implement
+    // - How to prevent forgetting this tech debt
     expect(true).toBe(true);
   });
 });
-
-/**
- * Future Test Plan for Phase 5+
- *
- * If additional unit tests are needed for subscription business logic:
- *
- * 1. Test subscription statistics calculation (getStats query)
- * 2. Test seat availability calculations
- * 3. Test grace period expiration logic
- * 4. Test pending downgrade scheduling
- *
- * Currently, these are adequately covered by:
- * - Webhook integration tests (test/integration/stripe-webhooks.test.ts)
- * - Multi-tenancy tests (test/integration/multi-tenancy.test.ts)
- * - Billing constants tests (test/unit/billing-constants.test.ts)
- */

@@ -434,6 +434,20 @@ open coverage/index.html
 - Generated code (`convex/_generated/`)
 - Route files (`app/routes/` - tested via integration tests)
 - Test files themselves
+- **Convex functions (`convex/**`)** - ⚠️ TEMPORARY EXCLUSION (Tech Debt)
+  - Currently tested via integration tests only
+  - Target: Add unit tests in Phase 7
+  - See: [TECH_DEBT.md](./TECH_DEBT.md) for tracking and plan
+
+### Testing Tech Debt
+
+⚠️ **Important:** Some code is currently excluded from coverage metrics but should be properly unit tested in the future.
+
+See **[test/TECH_DEBT.md](./TECH_DEBT.md)** for:
+- What's excluded and why
+- Timeline for addressing gaps (Phase 7+)
+- Implementation plan for Convex unit tests
+- Reminder system to prevent forgetting
 
 ## Best Practices
 
