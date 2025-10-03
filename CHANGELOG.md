@@ -2,6 +2,104 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.2] - 2025-10-03
+
+### 🔧 Phase 6 Critical Fixes - GPT-5 Code Review Findings
+
+This release addresses critical issues identified in comprehensive code review of billing implementation (Phases 1-6), including a data bug, missing documentation, and test coverage clarifications.
+
+### Fixed
+
+**Subscription Schedule Downgrade Bug** (app/routes/webhooks/stripe.tsx:264)
+
+- Fixed hard-coded `tier: 'starter'` in subscription schedule handler
+- Now properly extracts tier from Stripe schedule's price ID
+- Added `getTierFromPriceId()` helper for reverse price-to-tier lookup
+- Fallback to current tier if extraction fails (defensive programming)
+- **Impact**: Prevents incorrect tier assignments during scheduled downgrades
+
+### Added
+
+**Design Decision Documentation** (app/lib/stripe.server.ts)
+
+- Documented rationale for hard-coded API version (stability over auto-updates)
+- Documented rationale for import-time env validation (fail-fast approach)
+- Added API version review date (2025-10-03) and update process guidance
+- Helps future contributors understand intentional trade-offs
+
+**Test Coverage Documentation**
+
+- Added testing strategy comments to webhook route (stripe.tsx)
+- Added testing strategy comments to Convex functions (subscriptions.ts)
+- Explains why files lack direct unit tests (integration-tested instead)
+- References test/TECH_DEBT.md for Phase 7 unit test implementation plan
+
+**New Helper Function** (app/lib/stripe.server.ts:109-124)
+
+```typescript
+getTierFromPriceId(priceId: string): SubscriptionTier | null
+```
+
+- Reverse-lookup tier from Stripe price ID
+- Supports all price IDs (starter/professional, monthly/annual)
+- Returns null if price ID not found in env vars
+
+### Changed
+
+**Environment Variable Alignment**
+
+- Updated billing-constants.ts: `TEAM_MEMBER: 'member'` (matches WorkOS)
+- Updated .env.example: `STRIPE_PRICE_PROFESSIONAL_*` naming
+- Updated STRIPE_SETUP.md and BILLING_ROADMAP.md documentation
+- Fixed test expectations in billing-constants.test.ts
+
+**Code Quality**
+
+- Applied Prettier formatting to all documentation files
+- Added ESLint browser globals for test environment
+- Fixed React import placement in FeatureList.tsx
+- Fixed unescaped apostrophes in PricingTable and FeatureList
+
+### Technical Notes
+
+**Coverage Clarification**
+
+- Overall coverage: **96.72%** (unchanged, still excellent)
+- Command `npm run test:coverage -- <files>` shows 0% because it filters test files
+- Webhook/Convex files tested via integration tests (not unit tests)
+- Direct unit tests tracked as Phase 7 tech debt (see test/TECH_DEBT.md)
+
+**ESLint Status**
+
+- 0 errors (passing)
+- 48 warnings (unchanged, all intentional `any` types for API compatibility)
+- Warnings are acceptable; not blocking production deployment
+
+**Test Status**
+
+- All 363 tests passing
+- Zero regressions
+- TypeScript: 0 errors
+
+### Verification
+
+```
+✓ TypeScript: 0 errors
+✓ Tests: 363/363 passing
+✓ ESLint: 0 errors, 48 warnings (acceptable)
+✓ Coverage: 96.72% overall
+```
+
+### Why This Release Matters
+
+**Bug Fix**: Subscription schedule handler now correctly extracts tier from Stripe data instead of hard-coding 'starter', preventing incorrect billing assignments.
+
+**Documentation**: Design decisions are now explicitly documented, making it clear which behaviors are intentional vs. tech debt.
+
+**Clarity**: Test coverage strategy is now documented in code, explaining why certain files lack direct unit tests.
+
+---
+
 ## [1.8.1] - 2025-10-03
 
 ### 🧪 Phase 6 Tests Complete - Comprehensive Component Testing

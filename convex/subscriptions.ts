@@ -5,6 +5,14 @@
  * - Create, read, update subscription records
  * - Track subscription status and seat usage
  * - Handle grace periods and downgrades
+ *
+ * TESTING STRATEGY:
+ * This file has no direct unit tests. It is tested through:
+ * 1. Integration tests (test/integration/multi-tenancy.test.ts)
+ * 2. Integration tests (test/integration/stripe-webhooks.test.ts)
+ * Rationale: Convex functions require Convex runtime context.
+ * Integration tests provide good coverage for now.
+ * See test/TECH_DEBT.md for unit test implementation plan (Phase 7 target).
  */
 
 import { v } from 'convex/values';

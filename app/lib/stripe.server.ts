@@ -14,6 +14,12 @@ import type { SubscriptionTier } from '~/types/billing';
 
 /**
  * Validate Stripe environment variables
+ *
+ * DESIGN DECISION: Runs at import time (not runtime)
+ * Rationale: Fail-fast approach prevents server from starting with invalid config.
+ * Alternative: Runtime validation would allow pages to load but fail during checkout.
+ * Trade-off: Import-time validation catches config errors immediately but requires
+ * all env vars to be present even for non-billing pages.
  */
 function validateStripeConfig() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -39,13 +45,19 @@ function validateStripeConfig() {
   }
 }
 
-// Validate on module import
+// Validate on module import (see function comment for rationale)
 validateStripeConfig();
 
 /**
  * Initialize Stripe client
  *
- * Uses the latest Stripe API version and Node.js SDK
+ * DESIGN DECISION: API version is hard-coded (not auto-updated)
+ * Rationale: Manual version updates provide stability and allow testing before upgrading.
+ * Auto-updates could introduce breaking changes in production without warning.
+ * Update process: Review Stripe changelog, test in staging, update version string here.
+ *
+ * Current version: 2025-09-30.clover
+ * Last reviewed: 2025-10-03 (Phase 5)
  */
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
@@ -53,7 +65,7 @@ if (!stripeSecretKey) {
 }
 
 export const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-09-30.clover',
+  apiVersion: '2025-09-30.clover', // Hard-coded for stability (see comment above)
   typescript: true,
 });
 
@@ -86,6 +98,29 @@ export function getStripePriceId(
   }
 
   return priceId;
+}
+
+/**
+ * Get tier from Stripe price ID (reverse lookup)
+ *
+ * @param priceId - The Stripe price ID to look up
+ * @returns The subscription tier or null if not found
+ */
+export function getTierFromPriceId(priceId: string): SubscriptionTier | null {
+  const priceEnvVars: Record<string, SubscriptionTier> = {
+    STRIPE_PRICE_STARTER_MONTHLY: 'starter',
+    STRIPE_PRICE_STARTER_ANNUAL: 'starter',
+    STRIPE_PRICE_PROFESSIONAL_MONTHLY: 'professional',
+    STRIPE_PRICE_PROFESSIONAL_ANNUAL: 'professional',
+  };
+
+  for (const [envVar, tier] of Object.entries(priceEnvVars)) {
+    if (process.env[envVar] === priceId) {
+      return tier;
+    }
+  }
+
+  return null;
 }
 
 /**

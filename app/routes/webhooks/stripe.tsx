@@ -6,11 +6,20 @@
  * - Processes subscription lifecycle events
  * - Logs all billing events for audit trail
  * - Implements idempotency to prevent duplicate processing
+ *
+ * TESTING STRATEGY:
+ * This file has no direct unit tests. It is tested through:
+ * 1. Integration tests (test/integration/stripe-webhooks.test.ts)
+ * 2. Unit tests for utilities (test/unit/stripe.server.test.ts)
+ * 3. Manual testing with Stripe CLI (see BILLING_ROADMAP.md Phase 5.15)
+ * Rationale: Webhook routes require complex mocking due to Stripe signature
+ * validation at import time. Integration + manual testing provides better coverage.
+ * See test/TECH_DEBT.md for future improvements (Phase 7 target).
  */
 
 import type { ActionFunctionArgs } from 'react-router';
 import Stripe from 'stripe';
-import { verifyWebhookSignature } from '~/lib/stripe.server';
+import { verifyWebhookSignature, getTierFromPriceId } from '~/lib/stripe.server';
 import { convexServer } from '../../../lib/convex.server';
 import { TIER_CONFIG, GRACE_PERIOD_DAYS } from '~/lib/billing-constants';
 import type { SubscriptionTier } from '~/types/billing';
@@ -259,9 +268,13 @@ async function handleSubscriptionScheduleCreated(event: Stripe.Event) {
   // Store pending downgrade info
   const futurePhase = schedule.phases[schedule.phases.length - 1];
   if (futurePhase) {
+    // Extract tier from scheduled phase's price ID
+    const futurePriceId = futurePhase.items?.[0]?.price;
+    const tier = typeof futurePriceId === 'string' ? getTierFromPriceId(futurePriceId) : null;
+
     await convexServer.mutation('subscriptions:setPendingDowngrade' as any, {
       subscriptionId: existing._id,
-      tier: 'starter', // Extract from schedule if available
+      tier: tier || existing.tier, // Fallback to current tier if extraction fails
       effectiveDate: futurePhase.start_date * 1000,
     });
   }

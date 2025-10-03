@@ -103,7 +103,7 @@ The billing system uses **5 custom roles** to control access to features and bil
 1. Click **Create Role**
 2. Fill in:
    - **Role name:** `Team Member`
-   - **Role slug:** `team_member`
+   - **Role slug:** `member`
    - **Description:** `Basic user with limited feature access`
 3. Click **Create role**
 
