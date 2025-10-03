@@ -20,6 +20,7 @@ import React from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 import { ConvexProvider } from 'convex/react';
 import { ConvexReactClient } from 'convex/react';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
 
 /**
@@ -37,33 +38,70 @@ export function createMockConvexClient() {
 interface AllProvidersProps {
   children: React.ReactNode;
   convexClient?: ConvexReactClient;
+  routerOptions?: {
+    initialEntries?: string[];
+    initialIndex?: number;
+  };
 }
 
-function AllProviders({ children, convexClient }: AllProvidersProps) {
+function AllProviders({ children, convexClient, routerOptions }: AllProvidersProps) {
   const client = convexClient || createMockConvexClient();
 
-  return <ConvexProvider client={client}>{children}</ConvexProvider>;
+  // Wrap children in Convex provider
+  const WrappedChildren = () => <ConvexProvider client={client}>{children}</ConvexProvider>;
+
+  // Create a data router (required for React Router Forms)
+  const router = createMemoryRouter(
+    [
+      {
+        path: '*',
+        element: <WrappedChildren />,
+        action: async () => null, // Mock action handler for forms
+      },
+    ],
+    {
+      initialEntries: routerOptions?.initialEntries || ['/'],
+      initialIndex: routerOptions?.initialIndex || 0,
+    }
+  );
+
+  return <RouterProvider router={router} />;
 }
 
 /**
  * Custom render function that wraps components with all necessary providers
  *
- * Use this instead of @testing-library/react's render() for components that need Convex context.
+ * Use this instead of @testing-library/react's render() for components that need Convex context or React Router.
  *
  * @example
  * ```typescript
  * const { getByText, getByRole } = renderWithProviders(<Dashboard />);
  * expect(getByText('Welcome')).toBeInTheDocument();
+ *
+ * // With router options
+ * const { getByText } = renderWithProviders(<PricingPage />, {
+ *   routerOptions: { initialEntries: ['/pricing'] }
+ * });
  * ```
  */
 export function renderWithProviders(
   ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'> & { convexClient?: ConvexReactClient }
+  options?: Omit<RenderOptions, 'wrapper'> & {
+    convexClient?: ConvexReactClient;
+    routerOptions?: {
+      initialEntries?: string[];
+      initialIndex?: number;
+    };
+  }
 ) {
-  const { convexClient, ...renderOptions } = options || {};
+  const { convexClient, routerOptions, ...renderOptions } = options || {};
 
   return render(ui, {
-    wrapper: ({ children }) => <AllProviders convexClient={convexClient}>{children}</AllProviders>,
+    wrapper: ({ children }) => (
+      <AllProviders convexClient={convexClient} routerOptions={routerOptions}>
+        {children}
+      </AllProviders>
+    ),
     ...renderOptions,
   });
 }
