@@ -51,6 +51,7 @@ type SeatPreviewLine = {
   currency: string;
   isProration: boolean;
   periodEnd?: number;
+  taxAmount?: number;
 };
 
 type SeatPreview = {
@@ -203,12 +204,15 @@ async function previewSeatAddition(options: {
         line.parent?.subscription_item_details?.proration || line.parent?.invoice_item_details?.proration
       );
 
+      const taxAmount = (line.taxes ?? []).reduce<number>((sum, tax) => sum + (tax.amount ?? 0), 0);
+
       return {
         description: line.description ?? 'Billing item',
         amount: line.amount ?? 0,
         currency: line.currency ?? invoice.currency ?? 'gbp',
         isProration,
         periodEnd: line.period?.end,
+        taxAmount,
       };
     });
 
@@ -490,6 +494,20 @@ export default function BillingSettings() {
       ? previewFetcher.data.preview
       : null;
 
+  const previousSeatTotals = useMemo(() => {
+    if (!subscription) {
+      return {
+        total: TIER_CONFIG.free.seats.max,
+        paid: 0,
+      };
+    }
+
+    return {
+      total: subscription.seatsTotal,
+      paid: Math.max(0, subscription.seatsTotal - subscription.seatsIncluded),
+    };
+  }, [subscription]);
+
   const chargeSummary = useMemo(() => {
     if (!previewResult) {
       return {
@@ -498,6 +516,8 @@ export default function BillingSettings() {
         chargesTotal: 0,
         creditsTotal: 0,
         immediateTotal: 0,
+        totalTax: 0,
+        hasTaxLines: false,
       };
     }
 
@@ -506,6 +526,8 @@ export default function BillingSettings() {
     const chargesTotal = chargeLines.reduce((sum, line) => sum + line.amount, 0);
     const creditsTotal = creditLines.reduce((sum, line) => sum + line.amount, 0);
     const immediateTotal = previewResult.immediateAmount ?? chargesTotal + creditsTotal;
+    const totalTax = previewResult.prorationLines.reduce((sum, line) => sum + (line.taxAmount ?? 0), 0);
+    const hasTaxLines = previewResult.prorationLines.some(line => (line.taxAmount ?? 0) !== 0);
 
     return {
       chargeLines,
@@ -513,8 +535,28 @@ export default function BillingSettings() {
       chargesTotal,
       creditsTotal,
       immediateTotal,
+      totalTax,
+      hasTaxLines,
     };
   }, [previewResult]);
+
+  const seatDelta = useMemo(() => {
+    if (!previewResult) {
+      return null;
+    }
+
+    const totalAfter = previewResult.seatsAfter ?? previousSeatTotals.total;
+    const paidAfter = previewResult.additionalSeatsAfter ?? previousSeatTotals.paid;
+
+    return {
+      totalBefore: previousSeatTotals.total,
+      totalAfter,
+      totalChange: totalAfter - previousSeatTotals.total,
+      paidBefore: previousSeatTotals.paid,
+      paidAfter,
+      paidChange: paidAfter - previousSeatTotals.paid,
+    };
+  }, [previewResult, previousSeatTotals]);
 
   const formatSignedAmount = (amountInPence: number) => {
     const absolute = Math.abs(amountInPence);
@@ -725,10 +767,20 @@ export default function BillingSettings() {
                           {formatSignedAmount(chargeSummary.immediateTotal)}
                         </p>
                       </div>
-                      <p className="mt-3 text-xs text-gray-500">
-                        Seats after update: {previewResult?.seatsAfter ?? 0} total • Paid seats:{' '}
-                        {previewResult?.additionalSeatsAfter ?? 0}
-                      </p>
+                      {seatDelta ? (
+                        <div className="mt-3 space-y-1 text-xs text-gray-500">
+                          <p>
+                            <span className="font-medium text-gray-700">Seats:</span>{' '}
+                            {seatDelta.totalBefore} → {seatDelta.totalAfter}{' '}
+                            {(seatDelta.totalChange >= 0 ? '+' : '') + seatDelta.totalChange}
+                          </p>
+                          <p>
+                            <span className="font-medium text-gray-700">Paid seats:</span>{' '}
+                            {seatDelta.paidBefore} → {seatDelta.paidAfter}{' '}
+                            {(seatDelta.paidChange >= 0 ? '+' : '') + seatDelta.paidChange}
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="space-y-2">
@@ -740,6 +792,15 @@ export default function BillingSettings() {
                         <span>Credits for seats already paid</span>
                         <span>{formatSignedAmount(chargeSummary.creditsTotal)}</span>
                       </div>
+                      {chargeSummary.hasTaxLines ? (
+                        <p className="text-xs text-gray-500">
+                          Tax included in total today: {formatSignedAmount(chargeSummary.totalTax)}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400">
+                          Taxes will be calculated at confirmation if applicable.
+                        </p>
+                      )}
                     </div>
 
                     <details className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">

@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.1] - 2025-10-03
+
+### 🔧 Billing Dashboard UX Improvements
+
+This patch release enhances the seat preview display with tax information and clearer delta tracking for better transparency during seat additions.
+
+### Changed
+
+**Seat Preview Enhancements** (`app/routes/settings/billing.tsx`)
+
+- Added tax amount display in seat addition preview
+- Improved seat delta display showing before/after comparison:
+  - Total seats: "5 → 7 +2"
+  - Paid seats: "0 → 2 +2"
+- Enhanced charge summary with tax breakdown
+- Shows "Tax included in total today" when tax lines present
+- Shows placeholder message when taxes will be calculated later
+- Better visual hierarchy in preview modal
+
+**Technical Improvements**
+
+- Added `taxAmount` field to `SeatPreviewLine` type
+- Created `previousSeatTotals` memo for delta calculation
+- Created `seatDelta` memo for clear before/after tracking
+- Updated `chargeSummary` to include `totalTax` and `hasTaxLines`
+- Improved tax calculation from Stripe invoice preview lines
+
+### Why This Update Matters
+
+**User Experience:**
+- ✅ Users can now see exactly how many seats they're adding (clear delta)
+- ✅ Tax transparency prevents confusion about "total due today"
+- ✅ Visual clarity helps users confirm seat additions before submitting
+
+**Accuracy:**
+- ✅ Tax amounts properly extracted from Stripe invoice preview
+- ✅ Seat counts accurately show before/after state
+- ✅ Charge breakdown includes all fee components
+
+### Verification
+
+- ✅ TypeScript: 0 errors
+- ✅ Seat preview modal displays correctly
+- ✅ Tax information shown when applicable
+- ✅ Delta tracking accurate for seat additions
+
+---
+
 ## [1.9.0] - 2025-10-03
 
 ### 🎉 Phase 7 Complete - Billing Dashboard & Convex Unit Tests
