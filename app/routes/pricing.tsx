@@ -119,7 +119,7 @@ export async function action({ request }: Route.ActionArgs) {
 
       if (currentTierLevel >= requestedTierLevel) {
         // Already on this tier or higher - redirect to billing
-        return redirect('/dashboard/billing');
+        return redirect('/settings/billing');
       }
     }
 
@@ -128,7 +128,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     // Build success and cancel URLs
     const origin = new URL(request.url).origin;
-    const successUrl = `${origin}/dashboard/billing?success=true`;
+    const successUrl = `${origin}/settings/billing?success=true`;
     const cancelUrl = `${origin}/pricing`;
 
     // Create Stripe checkout session
@@ -206,7 +206,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
                     Dashboard
                   </a>
                   <a
-                    href="/dashboard/billing"
+                    href="/settings/billing"
                     className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
                   >
                     Billing

@@ -10,4 +10,7 @@ export default [
   route('auth/create-organization', 'routes/auth/create-organization.tsx'),
   route('auth/logout', 'routes/auth/logout.tsx'),
   route('webhooks/stripe', 'routes/webhooks/stripe.tsx'),
+  route('settings', 'routes/settings.tsx', [
+    route('billing', 'routes/settings/billing.tsx'),
+  ]),
 ] satisfies RouteConfig;

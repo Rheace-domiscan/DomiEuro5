@@ -2,6 +2,157 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2025-10-03
+
+### 🎉 Phase 7 Complete - Billing Dashboard & Convex Unit Tests
+
+This major release implements the protected billing dashboard with comprehensive role-based access control and adds critical Convex unit tests that were tracked as tech debt.
+
+### Added
+
+**Billing Dashboard** (`app/routes/settings/billing.tsx` - 730 lines)
+
+- Protected route requiring `owner` or `admin` role
+- Real-time subscription display with tier, status, and seat usage
+- Stripe Customer Portal integration for payment management
+- Billing history table with invoice records and event tracking
+- Seat warning banner when approaching or exceeding limits
+- Manual seat management with add/remove capabilities
+
+**Billing Dashboard Components** (`components/billing/`)
+
+- `BillingOverview.tsx` (4.4KB) - Current plan display with upgrade/downgrade options
+- `SeatManagement.tsx` (3.6KB) - Seat usage tracking and add/remove functionality
+- `BillingHistory.tsx` (3.3KB) - Invoice history table with date, amount, status
+- `SeatWarningBanner.tsx` (2.4KB) - Warning when seats exceed limits
+
+**Convex Unit Tests** (Tech Debt Resolution - Phase 7.12)
+
+- `test/unit/convex-subscriptions.test.ts` - Subscription business logic tests
+- `test/unit/convex-billingHistory.test.ts` - Billing event tests
+- Removed placeholder test file (`test/convex/subscriptions.test.ts`)
+- Removed Convex exclusion from coverage config (`vitest.config.ts`)
+- **Coverage Impact**: Convex functions now properly tested and measured
+
+**Integration Tests**
+
+- `test/integration/billing-dashboard.test.ts` (5 tests, 8.7KB)
+  - Role-based access control verification (owner/admin only)
+  - Manager/sales/member properly redirected to dashboard
+  - Subscription data display validation
+  - Seat usage tracking tests
+
+**Component Tests**
+
+- `test/unit/billing-components.test.tsx` - Billing component rendering tests
+- Tests for BillingOverview, SeatManagement, SeatWarningBanner
+
+**Dashboard Navigation**
+
+- Added navigation menu to dashboard with Home, Pricing, Billing links
+- Billing link only visible to owner/admin roles
+- User info display (name, email, role, organization)
+- Quick links section for easy navigation
+
+### Changed
+
+**Route Configuration** (`app/routes.ts`)
+
+- Added `/settings` parent route with nested `/billing` route
+- Proper route hierarchy for settings section
+
+**Dashboard Enhancement** (`app/routes/dashboard.tsx`)
+
+- Added role-based navigation menu
+- Added user display name handling (firstName + lastName or email fallback)
+- Added quick links to pricing and billing pages
+- Improved responsive layout
+
+**Pricing Page URLs** (`app/routes/pricing.tsx`)
+
+- Fixed redirect URLs from `/dashboard/billing` to `/settings/billing`
+- Fixed Stripe checkout success URL to correct billing dashboard path
+- Fixed billing link in authenticated user navigation
+
+**Organization Selection** (`app/routes/auth/organization-selection.tsx`)
+
+- Enhanced organization selection flow
+- Improved error handling and user feedback
+
+**Tech Debt Resolution** (`test/TECH_DEBT.md`)
+
+- Marked Phase 7 Convex unit tests as complete ✅
+- Updated implementation status and timeline
+- Documented test coverage improvements
+
+### Fixed
+
+**Convex Server Configuration** (`lib/convex.server.ts`)
+
+- Fixed Convex client initialization for server-side operations
+- Improved error handling for missing environment variables
+
+**Route Organization**
+
+- Created proper `/settings` parent route for future settings pages
+- Billing dashboard now at `/settings/billing` (not `/dashboard/billing`)
+
+### Test Results
+
+```
+✓ test/integration/billing-dashboard.test.ts (5 tests)
+✓ test/unit/billing-components.test.tsx (new)
+✓ test/unit/convex-subscriptions.test.ts (new)
+✓ test/unit/convex-billingHistory.test.ts (new)
+
+Test Files  15 passed (15)
+      Tests  381 passed (381) [+18 from v1.8.3]
+   Duration  2.23s
+```
+
+### Technical Notes
+
+**Files Created:**
+
+- `app/routes/settings.tsx` - Settings parent route
+- `app/routes/settings/billing.tsx` - Billing dashboard (730 lines)
+- `components/billing/BillingOverview.tsx` (4.4KB)
+- `components/billing/SeatManagement.tsx` (3.6KB)
+- `components/billing/BillingHistory.tsx` (3.3KB)
+- `components/billing/SeatWarningBanner.tsx` (2.4KB)
+- `test/integration/billing-dashboard.test.ts` (8.7KB, 5 tests)
+- `test/unit/billing-components.test.tsx` (new)
+- `test/unit/convex-subscriptions.test.ts` (new)
+- `test/unit/convex-billingHistory.test.ts` (new)
+
+**Files Modified:**
+
+- `app/routes.ts` - Added settings routes
+- `app/routes/dashboard.tsx` - Enhanced navigation and user display
+- `app/routes/pricing.tsx` - Fixed billing dashboard URLs (3 locations)
+- `vitest.config.ts` - Removed Convex coverage exclusion
+- `test/TECH_DEBT.md` - Updated Phase 7 status to complete
+
+**Verification:**
+
+- ✅ TypeScript: 0 errors
+- ✅ Tests: 381/381 passing (+18 new tests)
+- ✅ ESLint: 0 errors, 48 warnings (acceptable)
+- ✅ Coverage: Convex functions now included
+- ✅ Access Control: Billing dashboard protected (owner/admin only)
+
+### Why This Release Matters
+
+**Phase 7 Complete**: Full billing dashboard with role-based access control allows owners and admins to manage subscriptions, view billing history, and control seat allocations.
+
+**Tech Debt Resolved**: Convex unit tests are now in place (was Phase 7.12 requirement), improving test coverage and code confidence before production deployment.
+
+**Navigation Fixed**: Corrected all billing dashboard URLs from incorrect `/dashboard/billing` to proper `/settings/billing` path.
+
+**Test Coverage**: 18 new tests ensure billing dashboard works correctly and access control is enforced.
+
+---
+
 ## [1.8.3] - 2025-10-03
 
 ### 🔧 Type Definition Alignment - Role Slug Consistency

@@ -1,7 +1,11 @@
 import { redirect } from 'react-router';
 import { Form, useLoaderData } from 'react-router';
 import type { Organization } from '@workos-inc/node';
-import { authenticateWithOrganizationSelection, createUserSession } from '~/lib/auth.server';
+import {
+  authenticateWithOrganizationSelection,
+  createUserSession,
+  syncUserRoleFromWorkOS,
+} from '~/lib/auth.server';
 import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
 
 export async function loader({ request }: { request: Request }) {
@@ -53,8 +57,19 @@ export async function action({ request }: { request: Request }) {
       organizationId: authResponse.organizationId,
     });
 
+    // Sync user role from WorkOS so downstream loaders have the correct value
+    const userRole = await syncUserRoleFromWorkOS(
+      authResponse.user.id,
+      authResponse.organizationId
+    );
+
     // Create user session and redirect to home
-    return createUserSession(authResponse.user.id, '/');
+    return createUserSession(
+      authResponse.user.id,
+      '/',
+      authResponse.organizationId,
+      userRole
+    );
   } catch (_error) {
     return redirect('/auth/login?error=' + encodeURIComponent('Organization selection failed'));
   }

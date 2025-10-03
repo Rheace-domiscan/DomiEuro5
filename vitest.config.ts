@@ -13,7 +13,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['app/lib/**/*.{ts,tsx}'], // Only business logic, not UI/routes
+      include: ['app/lib/**/*.{ts,tsx}', 'convex/**/*.ts'], // Business logic + Convex functions
       exclude: [
         'app/**/*.test.{ts,tsx}',
         'app/routes/**', // Routes are integration tested
@@ -23,13 +23,7 @@ export default defineConfig({
         'app/welcome/**', // UI components, should add separate UI tests
         'app/lib/workos.server.ts', // Config only, no logic
         '**/*.d.ts',
-        // TODO [PHASE 7]: Add Convex unit tests and remove this exclusion
-        // Currently Convex functions tested via integration tests only:
-        // - test/integration/multi-tenancy.test.ts
-        // - test/integration/stripe-webhooks.test.ts
-        // This is TECH DEBT - Convex business logic should have unit tests
-        // See: test/TECH_DEBT.md for tracking and implementation plan
-        'convex/**',
+        'convex/_generated/**',
       ],
       thresholds: {
         // HIGH bar for business logic (app/lib/**) - these MUST be well-tested

@@ -38,9 +38,11 @@ export async function createOrUpdateUserInConvex(workosUser: {
 
   if (existingUser) {
     // Update existing user
+    const { workosUserId: _ignored, ...updatableFields } = userData; // Convex update validator disallows workosUserId
+
     return await convexServer.mutation(api.users.updateUser, {
       id: existingUser._id,
-      ...userData,
+      ...updatableFields,
     });
   } else {
     // Create new user (role will be synced separately via updateUserRole)

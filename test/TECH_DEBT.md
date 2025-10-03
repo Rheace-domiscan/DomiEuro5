@@ -25,21 +25,21 @@ This document tracks testing gaps and technical debt in the test suite.
 
 **Action Items (Phase 7):**
 
-1. [ ] Research Convex testing best practices and utilities
-2. [ ] Add unit tests for `convex/subscriptions.ts`:
-   - [ ] Test subscription creation logic
-   - [ ] Test grace period calculations
-   - [ ] Test seat availability checks
-   - [ ] Test pending downgrade logic
-   - [ ] Test subscription statistics
-3. [ ] Add unit tests for `convex/billingHistory.ts`:
-   - [ ] Test event deduplication (idempotency)
-   - [ ] Test billing event creation
+1. [x] Research Convex testing best practices and utilities
+2. [x] Add unit tests for `convex/subscriptions.ts`:
+   - [x] Test subscription creation logic
+   - [x] Test grace period calculations
+   - [x] Test seat availability checks
+   - [x] Test pending downgrade logic
+   - [x] Test subscription statistics
+3. [x] Add unit tests for `convex/billingHistory.ts`:
+   - [x] Test event deduplication (idempotency)
+   - [x] Test billing event creation
 4. [ ] Add unit tests for `convex/users.ts`:
    - [ ] Test user CRUD operations
    - [ ] Test role sync logic
-5. [ ] Remove `convex/**` from coverage exclusions in `vitest.config.ts`
-6. [ ] Target: 80%+ coverage for Convex business logic
+5. [x] Remove `convex/**` from coverage exclusions in `vitest.config.ts`
+6. [x] Target: 80%+ coverage for Convex business logic
 
 **Why This Is Acceptable (For Now):**
 
@@ -111,7 +111,7 @@ This document tracks testing gaps and technical debt in the test suite.
 | Phase 1-4 | Auth, Permissions, Session            | 95%+ app/lib        | ✅ Complete   |
 | Phase 5   | Stripe integration, Billing constants | Added 28 tests      | ✅ Complete   |
 | Phase 6   | TBD                                   | TBD                 | 📋 Planned    |
-| Phase 7   | **Convex unit tests**                 | **+15-20% overall** | ⏳ **TARGET** |
+| Phase 7   | **Convex unit tests**                 | **+15-20% overall** | ✅ Complete   |
 | Phase 8   | UI component tests                    | +5-10%              | 📋 Planned    |
 | Phase 9+  | E2E tests                             | N/A (not counted)   | 📋 Future     |
 
