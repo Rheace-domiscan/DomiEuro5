@@ -2,6 +2,194 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2025-10-03
+
+### 🎉 Phase 6 Complete - Public Pricing Page
+
+This release completes Phase 6 of the billing roadmap, implementing a comprehensive public pricing page with 3-tier comparison, monthly/annual billing toggle, and full Stripe checkout integration.
+
+### Added
+
+- **Public Pricing Page** (`app/routes/pricing.tsx` - 333 lines)
+  - Public route accessible at `/pricing` (no authentication required)
+  - Loader: Fetches current user and subscription tier if authenticated
+  - Action: Handles Stripe checkout session creation
+  - Comprehensive FAQ section with common billing questions
+  - Full SEO meta tags for search optimization
+  - Error handling for failed checkout sessions
+  - Redirects to login if unauthenticated user tries to checkout
+
+- **Pricing Components** (3 new components, 594 lines total)
+  - **PricingTable.tsx** (128 lines) - 3-column responsive grid layout
+    - Monthly/Annual toggle with "Save 17%" badge
+    - Current plan badge display for authenticated users
+    - Trial information and sales contact section
+  - **PricingCard.tsx** (199 lines) - Individual tier card component
+    - Dynamic pricing display (monthly vs annual)
+    - Savings calculator showing percentage saved with annual billing
+    - Seat information with additional seat pricing
+    - Feature list with checkmarks
+    - Form submission to create Stripe checkout
+    - "Popular" badge for recommended tier
+    - Disabled state for user's current plan
+  - **FeatureList.tsx** (267 lines) - Feature comparison table
+    - Desktop: Full table with checkmarks/crosses
+    - Mobile: Accordion-style cards for small screens
+    - Organized categories: Core Features, API Access, Support
+    - Highlights current tier with colored background
+
+### Changed
+
+- **Route Configuration** (`app/routes.ts`)
+  - Added pricing route: `route('pricing', 'routes/pricing.tsx')`
+  - Public route registration (no auth required)
+
+### Technical Details
+
+**Pricing Tiers:**
+- **Free**: £0/month, 1 seat included
+- **Starter**: £50/month or £500/year (5-19 seats)
+- **Professional**: £250/month or £2500/year (20-40 seats)
+- **Additional seats**: £10/seat/month
+
+**Annual Billing Savings:**
+- Annual price = 10x monthly (2 months free)
+- Savings percentage: 17% (2/12 months)
+
+**Stripe Integration:**
+- Uses `createCheckoutSession()` from Phase 5
+- Passes tier, interval, seats, and organizationId
+- Includes success/cancel URLs for proper flow
+- Metadata for webhook processing
+
+**Responsive Design:**
+- Mobile-first TailwindCSS implementation
+- 3-column grid on desktop, stacked cards on mobile
+- Feature table transforms to accordion on mobile
+- Touch-friendly toggle switches and buttons
+
+### Verification Results
+
+```
+✅ TypeScript: 0 errors (all types properly defined)
+✅ ESLint: 0 errors (all linting rules passing)
+✅ Build: Successful production build
+✅ Routes: Pricing route properly registered
+✅ Integration: Stripe checkout wired up correctly
+✅ Responsive: Mobile and desktop layouts tested
+```
+
+### Files Created
+
+- `app/routes/pricing.tsx` (333 lines)
+- `components/pricing/PricingTable.tsx` (128 lines)
+- `components/pricing/PricingCard.tsx` (199 lines)
+- `components/pricing/FeatureList.tsx` (267 lines)
+
+**Total**: 927 lines of new code
+
+### Files Modified
+
+- `app/routes.ts` - Added pricing route registration
+
+### Key Features
+
+1. **Monthly/Annual Toggle**
+   - Smooth transition between pricing displays
+   - Shows "Save 17%" badge on annual option
+   - Dynamically updates all pricing cards
+   - Displays per-month cost for annual plans
+
+2. **Stripe Checkout Integration**
+   - Form-based CTA button submission
+   - Creates checkout session with metadata
+   - Handles new subscriptions and upgrades
+   - Prevents downgrades (checks existing tier)
+   - Login redirect with return URL
+
+3. **Authentication Flow**
+   - Public page (no login required to view)
+   - Authenticated users see current tier highlighted
+   - "Current Plan" badge on active tier
+   - Free tier redirects to dashboard (no checkout)
+
+4. **Visual Design**
+   - "Most Popular" badge on Starter tier
+   - Gradient background (white to gray)
+   - Card hover effects with shadows
+   - Color-coded indicators (indigo/green)
+
+### Phase 6 Completion Status
+
+```
+✅ 6.1 - Public pricing route at /pricing
+✅ 6.2 - 3-column tier grid component
+✅ 6.3 - Individual pricing card component
+✅ 6.4 - Feature comparison list component
+✅ 6.5 - Monthly/annual billing toggle
+✅ 6.6 - Stripe checkout integration
+✅ 6.7 - Responsive TailwindCSS design
+✅ 6.8 - Implementation verified
+
+🎉 PHASE 6: 100% COMPLETE (8/8 tasks)
+```
+
+### Dependencies
+
+- **Phase 5 (Stripe Integration)**: ✅ Complete
+  - Uses `createCheckoutSession()` from `app/lib/stripe.server.ts`
+  - Integrates with webhook handlers from Phase 5
+
+- **Phase 2 (Stripe Products)**: ✅ Complete
+  - Requires price IDs configured in `.env`
+  - Uses tier configuration from `app/lib/billing-constants.ts`
+
+### How to Use
+
+1. **View Pricing Page**
+   ```
+   Navigate to: http://localhost:5173/pricing
+   ```
+
+2. **Test Monthly/Annual Toggle**
+   - Click toggle to switch billing periods
+   - Observe price changes and savings display
+
+3. **Test Checkout Flow**
+   - Click "Get Started" or "Start Free Trial"
+   - Unauthenticated: Redirects to login
+   - Authenticated: Creates Stripe checkout session
+
+### Next Phase
+
+**Phase 7: Billing Dashboard** (Day 5-6, 5-6 hours)
+
+Ready to implement:
+- Protected billing management page (owner/admin only)
+- Current plan display and seat management
+- Billing history table with invoice records
+- "Manage Billing" → Stripe Customer Portal
+- Seat warning banners and limit enforcement
+- Grace period and pending downgrade displays
+
+### Why This Release Matters
+
+**User Experience:**
+- ✅ Clear pricing presentation for potential customers
+- ✅ Transparent annual savings calculation (17% discount)
+- ✅ Mobile-optimized for on-the-go browsing
+- ✅ FAQ section answers common questions
+- ✅ One-click upgrade flow via Stripe
+
+**Technical Excellence:**
+- ✅ Type-safe implementation (0 TypeScript errors)
+- ✅ Proper error handling (failed checkouts, auth issues)
+- ✅ SEO optimized (meta tags for discoverability)
+- ✅ Responsive design (mobile-first approach)
+- ✅ Reusable components for future pages
+
+The pricing page is now live and ready for customer acquisition. Phase 6 provides the frontend experience, while Phase 5's backend handles the actual subscription processing.
+
 ## [1.7.2] - 2025-10-03
 
 ### Fixed
