@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.3] - 2025-10-03
+
+### 🔧 Type Definition Alignment - Role Slug Consistency
+
+This patch release fixes a type definition inconsistency between billing constants and type definitions.
+
+### Fixed
+
+**UserRole Type Definition** (app/types/billing.ts:38)
+
+- Changed `UserRole` type from `'team_member'` to `'member'`
+- Now matches WorkOS convention and billing-constants.ts implementation
+- Ensures type safety across authentication and billing modules
+- **Impact**: Prevents type mismatches in role-based access control
+
+### Technical Notes
+
+This completes the role slug alignment started in v1.8.2:
+- ✅ billing-constants.ts: `TEAM_MEMBER: 'member'` (v1.8.2)
+- ✅ billing-constants.test.ts: `expect(...).toBe('member')` (v1.8.2)
+- ✅ billing.ts types: `UserRole = ... | 'member'` (v1.8.3) ← This fix
+
+**Verification:**
+- TypeScript: 0 errors
+- Tests: 363/363 passing
+- ESLint: 0 errors, 48 warnings
+
+---
+
 ## [1.8.2] - 2025-10-03
 
 ### 🔧 Phase 6 Critical Fixes - GPT-5 Code Review Findings

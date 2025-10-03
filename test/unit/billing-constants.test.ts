@@ -281,7 +281,7 @@ describe('Billing Constants', () => {
       expect(hasPermission('admin', 'billing:manage')).toBe(false);
       expect(hasPermission('manager', 'billing:view')).toBe(false);
       expect(hasPermission('sales', 'billing:manage')).toBe(false);
-      expect(hasPermission('team_member', 'billing:view')).toBe(false);
+      expect(hasPermission('member', 'billing:view')).toBe(false);
     });
 
     it('should return false for non-existent permissions', () => {
@@ -294,7 +294,7 @@ describe('Billing Constants', () => {
       expect(hasPermission('admin', 'features:analytics')).toBe(true);
       expect(hasPermission('manager', 'features:analytics')).toBe(true);
       expect(hasPermission('sales', 'features:analytics')).toBe(true);
-      expect(hasPermission('team_member', 'features:analytics')).toBe(false);
+      expect(hasPermission('member', 'features:analytics')).toBe(false);
     });
   });
 

@@ -35,7 +35,7 @@ export type AccessStatus = 'active' | 'grace_period' | 'locked' | 'read_only';
 /**
  * User roles in the system
  */
-export type UserRole = 'owner' | 'admin' | 'manager' | 'sales' | 'team_member';
+export type UserRole = 'owner' | 'admin' | 'manager' | 'sales' | 'member';
 
 /**
  * Subscription data structure
