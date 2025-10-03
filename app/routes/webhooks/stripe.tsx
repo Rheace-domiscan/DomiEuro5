@@ -177,13 +177,18 @@ async function handleSubscriptionCreated(event: Stripe.Event) {
 
   const tierConfig = TIER_CONFIG[tier as SubscriptionTier];
 
+  // Transform Stripe's interval ('month' | 'year') to internal format ('monthly' | 'annual')
+  const stripeInterval = subscription.items.data[0]?.plan?.interval;
+  const billingInterval =
+    stripeInterval === 'month' ? 'monthly' : stripeInterval === 'year' ? 'annual' : 'monthly'; // Default fallback
+
   await convexServer.mutation('subscriptions:create' as any, {
     organizationId,
     stripeCustomerId: subscription.customer as string,
     stripeSubscriptionId: subscription.id,
     tier: tier || 'starter',
     status: subscription.status,
-    billingInterval: subscription.items.data[0]?.plan?.interval || 'monthly',
+    billingInterval,
     seatsIncluded: tierConfig.seats.included,
     seatsTotal: tierConfig.seats.included,
     seatsActive: 0,

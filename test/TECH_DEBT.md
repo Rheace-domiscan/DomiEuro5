@@ -11,17 +11,20 @@ This document tracks testing gaps and technical debt in the test suite.
 **Risk Level:** Medium - Code IS tested, but not at unit level
 
 **Problem:**
+
 - Convex functions (`convex/subscriptions.ts`, `convex/billingHistory.ts`, `convex/users.ts`) are excluded from coverage metrics
 - Currently only tested via integration tests
 - Unit tests would provide faster feedback and better isolation
 
 **Current Testing:**
+
 - ✅ Integration tests in `test/integration/multi-tenancy.test.ts` verify subscription queries
 - ✅ Integration tests in `test/integration/stripe-webhooks.test.ts` verify mutations
 - ✅ MockConvexDatabase provides some isolation
 - ❌ No direct unit tests for Convex business logic
 
 **Action Items (Phase 7):**
+
 1. [ ] Research Convex testing best practices and utilities
 2. [ ] Add unit tests for `convex/subscriptions.ts`:
    - [ ] Test subscription creation logic
@@ -39,12 +42,14 @@ This document tracks testing gaps and technical debt in the test suite.
 6. [ ] Target: 80%+ coverage for Convex business logic
 
 **Why This Is Acceptable (For Now):**
+
 - All Convex code paths are exercised via integration tests
 - Multi-tenancy isolation is verified (critical security requirement)
 - Integration tests catch real bugs that unit tests might miss
 - This is a pragmatic trade-off for Phase 5 delivery
 
 **When This Becomes a Problem:**
+
 - Before production deployment
 - When Convex business logic becomes more complex
 - When debugging Convex issues takes too long
@@ -61,10 +66,12 @@ This document tracks testing gaps and technical debt in the test suite.
 **Risk Level:** Low - UI is simple, manually tested
 
 **Problem:**
+
 - UI components in `app/welcome/**` have no tests
 - React components in routes have minimal testing
 
 **Action Items (Phase 8):**
+
 1. [ ] Add React Testing Library tests for UI components
 2. [ ] Add visual regression tests (optional, Phase 9+)
 3. [ ] Include UI components in coverage metrics
@@ -80,10 +87,12 @@ This document tracks testing gaps and technical debt in the test suite.
 **Risk Level:** Low - Integration tests cover critical paths
 
 **Problem:**
+
 - No browser-based E2E tests (Playwright/Cypress)
 - User flows not tested end-to-end
 
 **Action Items (Phase 9+):**
+
 1. [ ] Add Playwright setup
 2. [ ] Add critical user journey tests:
    - [ ] Login → Organization selection → Dashboard
@@ -97,14 +106,14 @@ This document tracks testing gaps and technical debt in the test suite.
 
 **Last Updated:** 2025-10-03 (Phase 5 Complete)
 
-| Phase | Tests Added | Coverage Impact | Status |
-|-------|-------------|-----------------|--------|
-| Phase 1-4 | Auth, Permissions, Session | 95%+ app/lib | ✅ Complete |
-| Phase 5 | Stripe integration, Billing constants | Added 28 tests | ✅ Complete |
-| Phase 6 | TBD | TBD | 📋 Planned |
-| Phase 7 | **Convex unit tests** | **+15-20% overall** | ⏳ **TARGET** |
-| Phase 8 | UI component tests | +5-10% | 📋 Planned |
-| Phase 9+ | E2E tests | N/A (not counted) | 📋 Future |
+| Phase     | Tests Added                           | Coverage Impact     | Status        |
+| --------- | ------------------------------------- | ------------------- | ------------- |
+| Phase 1-4 | Auth, Permissions, Session            | 95%+ app/lib        | ✅ Complete   |
+| Phase 5   | Stripe integration, Billing constants | Added 28 tests      | ✅ Complete   |
+| Phase 6   | TBD                                   | TBD                 | 📋 Planned    |
+| Phase 7   | **Convex unit tests**                 | **+15-20% overall** | ⏳ **TARGET** |
+| Phase 8   | UI component tests                    | +5-10%              | 📋 Planned    |
+| Phase 9+  | E2E tests                             | N/A (not counted)   | 📋 Future     |
 
 ---
 
@@ -113,12 +122,14 @@ This document tracks testing gaps and technical debt in the test suite.
 When you're ready to tackle Convex unit tests (Phase 7):
 
 1. **Read Convex Testing Docs:**
+
    ```bash
    # Check if Convex has official testing utilities
    # https://docs.convex.dev/testing
    ```
 
 2. **Create Test Template:**
+
    ```typescript
    // test/unit/convex-subscriptions.test.ts
    import { describe, it, expect } from 'vitest';
@@ -132,6 +143,7 @@ When you're ready to tackle Convex unit tests (Phase 7):
    ```
 
 3. **Remove Exclusion:**
+
    ```diff
    // vitest.config.ts
    exclude: [
@@ -152,6 +164,7 @@ When you're ready to tackle Convex unit tests (Phase 7):
 ## Reminder System
 
 **If you forget about this:**
+
 1. ⚠️ The TODO comment in `vitest.config.ts` will remind you
 2. ⚠️ This document is linked from test README
 3. ⚠️ Phase 7 roadmap should reference this

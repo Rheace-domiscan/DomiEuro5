@@ -31,7 +31,9 @@ export function PricingTable({ currentTier, showCurrentPlan = false }: PricingTa
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
           Simple, transparent pricing
         </h1>
-        <p className="mt-4 text-xl text-gray-600">Choose the plan that's right for your team</p>
+        <p className="mt-4 text-xl text-gray-600">
+          Choose the plan that&apos;s right for your team
+        </p>
       </div>
 
       {/* Billing Toggle */}

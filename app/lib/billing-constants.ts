@@ -15,7 +15,7 @@ export const ROLES = {
   ADMIN: 'admin',
   MANAGER: 'manager',
   SALES: 'sales',
-  TEAM_MEMBER: 'team_member',
+  TEAM_MEMBER: 'member', // ✅ Match WorkOS convention
 } as const;
 
 /**

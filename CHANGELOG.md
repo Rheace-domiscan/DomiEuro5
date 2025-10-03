@@ -50,6 +50,7 @@ Test Files  12 passed (12)
 ```
 
 **Test Coverage Breakdown:**
+
 - Component rendering and props validation: ✅ Comprehensive
 - User interactions (toggle clicks, form submissions): ✅ Complete
 - Conditional rendering (badges, prices, features): ✅ Verified
@@ -60,6 +61,7 @@ Test Files  12 passed (12)
 ### Technical Improvements
 
 **React Component Testing:**
+
 - First comprehensive React component tests in the codebase
 - Uses React Testing Library best practices (user-centric queries)
 - AAA pattern (Arrange, Act, Assert) for clarity
@@ -67,6 +69,7 @@ Test Files  12 passed (12)
 - No flakiness: Deterministic, no timeouts or random data
 
 **CI/CD Compatibility:**
+
 - All tests pass in CI environment (verified)
 - Zero TypeScript errors
 - Zero ESLint errors
@@ -76,12 +79,14 @@ Test Files  12 passed (12)
 ### Verification Report
 
 **Billing Implementation Status:**
+
 - Phase 1-5: ✅ Complete (314 tests passing)
 - Phase 6 Implementation: ✅ Complete (927 lines, 4 components)
 - Phase 6 Tests: ✅ Complete (538 lines, 49 tests)
 - Total Test Suite: ✅ 363/363 passing (100% pass rate)
 
 **Production Readiness:**
+
 - ✅ All tests passing
 - ✅ Type safety verified (zero TS errors)
 - ✅ Code quality verified (zero lint errors)
@@ -97,18 +102,21 @@ Test Files  12 passed (12)
 ### Why This Release Matters
 
 **Test Quality:**
+
 - ✅ 49 new tests with zero regressions
 - ✅ 58% test-to-code ratio (538 test lines / 927 component lines)
 - ✅ Proper mocking and isolation
 - ✅ Comprehensive edge case coverage
 
 **Developer Experience:**
+
 - ✅ Reusable test utilities for future component tests
 - ✅ Clear test patterns to follow
 - ✅ Fast feedback loop (<1 second full suite)
 - ✅ Confidence in refactoring (comprehensive coverage)
 
 **CI/CD:**
+
 - ✅ Guaranteed to pass in CI environment
 - ✅ No environment-specific issues
 - ✅ Consistent results across local/CI
@@ -161,22 +169,26 @@ This release completes Phase 6 of the billing roadmap, implementing a comprehens
 ### Technical Details
 
 **Pricing Tiers:**
+
 - **Free**: £0/month, 1 seat included
 - **Starter**: £50/month or £500/year (5-19 seats)
 - **Professional**: £250/month or £2500/year (20-40 seats)
 - **Additional seats**: £10/seat/month
 
 **Annual Billing Savings:**
+
 - Annual price = 10x monthly (2 months free)
 - Savings percentage: 17% (2/12 months)
 
 **Stripe Integration:**
+
 - Uses `createCheckoutSession()` from Phase 5
 - Passes tier, interval, seats, and organizationId
 - Includes success/cancel URLs for proper flow
 - Metadata for webhook processing
 
 **Responsive Design:**
+
 - Mobile-first TailwindCSS implementation
 - 3-column grid on desktop, stacked cards on mobile
 - Feature table transforms to accordion on mobile
@@ -261,6 +273,7 @@ This release completes Phase 6 of the billing roadmap, implementing a comprehens
 ### How to Use
 
 1. **View Pricing Page**
+
    ```
    Navigate to: http://localhost:5173/pricing
    ```
@@ -279,6 +292,7 @@ This release completes Phase 6 of the billing roadmap, implementing a comprehens
 **Phase 7: Billing Dashboard** (Day 5-6, 5-6 hours)
 
 Ready to implement:
+
 - Protected billing management page (owner/admin only)
 - Current plan display and seat management
 - Billing history table with invoice records
@@ -289,6 +303,7 @@ Ready to implement:
 ### Why This Release Matters
 
 **User Experience:**
+
 - ✅ Clear pricing presentation for potential customers
 - ✅ Transparent annual savings calculation (17% discount)
 - ✅ Mobile-optimized for on-the-go browsing
@@ -296,6 +311,7 @@ Ready to implement:
 - ✅ One-click upgrade flow via Stripe
 
 **Technical Excellence:**
+
 - ✅ Type-safe implementation (0 TypeScript errors)
 - ✅ Proper error handling (failed checkouts, auth issues)
 - ✅ SEO optimized (meta tags for discoverability)
@@ -309,11 +325,13 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
 ### Fixed
 
 **Stripe Webhook Route Registration**
+
 - Fix 404 errors on webhook endpoint by registering route in app/routes.ts
 - Webhook route file existed but wasn't registered in routing config
 - All webhook events now return 200 status codes correctly
 
 **ESLint Error Cleanup (29 errors → 0 errors)**
+
 - Remove unused imports from test files (beforeEach, vi, type Mock, type Tier)
 - Fix unused variables in multi-tenancy integration tests using underscore prefix convention
 - Fix unused parameters in permissions tests using underscore prefix
@@ -321,6 +339,7 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
 - Final verification: 0 errors, 48 acceptable warnings
 
 **Files Modified:**
+
 - app/routes.ts - Added webhook route registration
 - test/unit/session.server.test.ts - Removed unused imports
 - test/unit/permissions.test.ts - Fixed unused type and parameter
@@ -332,6 +351,7 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
 ### Fixed
 
 **CI/CD Pipeline Fixes**
+
 - Remove all console.log/console.error statements from production code (webhooks and auth routes)
 - Fix ESLint errors in test files (undefined globals in test-utils.tsx)
 - Remove unused imports and variables (calculateSubscriptionCost, setupConvexQueryMocks)
@@ -339,6 +359,7 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
 - Fix Prettier formatting issues in webhook handlers
 
 **Coverage Configuration**
+
 - Properly configure coverage to exclude untestable files instead of lowering thresholds
 - **Restored high coverage standards**: 90% lines, 85% functions (previously reward-hacked to 42%)
 - Exclude Convex functions from coverage (require Convex runtime, tested via integration)
@@ -349,6 +370,7 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
 ### Added
 
 **Tech Debt Tracking System** (Prevents forgetting testing gaps)
+
 - Created `test/TECH_DEBT.md` - Master tech debt tracker with Phase 7 timeline
 - Added TODO comments in `vitest.config.ts` pointing to Phase 7 Convex unit tests
 - Updated `test/README.md` with tech debt section linking to tracking document
@@ -362,6 +384,7 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
   - Placeholder test file warnings
 
 **Tech Debt Details:**
+
 - Convex functions currently tested via integration tests only (acceptable short-term)
 - Target: Add proper Convex unit tests in Phase 7 (before production)
 - Risk: Medium - code IS tested, but not at unit level
@@ -371,12 +394,14 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
 ### Changed
 
 **Testing Strategy**
+
 - Moved from "lower coverage thresholds" to "exclude untestable files"
 - Coverage metrics now focus on business logic that CAN and SHOULD be unit tested
 - Integration-tested code (Convex, routes) excluded with clear documentation
 - This approach maintains high standards while being pragmatic about test boundaries
 
 **Documentation**
+
 - Updated test/README.md to explain coverage exclusions
 - Enhanced vitest.config.ts comments to explain why files are excluded
 - Added comprehensive tech debt tracking to prevent future issues
@@ -384,12 +409,14 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
 ### Technical Notes
 
 **Why This Release Matters:**
+
 - **Fixed reward hacking**: Commit c164c58 lowered coverage to 42% (bad!)
 - **Restored standards**: Now enforce 90% coverage on testable code (good!)
 - **Documented trade-offs**: Tech debt tracker prevents forgetting gaps
 - **CI stability**: All 314 tests passing, no linting errors, high coverage maintained
 
 **Verification:**
+
 - ✅ All 314 tests passing
 - ✅ CI/CD pipeline green (59s runtime)
 - ✅ TypeScript: No errors
@@ -398,6 +425,7 @@ The pricing page is now live and ready for customer acquisition. Phase 6 provide
 - ✅ Tech debt: Tracked with Phase 7 timeline
 
 **Commits in this release:**
+
 - 2869b2e: docs: Add tech debt tracking for Convex unit tests (Option 3)
 - 2ebc150: fix: Properly configure coverage to exclude untestable files, restore high thresholds
 - c164c58: fix: Adjust coverage thresholds for Phase 5 Convex functions (REVERTED by 2ebc150)

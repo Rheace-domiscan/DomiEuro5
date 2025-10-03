@@ -98,6 +98,24 @@ export default [
     },
   },
 
+  // Test files (allow browser globals from happy-dom)
+  {
+    files: ['test/**/*.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      globals: {
+        document: 'readonly',
+        window: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLFormElement: 'readonly',
+        Element: 'readonly',
+        Node: 'readonly',
+      },
+    },
+  },
+
   // Configuration files
   {
     files: ['*.config.{js,ts}', '*.config.*.{js,ts}'],

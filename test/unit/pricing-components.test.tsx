@@ -324,12 +324,7 @@ describe('PricingCard Component', () => {
   describe('Free Tier Specifics', () => {
     it('should show "No credit card required" for free tier', () => {
       renderWithProviders(
-        <PricingCard
-          {...basePricingCardProps}
-          tier="free"
-          monthlyPrice={0}
-          annualPrice={0}
-        />
+        <PricingCard {...basePricingCardProps} tier="free" monthlyPrice={0} annualPrice={0} />
       );
 
       expect(screen.getByText('No credit card required')).toBeInTheDocument();
@@ -343,12 +338,7 @@ describe('PricingCard Component', () => {
 
     it('should show £0 for free tier pricing', () => {
       renderWithProviders(
-        <PricingCard
-          {...basePricingCardProps}
-          tier="free"
-          monthlyPrice={0}
-          annualPrice={0}
-        />
+        <PricingCard {...basePricingCardProps} tier="free" monthlyPrice={0} annualPrice={0} />
       );
 
       expect(screen.getByText('£0')).toBeInTheDocument();
@@ -435,7 +425,9 @@ describe('FeatureList Component', () => {
       renderWithProviders(<FeatureList highlightTier="free" />);
 
       const table = document.querySelector('.hidden.lg\\:block table');
-      const freeHeader = within(table as HTMLElement).getByText('Free').closest('th');
+      const freeHeader = within(table as HTMLElement)
+        .getByText('Free')
+        .closest('th');
 
       expect(freeHeader).toHaveClass('bg-indigo-50');
       expect(freeHeader).toHaveClass('text-indigo-900');
@@ -445,7 +437,9 @@ describe('FeatureList Component', () => {
       renderWithProviders(<FeatureList highlightTier="starter" />);
 
       const table = document.querySelector('.hidden.lg\\:block table');
-      const starterHeader = within(table as HTMLElement).getByText('Starter').closest('th');
+      const starterHeader = within(table as HTMLElement)
+        .getByText('Starter')
+        .closest('th');
 
       expect(starterHeader).toHaveClass('bg-indigo-50');
       expect(starterHeader).toHaveClass('text-indigo-900');
@@ -455,7 +449,9 @@ describe('FeatureList Component', () => {
       renderWithProviders(<FeatureList highlightTier="professional" />);
 
       const table = document.querySelector('.hidden.lg\\:block table');
-      const proHeader = within(table as HTMLElement).getByText('Professional').closest('th');
+      const proHeader = within(table as HTMLElement)
+        .getByText('Professional')
+        .closest('th');
 
       expect(proHeader).toHaveClass('bg-indigo-50');
       expect(proHeader).toHaveClass('text-indigo-900');

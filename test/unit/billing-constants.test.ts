@@ -32,7 +32,7 @@ describe('Billing Constants', () => {
       expect(ROLES.ADMIN).toBe('admin');
       expect(ROLES.MANAGER).toBe('manager');
       expect(ROLES.SALES).toBe('sales');
-      expect(ROLES.TEAM_MEMBER).toBe('team_member');
+      expect(ROLES.TEAM_MEMBER).toBe('member');
     });
 
     it('should have string type for all roles', () => {

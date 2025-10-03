@@ -52,7 +52,7 @@ This guide walks through configuring Stripe for the billing system, including cr
      - **Currency:** `GBP`
      - **Billing period:** `Monthly (recurring)`
 3. Click **Add product**
-4. **Copy the Price ID** → Add to `.env` as `STRIPE_PRICE_PRO_MONTHLY`
+4. **Copy the Price ID** → Add to `.env` as `STRIPE_PRICE_PROFESSIONAL_MONTHLY`
 
 ### 1.4 Create "Professional Plan - Annual"
 
@@ -65,7 +65,7 @@ This guide walks through configuring Stripe for the billing system, including cr
      - **Currency:** `GBP`
      - **Billing period:** `Yearly (recurring)`
 3. Click **Add product**
-4. **Copy the Price ID** → Add to `.env` as `STRIPE_PRICE_PRO_ANNUAL`
+4. **Copy the Price ID** → Add to `.env` as `STRIPE_PRICE_PROFESSIONAL_ANNUAL`
 
 ### 1.5 Create "Additional Seat"
 
@@ -206,8 +206,8 @@ STRIPE_WEBHOOK_SECRET=whsec_...  # From Stripe CLI (local) or Dashboard (product
 # Product Price IDs
 STRIPE_PRICE_STARTER_MONTHLY=price_...
 STRIPE_PRICE_STARTER_ANNUAL=price_...
-STRIPE_PRICE_PRO_MONTHLY=price_...
-STRIPE_PRICE_PRO_ANNUAL=price_...
+STRIPE_PRICE_PROFESSIONAL_MONTHLY=price_...
+STRIPE_PRICE_PROFESSIONAL_ANNUAL=price_...
 STRIPE_PRICE_ADDITIONAL_SEAT=price_...
 ```
 

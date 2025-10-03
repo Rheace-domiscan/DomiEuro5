@@ -5,6 +5,7 @@
  * Shows which features are available in each tier with checkmarks.
  */
 
+import React from 'react';
 import type { SubscriptionTier } from '~/types/billing';
 import { TIER_CONFIG } from '~/lib/billing-constants';
 
@@ -92,7 +93,7 @@ export function FeatureList({ highlightTier }: FeatureListProps) {
             Compare Features
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            Everything you need to know about what's included in each plan
+            Everything you need to know about what&apos;s included in each plan
           </p>
         </div>
 
@@ -262,6 +263,3 @@ export function FeatureList({ highlightTier }: FeatureListProps) {
     </div>
   );
 }
-
-// Export React for Fragment usage
-import React from 'react';
