@@ -7,7 +7,7 @@
  * Coverage Target: >80% (security-critical)
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { sessionStorage, getSession, commitSession, destroySession } from '~/lib/session.server';
 
 describe('Session Management (session.server.ts)', () => {

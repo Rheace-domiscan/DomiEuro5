@@ -12,12 +12,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockWorkOS, resetWorkOSMocks } from '../mocks/workos';
 import { mockConvexServer, resetConvexMocks, MockConvexDatabase } from '../mocks/convex';
-import {
-  mockUser,
-  mockOrganization,
-  mockOrganization2,
-  createMockUser,
-} from '../helpers/test-data';
+// Mock data helpers not needed - tests create data directly with mockDb
+// import { mockUser, mockOrganization, mockOrganization2, createMockUser } from '../helpers/test-data';
 
 // Mock WorkOS
 vi.mock('@workos-inc/node', () => ({
@@ -47,7 +43,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
   describe('User Data Isolation', () => {
     it('should only return users from the same organization', async () => {
       // Setup: Create users in two different organizations
-      const org1User1 = mockDb.createUser({
+      mockDb.createUser({
         email: 'user1@org1.com',
         name: 'Org1 User 1',
         workosUserId: 'user_org1_1',
@@ -55,7 +51,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
         role: 'owner',
       });
 
-      const org1User2 = mockDb.createUser({
+      mockDb.createUser({
         email: 'user2@org1.com',
         name: 'Org1 User 2',
         workosUserId: 'user_org1_2',
@@ -63,7 +59,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
         role: 'admin',
       });
 
-      const org2User1 = mockDb.createUser({
+      mockDb.createUser({
         email: 'user1@org2.com',
         name: 'Org2 User 1',
         workosUserId: 'user_org2_1',
@@ -71,7 +67,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
         role: 'owner',
       });
 
-      const org2User2 = mockDb.createUser({
+      mockDb.createUser({
         email: 'user2@org2.com',
         name: 'Org2 User 2',
         workosUserId: 'user_org2_2',
@@ -109,7 +105,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
 
     it('should handle users with same email in different organizations', async () => {
       // Setup: Two users with same email in different orgs
-      const org1User = mockDb.createUser({
+      mockDb.createUser({
         email: 'shared@example.com',
         name: 'Org1 Shared User',
         workosUserId: 'user_org1_shared',
@@ -117,7 +113,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
         role: 'owner',
       });
 
-      const org2User = mockDb.createUser({
+      mockDb.createUser({
         email: 'shared@example.com', // Same email!
         name: 'Org2 Shared User',
         workosUserId: 'user_org2_shared',
@@ -181,14 +177,14 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
   describe('Subscription Data Isolation', () => {
     it('should only return subscription for the correct organization', async () => {
       // Setup: Create subscriptions for two organizations
-      const org1Subscription = mockDb.createSubscription({
+      const _org1Subscription = mockDb.createSubscription({
         organizationId: 'org_1',
         tier: 'professional',
         stripeCustomerId: 'cus_org1',
         stripeSubscriptionId: 'sub_org1',
       });
 
-      const org2Subscription = mockDb.createSubscription({
+      const _org2Subscription = mockDb.createSubscription({
         organizationId: 'org_2',
         tier: 'starter',
         stripeCustomerId: 'cus_org2',
@@ -235,7 +231,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
   describe('Role Isolation', () => {
     it('should isolate role queries by organization', async () => {
       // Setup: Same role name in different organizations
-      const org1Owner = mockDb.createUser({
+      const _org1Owner = mockDb.createUser({
         email: 'owner@org1.com',
         name: 'Org1 Owner',
         workosUserId: 'user_org1_owner',
@@ -243,7 +239,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
         role: 'owner',
       });
 
-      const org2Owner = mockDb.createUser({
+      const _org2Owner = mockDb.createUser({
         email: 'owner@org2.com',
         name: 'Org2 Owner',
         workosUserId: 'user_org2_owner',
@@ -351,7 +347,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
       expect(org3Users).toHaveLength(3);
 
       // CRITICAL: Verify complete isolation
-      const allOrgIds = [
+      const _allOrgIds = [
         ...org1Users.map(u => u.organizationId),
         ...org2Users.map(u => u.organizationId),
         ...org3Users.map(u => u.organizationId),
@@ -405,7 +401,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
       };
 
       // Act: Create users in mock database
-      const org1User = mockDb.createUser({
+      const _org1User = mockDb.createUser({
         email: org1AuthResponse.user.email,
         name: 'Org1 Auth User',
         workosUserId: org1AuthResponse.user.id,
@@ -413,7 +409,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
         role: 'owner',
       });
 
-      const org2User = mockDb.createUser({
+      const _org2User = mockDb.createUser({
         email: org2AuthResponse.user.email,
         name: 'Org2 Auth User',
         workosUserId: org2AuthResponse.user.id,
@@ -485,7 +481,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
   describe('Security Regression Tests', () => {
     it('should never expose organization data through user queries', async () => {
       // Setup: Create sensitive data in org_secure
-      const sensitiveUserId = mockDb.createUser({
+      const _sensitiveUserId = mockDb.createUser({
         email: 'ceo@topsecret.com',
         name: 'CEO',
         workosUserId: 'user_ceo',
@@ -500,7 +496,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
       });
 
       // Setup: Create attacker in org_attacker
-      const attackerId = mockDb.createUser({
+      const _attackerId = mockDb.createUser({
         email: 'attacker@malicious.com',
         name: 'Attacker',
         workosUserId: 'user_attacker',

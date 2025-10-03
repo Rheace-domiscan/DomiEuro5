@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.2] - 2025-10-03
+
+### Fixed
+
+**Stripe Webhook Route Registration**
+- Fix 404 errors on webhook endpoint by registering route in app/routes.ts
+- Webhook route file existed but wasn't registered in routing config
+- All webhook events now return 200 status codes correctly
+
+**ESLint Error Cleanup (29 errors → 0 errors)**
+- Remove unused imports from test files (beforeEach, vi, type Mock, type Tier)
+- Fix unused variables in multi-tenancy integration tests using underscore prefix convention
+- Fix unused parameters in permissions tests using underscore prefix
+- Apply proper TypeScript/ESLint patterns (no workarounds)
+- Final verification: 0 errors, 48 acceptable warnings
+
+**Files Modified:**
+- app/routes.ts - Added webhook route registration
+- test/unit/session.server.test.ts - Removed unused imports
+- test/unit/permissions.test.ts - Fixed unused type and parameter
+- test/unit/auth.server.test.ts - Fixed unused type and variables
+- test/integration/multi-tenancy.test.ts - Fixed multiple unused variables
+
 ## [1.7.1] - 2025-10-03
 
 ### Fixed

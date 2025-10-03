@@ -7,7 +7,7 @@
  * Coverage Target: 85%+ (security-critical code)
  */
 
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockWorkOS, resetWorkOSMocks } from '../mocks/workos';
 import { mockConvexServer, resetConvexMocks } from '../mocks/convex';
 import { mockUser, mockOrganization } from '../helpers/test-data';
@@ -487,7 +487,7 @@ describe('Authentication Module (auth.server.ts)', () => {
 
       await expect(authModule.createUserSession('user_123', '/')).rejects.toThrow();
 
-      const setCallsAfter = mockSession.set.mock.calls.length;
+      const _setCallsAfter = mockSession.set.mock.calls.length;
       const newCalls = mockSession.set.mock.calls.slice(setCallsBefore);
 
       // Should only have one set call for userId
@@ -583,7 +583,7 @@ describe('Authentication Module (auth.server.ts)', () => {
 
   describe('getAuthorizationUrl()', () => {
     it('should generate WorkOS authorization URL without state or organizationId', () => {
-      const url = authModule.getAuthorizationUrl();
+      const _url = authModule.getAuthorizationUrl();
 
       expect(mockWorkOS.userManagement.getAuthorizationUrl).toHaveBeenCalledWith({
         clientId: 'test_client_id',
@@ -593,7 +593,7 @@ describe('Authentication Module (auth.server.ts)', () => {
     });
 
     it('should include state when provided', () => {
-      const url = authModule.getAuthorizationUrl('test_state');
+      const _url = authModule.getAuthorizationUrl('test_state');
 
       expect(mockWorkOS.userManagement.getAuthorizationUrl).toHaveBeenCalledWith({
         clientId: 'test_client_id',
@@ -604,7 +604,7 @@ describe('Authentication Module (auth.server.ts)', () => {
     });
 
     it('should include organizationId when provided', () => {
-      const url = authModule.getAuthorizationUrl(undefined, 'org_123');
+      const _url = authModule.getAuthorizationUrl(undefined, 'org_123');
 
       expect(mockWorkOS.userManagement.getAuthorizationUrl).toHaveBeenCalledWith({
         clientId: 'test_client_id',
@@ -615,7 +615,7 @@ describe('Authentication Module (auth.server.ts)', () => {
     });
 
     it('should include both state and organizationId when provided', () => {
-      const url = authModule.getAuthorizationUrl('test_state', 'org_123');
+      const _url = authModule.getAuthorizationUrl('test_state', 'org_123');
 
       expect(mockWorkOS.userManagement.getAuthorizationUrl).toHaveBeenCalledWith({
         clientId: 'test_client_id',

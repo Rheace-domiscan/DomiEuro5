@@ -8,4 +8,5 @@ export default [
   route('auth/callback', 'routes/auth/callback.tsx'),
   route('auth/create-organization', 'routes/auth/create-organization.tsx'),
   route('auth/logout', 'routes/auth/logout.tsx'),
+  route('webhooks/stripe', 'routes/webhooks/stripe.tsx'),
 ] satisfies RouteConfig;

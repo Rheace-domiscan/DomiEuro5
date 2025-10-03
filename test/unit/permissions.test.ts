@@ -18,7 +18,6 @@ import {
   getRoleName,
   getTierName,
   type Role,
-  type Tier,
   type Permission,
 } from '~/lib/permissions';
 
@@ -88,7 +87,7 @@ describe('RBAC Permissions System', () => {
     });
 
     it('should have valid role arrays for each permission', () => {
-      Object.entries(PERMISSIONS).forEach(([permission, roles]) => {
+      Object.entries(PERMISSIONS).forEach(([_permission, roles]) => {
         expect(Array.isArray(roles)).toBe(true);
         expect(roles.length).toBeGreaterThan(0);
 
