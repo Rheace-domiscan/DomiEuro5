@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.4] - 2025-10-04
+
+### ✅ Billing Dashboard Verification
+
+**Integration alignment**
+
+- Updated `test/integration/billing-dashboard.test.ts` to exercise the current seat-management contract (`previewSeatChange` / `applySeatChange` with `mode` + `seats`).
+- Added assertions for seat totals and modes to guard against regressions in Stripe proration previews and seat updates.
+- Captured the passing audit log at `.claude/verification-reports/phase-7-2025-10-04.md` for Phase 7 sign-off.
+
+**Testing**
+
+- `npm run test -- --run test/integration/billing-dashboard.test.ts`
+- `npm run test`
+
 ## [1.9.3] - 2025-10-03
 
 ### 💳 Immediate Seat Charge Settlement

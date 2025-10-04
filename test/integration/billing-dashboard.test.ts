@@ -202,7 +202,7 @@ describe('billing settings action', () => {
     }
   });
 
-  it('returns seat preview details for previewSeats intent', async () => {
+  it('returns seat preview details for previewSeatChange intent', async () => {
     vi.mocked(requireRole).mockResolvedValue(ownerUser);
     vi.mocked(convexServer.query).mockResolvedValue(subscriptionRecord);
 
@@ -240,22 +240,24 @@ describe('billing settings action', () => {
 
     const request = createMockRequest('/settings/billing', {
       method: 'POST',
-      body: new URLSearchParams({ intent: 'previewSeats', seatsToAdd: '2' }),
+      body: new URLSearchParams({ intent: 'previewSeatChange', mode: 'add', seats: '2' }),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
     const response = await action({ request, params: {}, context: {} });
     const payload = await resolveLoaderData<any>(response);
 
-    expect(payload.intent).toBe('previewSeats');
+    expect(payload.intent).toBe('previewSeatChange');
+    expect(payload.mode).toBe('add');
     expect(payload.ok).toBe(true);
     expect(payload.preview.immediateAmount).toBe(1500);
     expect(payload.preview.additionalSeatsAfter).toBe(3);
+    expect(payload.preview.seatsAfter).toBe(8);
     expect(getStripePriceId).toHaveBeenCalledWith('starter', 'monthly');
     expect(getAdditionalSeatPriceId).toHaveBeenCalled();
   });
 
-  it('adds seats and updates subscription totals for addSeats intent', async () => {
+  it('adds seats and updates subscription totals for applySeatChange intent', async () => {
     vi.mocked(requireRole).mockResolvedValue(ownerUser);
     vi.mocked(convexServer.query).mockResolvedValue(subscriptionRecord);
     stripeSubscriptionsRetrieve.mockResolvedValue({
@@ -282,16 +284,18 @@ describe('billing settings action', () => {
 
     const request = createMockRequest('/settings/billing', {
       method: 'POST',
-      body: new URLSearchParams({ intent: 'addSeats', seatsToAdd: '2' }),
+      body: new URLSearchParams({ intent: 'applySeatChange', mode: 'add', seats: '2' }),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
     const response = await action({ request, params: {}, context: {} });
     const payload = await resolveLoaderData<any>(response);
 
-    expect(payload.intent).toBe('addSeats');
+    expect(payload.intent).toBe('applySeatChange');
+    expect(payload.mode).toBe('add');
     expect(payload.ok).toBe(true);
-    expect(payload.seatsAdded).toBe(2);
+    expect(payload.seatsChanged).toBe(2);
+    expect(payload.newSeatTotal).toBe(8);
     expect(convexServer.mutation).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ seatsTotal: 8 })
