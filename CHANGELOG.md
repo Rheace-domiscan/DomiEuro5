@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.1] - 2025-10-05
+
+### 🧹 Maintenance
+
+- Documented a maintenance-only release to capture the changelog update; no application code changes.
+
 ## [1.11.0] - 2025-10-05
 
 ### 🔐 Feature Gating Framework
