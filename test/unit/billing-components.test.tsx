@@ -83,7 +83,7 @@ describe('SeatWarningBanner', () => {
 
 describe('SeatManagement', () => {
   it('renders seat usage metrics and manage billing button', () => {
-    const onAddSeats = vi.fn();
+    const onAdjustSeats = vi.fn();
 
     renderWithProviders(
       <SeatManagement
@@ -94,7 +94,7 @@ describe('SeatManagement', () => {
         maxSeats={19}
         tierName="Starter"
         isAtSeatCap={false}
-        onAddSeats={onAddSeats}
+        onAdjustSeats={onAdjustSeats}
         manageBillingAction={
           <form data-testid="portal-form">
             <input type="hidden" name="intent" value="manageBilling" />
@@ -109,11 +109,11 @@ describe('SeatManagement', () => {
     expect(screen.getByText(/Manage Billing/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Add Seats'));
-    expect(onAddSeats).toHaveBeenCalledTimes(1);
+    expect(onAdjustSeats).toHaveBeenCalledWith('add');
   });
 
   it('disables add seats button when at seat cap', () => {
-    const onAddSeats = vi.fn();
+    const onAdjustSeats = vi.fn();
 
     renderWithProviders(
       <SeatManagement
@@ -124,7 +124,7 @@ describe('SeatManagement', () => {
         maxSeats={40}
         tierName="Professional"
         isAtSeatCap={true}
-        onAddSeats={onAddSeats}
+        onAdjustSeats={onAdjustSeats}
         manageBillingAction={<button disabled>Manage Billing</button>}
       />
     );
@@ -132,6 +132,51 @@ describe('SeatManagement', () => {
     const addSeatsButton = screen.getByRole('button', { name: /seat limit reached/i });
     expect(addSeatsButton).toBeDisabled();
     fireEvent.click(addSeatsButton);
-    expect(onAddSeats).not.toHaveBeenCalled();
+    expect(onAdjustSeats).not.toHaveBeenCalled();
+  });
+
+  it('invokes remove callback when seats can be reduced', () => {
+    const onAdjustSeats = vi.fn();
+
+    renderWithProviders(
+      <SeatManagement
+        seatsIncluded={5}
+        seatsTotal={8}
+        seatsActive={5}
+        seatsAvailable={3}
+        maxSeats={19}
+        tierName="Starter"
+        isAtSeatCap={false}
+        onAdjustSeats={onAdjustSeats}
+        manageBillingAction={<button>Manage Billing</button>}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Remove Seats'));
+    expect(onAdjustSeats).toHaveBeenCalledWith('remove');
+  });
+
+  it('disables remove seats button when at minimum allocation', () => {
+    const onAdjustSeats = vi.fn();
+
+    renderWithProviders(
+      <SeatManagement
+        seatsIncluded={5}
+        seatsTotal={5}
+        seatsActive={5}
+        seatsAvailable={0}
+        maxSeats={19}
+        tierName="Starter"
+        isAtSeatCap={false}
+        onAdjustSeats={onAdjustSeats}
+        manageBillingAction={<button>Manage Billing</button>}
+      />
+    );
+
+    const removeButton = screen.getByText('Remove Seats');
+    expect(removeButton).toBeDisabled();
+    fireEvent.click(removeButton);
+    expect(onAdjustSeats).not.toHaveBeenCalled();
+    expect(screen.getByText(/All seats are included in your plan/)).toBeInTheDocument();
   });
 });

@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.2] - 2025-10-03
+
+### 🚀 Seat Management Enhancements
+
+**Seat removal support**
+
+- Added add/remove seat modes to `SeatManagement.tsx` with validation messaging for plan limits.
+- Refactored `app/routes/settings/billing.tsx` modal to handle seat reductions, reuse preview logic, and surface clear success messaging.
+- Normalised Stripe preview responses so tax group breakdowns appear for both additions and removals.
+
+**Billing modal improvements**
+
+- Dynamic copy and button styling clarify whether seats are being added or removed.
+- Prevents preview/apply submissions when the requested change exceeds plan capacity or active user counts.
+- Persisted seat deltas and tax summaries in the modal for either direction of change.
+
+**Testing**
+
+- `npm run test -- --run test/unit/billing-components.test.tsx`
+
 ## [1.9.1] - 2025-10-03
 
 ### 🔧 Billing Dashboard UX Improvements

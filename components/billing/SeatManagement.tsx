@@ -7,6 +7,8 @@
 
 import type { ReactNode } from 'react';
 
+type SeatAdjustmentMode = 'add' | 'remove';
+
 interface SeatManagementProps {
   seatsIncluded: number;
   seatsTotal: number;
@@ -16,7 +18,7 @@ interface SeatManagementProps {
   tierName: string;
   isAtSeatCap: boolean;
   manageBillingAction: ReactNode;
-  onAddSeats: () => void;
+  onAdjustSeats: (mode: SeatAdjustmentMode) => void;
 }
 
 export function SeatManagement({
@@ -28,10 +30,17 @@ export function SeatManagement({
   tierName,
   isAtSeatCap,
   manageBillingAction,
-  onAddSeats,
+  onAdjustSeats,
 }: SeatManagementProps) {
   const utilization = Math.min((seatsActive / Math.max(seatsTotal, 1)) * 100, 100);
   const seatsOver = Math.max(0, seatsActive - seatsTotal);
+  const minimumSeatTotal = Math.max(seatsIncluded, seatsActive);
+  const canRemoveSeats = seatsTotal > minimumSeatTotal;
+  const removalDisabledReason = canRemoveSeats
+    ? null
+    : seatsTotal <= seatsIncluded
+    ? 'All seats are included in your plan'
+    : 'Remove team members before reducing seats';
 
   return (
     <aside className="rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -82,21 +91,36 @@ export function SeatManagement({
         <div className="space-y-3">
           {manageBillingAction}
 
-          <button
-            type="button"
-            onClick={onAddSeats}
-            className="w-full rounded-lg border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400"
-            disabled={isAtSeatCap}
-          >
-            {isAtSeatCap ? 'Seat limit reached' : 'Add Seats'}
-          </button>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => onAdjustSeats('add')}
+              className="w-full rounded-lg border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400"
+              disabled={isAtSeatCap}
+            >
+              {isAtSeatCap ? 'Seat limit reached' : 'Add Seats'}
+            </button>
 
-          {isAtSeatCap && (
+            <button
+              type="button"
+              onClick={() => onAdjustSeats('remove')}
+              className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400"
+              disabled={!canRemoveSeats}
+            >
+              Remove Seats
+            </button>
+          </div>
+
+          {isAtSeatCap ? (
             <p className="text-xs text-amber-600">
               You&apos;re at the maximum seat capacity for this plan. Upgrade to a higher tier to unlock
               more seats.
             </p>
-          )}
+          ) : null}
+
+          {removalDisabledReason ? (
+            <p className="text-xs text-gray-500">{removalDisabledReason}</p>
+          ) : null}
         </div>
       </div>
     </aside>
