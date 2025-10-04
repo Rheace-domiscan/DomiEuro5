@@ -70,6 +70,67 @@ export const stripe = new Stripe(stripeSecretKey, {
 });
 
 /**
+ * Finalize and charge the next invoice for a subscription.
+ *
+ * Used after mid-cycle seat adjustments to ensure prorations are collected immediately
+ * (rather than waiting for the next billing cycle). Also handles the inverse case where
+ * removing seats produces a credit-only invoice by finalizing it so the balance applies
+ * right away.
+ */
+export async function settleSubscriptionInvoice(options: {
+  customerId: string;
+  subscriptionId: string;
+}): Promise<Stripe.Invoice | null> {
+  const { customerId, subscriptionId } = options;
+
+  const findInvoice = async (status: Stripe.Invoice.Status) => {
+    const invoices = await stripe.invoices.list({
+      customer: customerId,
+      subscription: subscriptionId,
+      status,
+      limit: 1,
+    });
+
+    return invoices.data[0] ?? null;
+  };
+
+  let invoice = (await findInvoice('open')) ?? (await findInvoice('draft'));
+
+  if (!invoice) {
+    invoice = await stripe.invoices.create({
+      customer: customerId,
+      subscription: subscriptionId,
+      collection_method: 'charge_automatically',
+      auto_advance: false,
+    });
+  }
+
+  if (!invoice) {
+    return null;
+  }
+
+  if (invoice.status === 'draft') {
+    invoice = await stripe.invoices.finalizeInvoice(invoice.id, {
+      auto_advance: false,
+    });
+  }
+
+  if (invoice.status === 'open' && invoice.collection_method === 'charge_automatically') {
+    try {
+      invoice = await stripe.invoices.pay(invoice.id);
+    } catch (error) {
+      throw new Error(
+        error instanceof Error
+          ? `Failed to charge seat adjustment invoice: ${error.message}`
+          : 'Failed to charge seat adjustment invoice'
+      );
+    }
+  }
+
+  return invoice;
+}
+
+/**
  * Check if running in test mode
  */
 export function isTestMode(): boolean {

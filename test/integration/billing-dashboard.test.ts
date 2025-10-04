@@ -27,6 +27,7 @@ vi.mock('~/lib/stripe.server', () => ({
   createBillingPortalSession: vi.fn(),
   getAdditionalSeatPriceId: vi.fn(() => 'price_additional'),
   getStripePriceId: vi.fn(() => 'price_base'),
+  settleSubscriptionInvoice: vi.fn(),
   stripe: {
     subscriptions: {
       retrieve: vi.fn(),
@@ -45,12 +46,14 @@ import {
   createBillingPortalSession,
   getAdditionalSeatPriceId,
   getStripePriceId,
+  settleSubscriptionInvoice,
   stripe,
 } from '~/lib/stripe.server';
 
 const stripeSubscriptionsRetrieve = vi.mocked(stripe.subscriptions.retrieve);
 const stripeSubscriptionsUpdate = vi.mocked(stripe.subscriptions.update);
 const stripeInvoicesCreatePreview = vi.mocked(stripe.invoices.createPreview);
+const stripeSettleInvoice = vi.mocked(settleSubscriptionInvoice);
 
 async function resolveLoaderData<T>(result: unknown): Promise<T> {
   if (result && typeof (result as Response).json === 'function') {

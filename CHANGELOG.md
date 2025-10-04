@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.3] - 2025-10-03
+
+### 💳 Immediate Seat Charge Settlement
+
+**Highlights**
+
+- Added `settleSubscriptionInvoice()` in `app/lib/stripe.server.ts` to finalize or create the next invoice and collect prorations right away.
+- Updated `app/routes/settings/billing.tsx` so seat changes trigger immediate invoice settlement, keeping the sandbox portal in sync with modal previews.
+- Expanded Stripe mocks and unit coverage to exercise invoice finalization, payment success, and failure scenarios.
+
+**Testing**
+
+- `npm run test -- --run test/unit/stripe.server.test.ts`
+- `npm run typecheck`
+
 ## [1.9.2] - 2025-10-03
 
 ### 🚀 Seat Management Enhancements

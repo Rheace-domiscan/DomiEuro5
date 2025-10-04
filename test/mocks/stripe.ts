@@ -203,6 +203,7 @@ export const mockStripe = {
     create: vi.fn().mockResolvedValue(mockStripeInvoice),
     retrieve: vi.fn().mockResolvedValue(mockStripeInvoice),
     update: vi.fn().mockResolvedValue(mockStripeInvoice),
+    finalizeInvoice: vi.fn().mockResolvedValue({ ...mockStripeInvoice, status: 'open' }),
     pay: vi.fn().mockResolvedValue({ ...mockStripeInvoice, status: 'paid' }),
     list: vi.fn().mockResolvedValue({
       object: 'list',
@@ -268,6 +269,7 @@ export function resetStripeMocks() {
   mockStripe.subscriptions.retrieve.mockResolvedValue(mockStripeSubscription);
   mockStripe.invoices.create.mockResolvedValue(mockStripeInvoice);
   mockStripe.invoices.retrieve.mockResolvedValue(mockStripeInvoice);
+  mockStripe.invoices.finalizeInvoice.mockResolvedValue({ ...mockStripeInvoice, status: 'open' });
   mockStripe.webhooks.constructEvent.mockReturnValue(mockStripeEvent);
 }
 

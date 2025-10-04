@@ -27,6 +27,7 @@ import {
   createBillingPortalSession,
   getAdditionalSeatPriceId,
   getStripePriceId,
+  settleSubscriptionInvoice,
   stripe,
 } from '~/lib/stripe.server';
 import type Stripe from 'stripe';
@@ -466,6 +467,13 @@ export async function action({ request }: Route.ActionArgs) {
           billingInterval: subscription.billingInterval as 'monthly' | 'annual',
           targetAdditionalSeats,
         });
+
+        if (subscription.stripeCustomerId) {
+          await settleSubscriptionInvoice({
+            customerId: subscription.stripeCustomerId,
+            subscriptionId: subscription.stripeSubscriptionId,
+          });
+        }
 
         await convexServer.mutation(api.subscriptions.updateSeats, {
           subscriptionId: subscription._id,

@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { mockStripe, resetStripeMocks, mockStripeSignature } from '../mocks/stripe';
+import { mockStripe, resetStripeMocks, mockStripeSignature, mockStripeInvoice } from '../mocks/stripe';
 
 // Mock Stripe SDK
 vi.mock('stripe', () => ({
@@ -385,6 +385,98 @@ describe('Stripe Server Utilities', () => {
 
       expect(mockStripe.subscriptions.update).toHaveBeenCalledWith('sub_123', params);
       expect(subscription).toBeDefined();
+    });
+  });
+
+  describe('settleSubscriptionInvoice()', () => {
+    it('pays an open invoice immediately', async () => {
+      const openInvoice = {
+        ...mockStripeInvoice,
+        id: 'in_open',
+        status: 'open' as const,
+        collection_method: 'charge_automatically' as const,
+      };
+
+      mockStripe.invoices.list
+        .mockResolvedValueOnce({ object: 'list', data: [openInvoice], has_more: false })
+        .mockResolvedValueOnce({ object: 'list', data: [], has_more: false });
+      mockStripe.invoices.pay.mockResolvedValue({
+        ...openInvoice,
+        status: 'paid' as const,
+      } as any);
+
+      const { settleSubscriptionInvoice } = await import('~/lib/stripe.server');
+
+      const invoice = await settleSubscriptionInvoice({
+        customerId: 'cus_123',
+        subscriptionId: 'sub_123',
+      });
+
+      expect(mockStripe.invoices.pay).toHaveBeenCalledWith('in_open');
+      expect(invoice?.id).toBe('in_open');
+    });
+
+    it('creates and charges a new invoice when none exist', async () => {
+      const draftInvoice = {
+        ...mockStripeInvoice,
+        id: 'in_draft',
+        status: 'draft' as const,
+        collection_method: 'charge_automatically' as const,
+      };
+
+      mockStripe.invoices.list
+        .mockResolvedValueOnce({ object: 'list', data: [], has_more: false })
+        .mockResolvedValueOnce({ object: 'list', data: [], has_more: false });
+
+      mockStripe.invoices.create.mockResolvedValue(draftInvoice as any);
+      mockStripe.invoices.finalizeInvoice.mockResolvedValue({
+        ...draftInvoice,
+        status: 'open' as const,
+      } as any);
+      mockStripe.invoices.pay.mockResolvedValue({
+        ...draftInvoice,
+        status: 'paid' as const,
+      } as any);
+
+      const { settleSubscriptionInvoice } = await import('~/lib/stripe.server');
+
+      const invoice = await settleSubscriptionInvoice({
+        customerId: 'cus_123',
+        subscriptionId: 'sub_123',
+      });
+
+      expect(mockStripe.invoices.create).toHaveBeenCalledWith({
+        customer: 'cus_123',
+        subscription: 'sub_123',
+        collection_method: 'charge_automatically',
+        auto_advance: false,
+      });
+      expect(mockStripe.invoices.finalizeInvoice).toHaveBeenCalledWith('in_draft', {
+        auto_advance: false,
+      });
+      expect(mockStripe.invoices.pay).toHaveBeenCalledWith('in_draft');
+      expect(invoice?.status).toBe('paid');
+    });
+
+    it('throws a helpful error when payment fails', async () => {
+      const openInvoice = {
+        ...mockStripeInvoice,
+        id: 'in_fail',
+        status: 'open' as const,
+        collection_method: 'charge_automatically' as const,
+      };
+
+      mockStripe.invoices.list
+        .mockResolvedValueOnce({ object: 'list', data: [openInvoice], has_more: false })
+        .mockResolvedValueOnce({ object: 'list', data: [], has_more: false });
+
+      mockStripe.invoices.pay.mockRejectedValue(new Error('Card declined'));
+
+      const { settleSubscriptionInvoice } = await import('~/lib/stripe.server');
+
+      await expect(
+        settleSubscriptionInvoice({ customerId: 'cus_123', subscriptionId: 'sub_123' })
+      ).rejects.toThrow('Failed to charge seat adjustment invoice: Card declined');
     });
   });
 });
