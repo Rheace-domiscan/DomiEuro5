@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0] - 2025-10-05
+
+### 🔐 Feature Gating Framework
+
+- Introduced `FeatureGate` and `LockedFeature` components that enforce tier/role checks and render an upgrade CTA with preview art when access is denied.
+- Added reusable preview assets under `public/assets/feature-previews/` to support locked states across analytics and API modules.
+- Extended pricing cards to carry an `upgradeTriggerFeature` hint so upgrade funnels land on the right feature messaging.
+
+### 📈 Dashboard Upsell Routes
+
+- Added `/dashboard/analytics` and `/dashboard/api` routes that surface premium dashboards behind the new gate while welcoming authenticated users on the index view.
+- Updated the dashboard navigation and route manifest so nested pages share loader data and respect billing/team permissions.
+
+### 💳 Stripe Upgrade Attribution
+
+- Propagated `upgradeTriggerFeature` metadata through checkout sessions, webhook handlers, and Convex subscription writes to attribute conversions to the feature that prompted the upgrade.
+- Surfaced `?upgrade=` banners on `/pricing` to explain why a user was sent there and preserve the trigger through checkout submission.
+
+### 🧪 Testing
+
+- `npm run test -- --run test/unit/feature-gates.test.tsx`
+- `npm run test -- --run test/unit/pricing-components.test.tsx`
+- `npm run test -- --run test/unit/stripe.server.test.ts`
+
 ## [1.10.0] - 2025-10-04
 
 ### 👥 Team Management Controls

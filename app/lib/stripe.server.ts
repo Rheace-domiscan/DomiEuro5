@@ -243,6 +243,7 @@ export async function createCheckoutSession(params: {
   organizationId: string;
   successUrl: string;
   cancelUrl: string;
+  upgradeTriggerFeature?: string;
 }): Promise<Stripe.Checkout.Session> {
   const {
     customerId,
@@ -292,6 +293,7 @@ export async function createCheckoutSession(params: {
       tier,
       interval,
       seats: seats.toString(),
+      ...(params.upgradeTriggerFeature ? { upgradeTriggerFeature: params.upgradeTriggerFeature } : {}),
     },
     subscription_data: {
       metadata: {
@@ -299,6 +301,9 @@ export async function createCheckoutSession(params: {
         tier,
         interval,
         seats: seats.toString(),
+        ...(params.upgradeTriggerFeature
+          ? { upgradeTriggerFeature: params.upgradeTriggerFeature }
+          : {}),
       },
     },
     allow_promotion_codes: true,

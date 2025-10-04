@@ -13,6 +13,7 @@ import type { SubscriptionTier } from '~/types/billing';
 export interface PricingTableProps {
   currentTier?: SubscriptionTier;
   showCurrentPlan?: boolean;
+  upgradeTriggerFeature?: string;
 }
 
 const TIER_DESCRIPTIONS = {
@@ -21,7 +22,11 @@ const TIER_DESCRIPTIONS = {
   [TIERS.PROFESSIONAL]: 'For growing teams that need advanced features',
 };
 
-export function PricingTable({ currentTier, showCurrentPlan = false }: PricingTableProps) {
+export function PricingTable({
+  currentTier,
+  showCurrentPlan = false,
+  upgradeTriggerFeature,
+}: PricingTableProps) {
   const [isAnnual, setIsAnnual] = useState(false);
 
   return (
@@ -78,6 +83,7 @@ export function PricingTable({ currentTier, showCurrentPlan = false }: PricingTa
           isCurrentPlan={showCurrentPlan && currentTier === TIERS.FREE}
           ctaText="Get Started Free"
           ctaVariant="outline"
+          upgradeTriggerFeature={upgradeTriggerFeature}
         />
 
         {/* Starter Tier */}
@@ -94,6 +100,7 @@ export function PricingTable({ currentTier, showCurrentPlan = false }: PricingTa
           isCurrentPlan={showCurrentPlan && currentTier === TIERS.STARTER}
           ctaText="Start Free Trial"
           ctaVariant="primary"
+          upgradeTriggerFeature={upgradeTriggerFeature}
         />
 
         {/* Professional Tier */}
@@ -110,6 +117,7 @@ export function PricingTable({ currentTier, showCurrentPlan = false }: PricingTa
           isCurrentPlan={showCurrentPlan && currentTier === TIERS.PROFESSIONAL}
           ctaText="Start Free Trial"
           ctaVariant="secondary"
+          upgradeTriggerFeature={upgradeTriggerFeature}
         />
       </div>
 

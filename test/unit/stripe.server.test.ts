@@ -257,6 +257,34 @@ describe('Stripe Server Utilities', () => {
       );
     });
 
+    it('should include upgrade trigger metadata when provided', async () => {
+      const { createCheckoutSession } = await import('~/lib/stripe.server');
+
+      await createCheckoutSession({
+        customerEmail: 'test@example.com',
+        tier: 'starter',
+        interval: 'monthly',
+        seats: 5,
+        organizationId: 'org_456',
+        successUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel',
+        upgradeTriggerFeature: 'dashboard-analytics',
+      });
+
+      expect(mockStripe.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            upgradeTriggerFeature: 'dashboard-analytics',
+          }),
+          subscription_data: expect.objectContaining({
+            metadata: expect.objectContaining({
+              upgradeTriggerFeature: 'dashboard-analytics',
+            }),
+          }),
+        })
+      );
+    });
+
     it('should handle Stripe API errors during checkout creation', async () => {
       mockStripe.checkout.sessions.create.mockRejectedValue(new Error('Checkout creation failed'));
       const { createCheckoutSession } = await import('~/lib/stripe.server');

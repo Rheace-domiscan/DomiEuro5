@@ -28,6 +28,8 @@ import type { SubscriptionTier, BillingInterval } from '~/types/billing';
 export async function loader({ request }: Route.LoaderArgs) {
   // Get user (optional - page is public)
   const user = await getUser(request);
+  const url = new URL(request.url);
+  const upgradeFeature = url.searchParams.get('upgrade');
 
   let currentTier: SubscriptionTier | undefined;
 
@@ -50,6 +52,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return data({
     user,
     currentTier: currentTier || TIERS.FREE,
+    upgradeFeature: upgradeFeature || null,
   });
 }
 
@@ -61,6 +64,7 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const tier = formData.get('tier') as SubscriptionTier;
   const interval = formData.get('interval') as BillingInterval;
+  const upgradeTriggerFeature = formData.get('upgradeTriggerFeature');
 
   // Validate tier and interval
   if (!tier || !interval) {
@@ -141,6 +145,10 @@ export async function action({ request }: Route.ActionArgs) {
       organizationId: user.organizationId,
       successUrl,
       cancelUrl,
+      upgradeTriggerFeature:
+        typeof upgradeTriggerFeature === 'string' && upgradeTriggerFeature.length > 0
+          ? upgradeTriggerFeature
+          : undefined,
     });
 
     // Redirect to Stripe checkout
@@ -183,7 +191,7 @@ export function meta(_: Route.MetaArgs) {
  * Pricing Page Component
  */
 export default function Pricing({ loaderData }: Route.ComponentProps) {
-  const { user, currentTier } = loaderData;
+  const { user, currentTier, upgradeFeature } = loaderData;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -235,8 +243,23 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
 
       {/* Main Content */}
       <main className="py-16">
+        {upgradeFeature && (
+          <div className="mx-auto mb-12 max-w-3xl px-4 sm:px-6 lg:px-8">
+            <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-6 py-5 text-sm text-indigo-900 shadow-sm">
+              <p className="font-semibold">Unlock {upgradeFeature}</p>
+              <p className="mt-1 text-indigo-800">
+                Select a paid plan below to enable this feature for your team.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Pricing Table */}
-        <PricingTable currentTier={currentTier} showCurrentPlan={!!user} />
+        <PricingTable
+          currentTier={currentTier}
+          showCurrentPlan={!!user}
+          upgradeTriggerFeature={upgradeFeature ?? undefined}
+        />
 
         {/* Feature Comparison */}
         <FeatureList highlightTier={currentTier} />

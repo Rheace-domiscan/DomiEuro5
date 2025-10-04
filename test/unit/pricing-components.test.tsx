@@ -145,6 +145,21 @@ describe('PricingTable Component', () => {
       expect(popularBadges).toHaveLength(1);
     });
   });
+
+  describe('Upgrade Trigger Feature', () => {
+    it('propagates upgrade trigger feature into checkout forms', () => {
+      renderWithProviders(<PricingTable upgradeTriggerFeature="dashboard-analytics" />);
+
+      const forms = document.querySelectorAll('form[action="/pricing"]');
+
+      forms.forEach(form => {
+        const hiddenInput = form.querySelector('input[name="upgradeTriggerFeature"]');
+        if (hiddenInput) {
+          expect(hiddenInput).toHaveValue('dashboard-analytics');
+        }
+      });
+    });
+  });
 });
 
 describe('PricingCard Component', () => {

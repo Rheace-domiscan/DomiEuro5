@@ -26,6 +26,7 @@ export interface PricingCardProps {
   isCurrentPlan?: boolean;
   ctaText?: string;
   ctaVariant?: 'primary' | 'secondary' | 'outline';
+  upgradeTriggerFeature?: string;
 }
 
 const FEATURE_DESCRIPTIONS: Record<string, string> = {
@@ -52,6 +53,7 @@ export function PricingCard({
   isCurrentPlan = false,
   ctaText,
   ctaVariant = 'primary',
+  upgradeTriggerFeature,
 }: PricingCardProps) {
   const displayPrice = isAnnual ? annualPrice : monthlyPrice;
   const pricePerMonth = isAnnual ? annualPrice / 12 : monthlyPrice;
@@ -181,6 +183,9 @@ export function PricingCard({
         <Form method="post" action="/pricing">
           <input type="hidden" name="tier" value={tier} />
           <input type="hidden" name="interval" value={isAnnual ? 'annual' : 'monthly'} />
+          {upgradeTriggerFeature ? (
+            <input type="hidden" name="upgradeTriggerFeature" value={upgradeTriggerFeature} />
+          ) : null}
           <button
             type="submit"
             className={`w-full rounded-lg py-3 text-sm font-semibold ${buttonStyles[ctaVariant]}`}

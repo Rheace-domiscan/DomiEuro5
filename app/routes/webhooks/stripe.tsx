@@ -176,6 +176,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
     seatsActive: 0,
     currentPeriodStart: Date.now(),
     currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000, // Approximate
+    upgradeTriggerFeature: session.metadata?.upgradeTriggerFeature || undefined,
   });
 
   // Log billing event
@@ -236,6 +237,8 @@ async function handleSubscriptionCreated(event: Stripe.Event) {
     currentPeriodStart: currentPeriodStartMs,
     currentPeriodEnd: currentPeriodEndMs,
     cancelAtPeriodEnd,
+    upgradeTriggerFeature:
+      (subscription.metadata?.upgradeTriggerFeature as string | undefined) || undefined,
   });
 
   await convexServer.mutation(api.billingHistory.create, {
