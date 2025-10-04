@@ -10,8 +10,15 @@
  * Coverage Target: >80%
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { mockStripe, resetStripeMocks, mockStripeSignature, mockStripeInvoice } from '../mocks/stripe';
+import {
+  mockStripe,
+  resetStripeMocks,
+  mockStripeSignature,
+  mockStripeInvoice,
+} from '../mocks/stripe';
 
 // Mock Stripe SDK
 vi.mock('stripe', () => ({

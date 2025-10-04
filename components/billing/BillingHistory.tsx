@@ -49,7 +49,9 @@ export function BillingHistory({ events }: BillingHistoryProps) {
       <header className="border-b border-gray-100 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">Billing History</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
+              Billing History
+            </p>
             <h2 className="mt-1 text-xl font-bold text-gray-900">Recent invoices & events</h2>
           </div>
         </div>
@@ -84,7 +86,9 @@ export function BillingHistory({ events }: BillingHistoryProps) {
                         {typeof event.amount === 'number' ? formatPrice(event.amount) : '—'}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}>
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
+                        >
                           {status.label}
                         </span>
                       </td>

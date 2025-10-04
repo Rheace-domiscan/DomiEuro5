@@ -1,5 +1,36 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, type MutationCtx } from './_generated/server';
+
+async function countActiveUsers(ctx: MutationCtx, organizationId: string) {
+  const activeUsers = await ctx.db
+    .query('users')
+    .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+    .filter(q => q.eq(q.field('isActive'), true))
+    .collect();
+
+  return activeUsers.length;
+}
+
+async function recalculateSeatsActive(ctx: MutationCtx, organizationId: string) {
+  const seatsActive = await countActiveUsers(ctx, organizationId);
+
+  const subscription = await ctx.db
+    .query('subscriptions')
+    .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+    .first();
+
+  if (subscription) {
+    await ctx.db.patch(subscription._id, {
+      seatsActive,
+      updatedAt: Date.now(),
+    });
+  }
+
+  return {
+    seatsActive,
+    subscriptionId: subscription?._id ?? null,
+  };
+}
 
 // Create a new user
 export const createUser = mutation({
@@ -21,6 +52,13 @@ export const createUser = mutation({
       workosUserId: args.workosUserId,
       organizationId: args.organizationId,
     });
+  },
+});
+
+export const getUser = query({
+  args: { id: v.id('users') },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
   },
 });
 
@@ -72,14 +110,70 @@ export const updateUser = mutation({
   },
 });
 
-// Delete user (soft delete by setting isActive to false)
+// Soft deactivate user (keeps record for seat history)
 export const deactivateUser = mutation({
   args: { id: v.id('users') },
   handler: async (ctx, args) => {
-    return await ctx.db.patch(args.id, {
+    const user = await ctx.db.get(args.id);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!user.isActive) {
+      const seatsActive = await countActiveUsers(ctx, user.organizationId);
+      return {
+        status: 'noop',
+        seatsActive,
+        organizationId: user.organizationId,
+      };
+    }
+
+    await ctx.db.patch(args.id, {
       isActive: false,
       updatedAt: Date.now(),
     });
+
+    const { seatsActive } = await recalculateSeatsActive(ctx, user.organizationId);
+
+    return {
+      status: 'deactivated',
+      seatsActive,
+      organizationId: user.organizationId,
+    };
+  },
+});
+
+export const reactivateUser = mutation({
+  args: { id: v.id('users') },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.id);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.isActive) {
+      const seatsActive = await countActiveUsers(ctx, user.organizationId);
+      return {
+        status: 'noop',
+        seatsActive,
+        organizationId: user.organizationId,
+      };
+    }
+
+    await ctx.db.patch(args.id, {
+      isActive: true,
+      updatedAt: Date.now(),
+    });
+
+    const { seatsActive } = await recalculateSeatsActive(ctx, user.organizationId);
+
+    return {
+      status: 'reactivated',
+      seatsActive,
+      organizationId: user.organizationId,
+    };
   },
 });
 
@@ -92,6 +186,25 @@ export const getUsersByOrganization = query({
       .withIndex('by_organization', q => q.eq('organizationId', args.organizationId))
       .filter(q => q.eq(q.field('isActive'), true))
       .collect();
+  },
+});
+
+export const getTeamMembers = query({
+  args: {
+    organizationId: v.string(),
+    includeInactive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const includeInactive = args.includeInactive ?? true;
+
+    const members = await ctx.db
+      .query('users')
+      .withIndex('by_organization', q => q.eq('organizationId', args.organizationId))
+      .collect();
+
+    const filtered = includeInactive ? members : members.filter(member => member.isActive);
+
+    return filtered.sort((a, b) => a.createdAt - b.createdAt);
   },
 });
 

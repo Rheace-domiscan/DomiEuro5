@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] - 2025-10-04
+
+### 👥 Team Management Controls
+
+**Team settings route**
+
+- Added `/settings/team` for owners and admins with a seat usage banner and role-gated access.
+- Built invite modal and table controls to assign roles plus deactivate/reactivate members without leaving the page.
+- Guarded self-updates and owner accounts while deriving available roles from the current user's permissions.
+
+**WorkOS & Convex sync**
+
+- Introduced WorkOS membership helpers and Convex mutations so invites, role changes, and reactivations stay in lockstep.
+- Reactivations and deactivations now recalculate active seats, keeping subscription totals aligned with billing limits.
+- Stripe webhooks now use generated Convex API clients and normalised subscription period fields for consistent updates.
+
+**Testing**
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test -- --run test/integration/billing-dashboard.test.ts`
+- `npm run test -- --run test/integration/team-management.test.ts`
+- `npm run test -- --run test/unit/team-components.test.tsx`
+
 ## [1.9.4] - 2025-10-04
 
 ### ✅ Billing Dashboard Verification

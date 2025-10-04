@@ -11,7 +11,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function Dashboard() {
   const { user } = useLoaderData<typeof loader>();
   const canAccessBilling = hasRole(user.role || 'member', ['owner', 'admin']);
-  const displayName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.email;
+  const canManageTeam = hasRole(user.role || 'member', ['owner', 'admin']);
+  const displayName =
+    [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.email;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -39,6 +41,14 @@ export default function Dashboard() {
                     className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                   >
                     Billing
+                  </Link>
+                )}
+                {canManageTeam && (
+                  <Link
+                    to="/settings/team"
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Team
                   </Link>
                 )}
               </div>
@@ -93,6 +103,13 @@ export default function Dashboard() {
                   <li>
                     <Link to="/settings/billing" className="text-indigo-600 hover:text-indigo-800">
                       → Manage Billing & Subscription
+                    </Link>
+                  </li>
+                )}
+                {canManageTeam && (
+                  <li>
+                    <Link to="/settings/team" className="text-indigo-600 hover:text-indigo-800">
+                      → Manage Team & Invitations
                     </Link>
                   </li>
                 )}

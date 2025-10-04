@@ -9,6 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { redirect } from 'react-router';
+import type Stripe from 'stripe';
 import type { User } from '~/lib/auth.server';
 import { createMockRequest } from '../helpers/test-utils';
 
@@ -46,22 +47,21 @@ import {
   createBillingPortalSession,
   getAdditionalSeatPriceId,
   getStripePriceId,
-  settleSubscriptionInvoice,
   stripe,
 } from '~/lib/stripe.server';
 
 const stripeSubscriptionsRetrieve = vi.mocked(stripe.subscriptions.retrieve);
 const stripeSubscriptionsUpdate = vi.mocked(stripe.subscriptions.update);
 const stripeInvoicesCreatePreview = vi.mocked(stripe.invoices.createPreview);
-const stripeSettleInvoice = vi.mocked(settleSubscriptionInvoice);
-
 async function resolveLoaderData<T>(result: unknown): Promise<T> {
-  if (result && typeof (result as Response).json === 'function') {
-    return ((await (result as Response).json()) as T);
+  if (result instanceof Response) {
+    return (await result.json()) as T;
   }
-  if (result && typeof result === 'object' && result !== null && 'data' in (result as Record<string, unknown>)) {
-    return ((result as Record<string, unknown>).data as T);
+
+  if (result && typeof result === 'object' && 'data' in result) {
+    return (result as { data: T }).data;
   }
+
   return result as T;
 }
 
@@ -72,11 +72,6 @@ const ownerUser: User = {
   lastName: 'User',
   organizationId: 'org_123',
   role: 'owner',
-};
-
-const managerUser: User = {
-  ...ownerUser,
-  role: 'manager',
 };
 
 const subscriptionRecord = {
@@ -126,6 +121,36 @@ const billingHistory = [
   },
 ];
 
+type PreviewSeatChangeResponse = {
+  intent: 'previewSeatChange';
+  mode: 'add' | 'remove';
+  ok: true;
+  preview: {
+    immediateAmount: number;
+    additionalSeatsAfter: number;
+    seatsAfter: number;
+  };
+};
+
+type ApplySeatChangeResponse = {
+  intent: 'applySeatChange';
+  mode: 'add' | 'remove';
+  ok: true;
+  seatsChanged: number;
+  newSeatTotal: number;
+};
+
+function makeStripeResponse<T>(payload: T): Stripe.Response<T> {
+  return {
+    ...payload,
+    lastResponse: {
+      headers: {},
+      requestId: 'req_mock',
+      statusCode: 200,
+    },
+  } as Stripe.Response<T>;
+}
+
 const originalEnv = { ...process.env };
 
 beforeEach(() => {
@@ -155,7 +180,9 @@ describe('billing settings loader', () => {
       context: {},
     });
 
-    const payload = await resolveLoaderData<any>(response);
+    const payload = await resolveLoaderData<{
+      subscription: { tier: string; seatsTotal: number };
+    }>(response);
     expect(payload.subscription).toMatchObject({ tier: 'starter', seatsTotal: 6 });
     expect(convexServer.query).toHaveBeenCalledTimes(3);
   });
@@ -171,7 +198,7 @@ describe('billing settings loader', () => {
         params: {},
         context: {},
       })
-    ).rejects.toMatchObject({ headers: new Headers({ Location: '/dashboard' }) });
+    ).rejects.toMatchObject({ headers: new globalThis.Headers({ Location: '/dashboard' }) });
   });
 });
 
@@ -181,11 +208,11 @@ describe('billing settings action', () => {
     vi.mocked(convexServer.query).mockResolvedValue(subscriptionRecord);
     vi.mocked(createBillingPortalSession).mockResolvedValue({
       url: 'https://stripe.test/portal',
-    } as any);
+    } as unknown as Stripe.BillingPortal.Session);
 
     const request = createMockRequest('/settings/billing', {
       method: 'POST',
-      body: new URLSearchParams({ intent: 'manageBilling' }),
+      body: new globalThis.URLSearchParams({ intent: 'manageBilling' }),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
@@ -206,46 +233,54 @@ describe('billing settings action', () => {
     vi.mocked(requireRole).mockResolvedValue(ownerUser);
     vi.mocked(convexServer.query).mockResolvedValue(subscriptionRecord);
 
-    stripeSubscriptionsRetrieve.mockResolvedValue({
-      id: 'sub_test_123',
-      customer: 'cus_test_123',
-      items: {
-        data: [
-          {
-            id: 'si_base',
-            price: { id: 'price_base' },
-            quantity: 1,
-          },
-        ],
-      },
-    } as any);
-
-    stripeInvoicesCreatePreview.mockResolvedValue({
-      amount_due: 1500,
-      currency: 'gbp',
-      lines: {
-        data: [
-          {
-            description: 'Seat proration',
-            amount: 1500,
-            currency: 'gbp',
-            parent: {
-              subscription_item_details: { proration: true },
-              invoice_item_details: null,
+    stripeSubscriptionsRetrieve.mockResolvedValue(
+      makeStripeResponse<Stripe.Subscription>({
+        id: 'sub_test_123',
+        customer: 'cus_test_123',
+        items: {
+          data: [
+            {
+              id: 'si_base',
+              price: { id: 'price_base' } as unknown as Stripe.Price,
+              quantity: 1,
             },
-          },
-        ],
-      },
-    } as any);
+          ],
+        },
+      } as unknown as Stripe.Subscription)
+    );
+
+    stripeInvoicesCreatePreview.mockResolvedValue(
+      makeStripeResponse<Stripe.Invoice>({
+        amount_due: 1500,
+        currency: 'gbp',
+        lines: {
+          data: [
+            {
+              description: 'Seat proration',
+              amount: 1500,
+              currency: 'gbp',
+              parent: {
+                subscription_item_details: { proration: true },
+                invoice_item_details: null,
+              },
+            },
+          ],
+        },
+      } as unknown as Stripe.Invoice)
+    );
 
     const request = createMockRequest('/settings/billing', {
       method: 'POST',
-      body: new URLSearchParams({ intent: 'previewSeatChange', mode: 'add', seats: '2' }),
+      body: new globalThis.URLSearchParams({
+        intent: 'previewSeatChange',
+        mode: 'add',
+        seats: '2',
+      }),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
     const response = await action({ request, params: {}, context: {} });
-    const payload = await resolveLoaderData<any>(response);
+    const payload = await resolveLoaderData<PreviewSeatChangeResponse>(response);
 
     expect(payload.intent).toBe('previewSeatChange');
     expect(payload.mode).toBe('add');
@@ -260,36 +295,48 @@ describe('billing settings action', () => {
   it('adds seats and updates subscription totals for applySeatChange intent', async () => {
     vi.mocked(requireRole).mockResolvedValue(ownerUser);
     vi.mocked(convexServer.query).mockResolvedValue(subscriptionRecord);
-    stripeSubscriptionsRetrieve.mockResolvedValue({
-      id: 'sub_test_123',
-      customer: 'cus_test_123',
-      items: {
-        data: [
-          {
-            id: 'si_base',
-            price: { id: 'price_base' },
-            quantity: 1,
-          },
-        ],
-      },
-    } as any);
-    stripeInvoicesCreatePreview.mockResolvedValue({
-      amount_due: 0,
-      currency: 'gbp',
-      lines: { data: [] },
-    } as any);
+    stripeSubscriptionsRetrieve.mockResolvedValue(
+      makeStripeResponse<Stripe.Subscription>({
+        id: 'sub_test_123',
+        customer: 'cus_test_123',
+        items: {
+          data: [
+            {
+              id: 'si_base',
+              price: { id: 'price_base' } as unknown as Stripe.Price,
+              quantity: 1,
+            },
+          ],
+        },
+      } as unknown as Stripe.Subscription)
+    );
+    stripeInvoicesCreatePreview.mockResolvedValue(
+      makeStripeResponse<Stripe.Invoice>({
+        amount_due: 0,
+        currency: 'gbp',
+        lines: { data: [] },
+      } as unknown as Stripe.Invoice)
+    );
 
-    stripeSubscriptionsUpdate.mockResolvedValue({} as any);
+    stripeSubscriptionsUpdate.mockResolvedValue(
+      makeStripeResponse<Stripe.Subscription>({
+        id: 'sub_test_123',
+      } as unknown as Stripe.Subscription)
+    );
     vi.mocked(convexServer.mutation).mockResolvedValue(null);
 
     const request = createMockRequest('/settings/billing', {
       method: 'POST',
-      body: new URLSearchParams({ intent: 'applySeatChange', mode: 'add', seats: '2' }),
+      body: new globalThis.URLSearchParams({
+        intent: 'applySeatChange',
+        mode: 'add',
+        seats: '2',
+      }),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
     const response = await action({ request, params: {}, context: {} });
-    const payload = await resolveLoaderData<any>(response);
+    const payload = await resolveLoaderData<ApplySeatChangeResponse>(response);
 
     expect(payload.intent).toBe('applySeatChange');
     expect(payload.mode).toBe('add');

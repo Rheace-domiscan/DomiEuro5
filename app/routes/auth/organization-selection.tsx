@@ -64,12 +64,7 @@ export async function action({ request }: { request: Request }) {
     );
 
     // Create user session and redirect to home
-    return createUserSession(
-      authResponse.user.id,
-      '/',
-      authResponse.organizationId,
-      userRole
-    );
+    return createUserSession(authResponse.user.id, '/', authResponse.organizationId, userRole);
   } catch (_error) {
     return redirect('/auth/login?error=' + encodeURIComponent('Organization selection failed'));
   }

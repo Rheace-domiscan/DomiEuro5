@@ -42,9 +42,11 @@ export function SeatWarningBanner({
       <div className="flex flex-col gap-2">
         <p className="font-semibold">Seat limit exceeded</p>
         <p>
-          You have <strong>{seatsActive}</strong> active users but only <strong>{seatsTotal}</strong> seats on the
+          You have <strong>{seatsActive}</strong> active users but only{' '}
+          <strong>{seatsTotal}</strong> seats on the
           {` ${tierConfig.name} `}
-          plan. Add {seatsOver} seat{seatsOver === 1 ? '' : 's'} or deactivate users to get back within your limit.
+          plan. Add {seatsOver} seat{seatsOver === 1 ? '' : 's'} or deactivate users to get back
+          within your limit.
         </p>
 
         <ul className="list-disc space-y-1 pl-4 text-xs text-amber-700">
@@ -55,15 +57,16 @@ export function SeatWarningBanner({
         {pendingDowngrade ? (
           <p className="text-xs">
             Downgrade to <strong>{TIER_CONFIG[pendingDowngrade.tier].name}</strong> scheduled for{' '}
-            <strong>{formatDate(pendingDowngrade.effectiveDate)}</strong>. Ensure seat count fits the new plan before the
-            downgrade takes effect.
+            <strong>{formatDate(pendingDowngrade.effectiveDate)}</strong>. Ensure seat count fits
+            the new plan before the downgrade takes effect.
           </p>
         ) : null}
 
         {cancelAtPeriodEnd ? (
           <p className="text-xs">
-            Cancellation is scheduled at the end of the current billing period. Access remains active until your
-            renewal date, after which the account will move to read-only unless reactivated.
+            Cancellation is scheduled at the end of the current billing period. Access remains
+            active until your renewal date, after which the account will move to read-only unless
+            reactivated.
           </p>
         ) : null}
       </div>

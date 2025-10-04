@@ -223,11 +223,18 @@ export const endGracePeriod = mutation({
     paymentSuccessful: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const updates: any = {
-      gracePeriodStartedAt: undefined,
-      gracePeriodEndsAt: undefined,
+    const updates: {
+      gracePeriodStartedAt?: number;
+      gracePeriodEndsAt?: number;
+      updatedAt: number;
+      status?: string;
+      accessStatus?: string;
+    } = {
       updatedAt: Date.now(),
     };
+
+    updates.gracePeriodStartedAt = undefined;
+    updates.gracePeriodEndsAt = undefined;
 
     if (args.paymentSuccessful) {
       // Payment successful - restore active status
@@ -300,7 +307,11 @@ export const updateSeats = mutation({
     seatsActive: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const updates: any = {
+    const updates: {
+      updatedAt: number;
+      seatsTotal?: number;
+      seatsActive?: number;
+    } = {
       updatedAt: Date.now(),
     };
 

@@ -39,13 +39,15 @@ export function SeatManagement({
   const removalDisabledReason = canRemoveSeats
     ? null
     : seatsTotal <= seatsIncluded
-    ? 'All seats are included in your plan'
-    : 'Remove team members before reducing seats';
+      ? 'All seats are included in your plan'
+      : 'Remove team members before reducing seats';
 
   return (
     <aside className="rounded-2xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-100 px-6 py-4">
-        <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">Seat Management</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
+          Seat Management
+        </p>
         <h2 className="mt-1 text-xl font-bold text-gray-900">{tierName}</h2>
         <p className="mt-2 text-sm text-gray-600">
           Included seats: {seatsIncluded}. Additional seats up to {maxSeats} total.
@@ -113,8 +115,8 @@ export function SeatManagement({
 
           {isAtSeatCap ? (
             <p className="text-xs text-amber-600">
-              You&apos;re at the maximum seat capacity for this plan. Upgrade to a higher tier to unlock
-              more seats.
+              You&apos;re at the maximum seat capacity for this plan. Upgrade to a higher tier to
+              unlock more seats.
             </p>
           ) : null}
 

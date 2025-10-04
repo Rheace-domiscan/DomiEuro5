@@ -33,8 +33,8 @@ describe('BillingOverview', () => {
     expect(screen.getByText('Starter')).toBeInTheDocument();
     expect(screen.getByText('£50 / month')).toBeInTheDocument();
     expect(screen.getByText('Next renewal')).toBeInTheDocument();
-    const renewalElements = screen.getAllByText((_, element) =>
-      element?.textContent?.includes('1 Mar 2025') ?? false
+    const renewalElements = screen.getAllByText(
+      (_, element) => element?.textContent?.includes('1 Mar 2025') ?? false
     );
     expect(renewalElements.length).toBeGreaterThan(0);
   });
@@ -53,8 +53,9 @@ describe('BillingOverview', () => {
     );
 
     expect(screen.getByText(/cancellation scheduled/i)).toBeInTheDocument();
-    const downgradeBadges = screen.getAllByText((_, element) =>
-      element?.textContent?.includes('Downgrade to Starter scheduled for 1 Mar 2025') ?? false
+    const downgradeBadges = screen.getAllByText(
+      (_, element) =>
+        element?.textContent?.includes('Downgrade to Starter scheduled for 1 Mar 2025') ?? false
     );
     expect(downgradeBadges.length).toBeGreaterThan(0);
   });
@@ -74,8 +75,9 @@ describe('SeatWarningBanner', () => {
 
     expect(screen.getByText(/15/)).toBeInTheDocument();
     expect(screen.getByText(/Add 5 seats/)).toBeInTheDocument();
-    const warningMessages = screen.getAllByText((_, element) =>
-      element?.textContent?.includes('Downgrade to Starter scheduled for 1 Mar 2025') ?? false
+    const warningMessages = screen.getAllByText(
+      (_, element) =>
+        element?.textContent?.includes('Downgrade to Starter scheduled for 1 Mar 2025') ?? false
     );
     expect(warningMessages.length).toBeGreaterThan(0);
   });

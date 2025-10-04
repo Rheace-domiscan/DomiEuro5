@@ -74,7 +74,9 @@ export function BillingOverview({
             </p>
             <h2 className="mt-1 text-2xl font-bold text-gray-900">{tierConfig.name}</h2>
           </div>
-          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusBadge.className}`}>
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusBadge.className}`}
+          >
             {statusBadge.label}
           </span>
         </div>
@@ -106,7 +108,8 @@ export function BillingOverview({
             <li>Max seats: {tierConfig.seats.max}</li>
             <li>Additional seat price: £10 / seat / month</li>
             <li>
-              Access status: <span className="font-medium capitalize">{accessStatus.replace(/_/g, ' ')}</span>
+              Access status:{' '}
+              <span className="font-medium capitalize">{accessStatus.replace(/_/g, ' ')}</span>
             </li>
           </ul>
 

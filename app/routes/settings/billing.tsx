@@ -36,16 +36,6 @@ import { SeatManagement } from '../../../components/billing/SeatManagement';
 import { BillingHistory } from '../../../components/billing/BillingHistory';
 import { SeatWarningBanner } from '../../../components/billing/SeatWarningBanner';
 
-interface BillingHistoryRecord {
-  _id: string;
-  eventType: string;
-  description: string;
-  amount?: number;
-  currency?: string;
-  status: string;
-  createdAt: number;
-}
-
 type SeatPreviewLine = {
   description: string;
   amount: number;
@@ -136,7 +126,9 @@ async function buildSubscriptionItemPayload(options: {
     throw new Error('Unable to locate base plan price on subscription');
   }
 
-  const additionalItem = subscription.items.data.find(item => item.price?.id === additionalSeatPriceId);
+  const additionalItem = subscription.items.data.find(
+    item => item.price?.id === additionalSeatPriceId
+  );
 
   const updateItems: Stripe.SubscriptionUpdateParams.Item[] = [
     {
@@ -212,19 +204,20 @@ async function previewSeatQuantityChange(options: {
   };
 
   const normalizedLines = invoice.lines.data.map((line: Stripe.InvoiceLineItem) => {
-      const isProration = Boolean(
-        line.parent?.subscription_item_details?.proration || line.parent?.invoice_item_details?.proration
-      );
+    const isProration = Boolean(
+      line.parent?.subscription_item_details?.proration ||
+        line.parent?.invoice_item_details?.proration
+    );
 
-      return {
-        description: line.description ?? 'Billing item',
-        amount: line.amount ?? 0,
-        currency: line.currency ?? invoice.currency ?? 'gbp',
-        isProration,
-        periodEnd: line.period?.end,
-        taxes: line.taxes ?? [],
-      };
-    });
+    return {
+      description: line.description ?? 'Billing item',
+      amount: line.amount ?? 0,
+      currency: line.currency ?? invoice.currency ?? 'gbp',
+      isProration,
+      periodEnd: line.period?.end,
+      taxes: line.taxes ?? [],
+    };
+  });
 
   preview.prorationLines = normalizedLines.filter(line => line.isProration);
   preview.upcomingLines = normalizedLines.filter(line => !line.isProration);
@@ -332,7 +325,10 @@ export async function action({ request }: Route.ActionArgs) {
       );
 
       if (!portalSession.url) {
-        return data({ intent: 'error', error: 'Unable to create billing portal session' }, { status: 500 });
+        return data(
+          { intent: 'error', error: 'Unable to create billing portal session' },
+          { status: 500 }
+        );
       }
 
       throw redirect(portalSession.url);
@@ -359,13 +355,18 @@ export async function action({ request }: Route.ActionArgs) {
       }
 
       const tierConfig = TIER_CONFIG[subscription.tier as Exclude<SubscriptionTier, 'free'>];
-      const currentAdditionalSeats = Math.max(0, subscription.seatsTotal - subscription.seatsIncluded);
+      const currentAdditionalSeats = Math.max(
+        0,
+        subscription.seatsTotal - subscription.seatsIncluded
+      );
       const currentTotalSeats = subscription.seatsTotal;
       const seatsActive = subscription.seatsActive ?? 0;
       const minTotalSeats = Math.max(subscription.seatsIncluded, seatsActive);
 
       const targetAdditionalSeats =
-        mode === 'add' ? currentAdditionalSeats + seatsRequested : currentAdditionalSeats - seatsRequested;
+        mode === 'add'
+          ? currentAdditionalSeats + seatsRequested
+          : currentAdditionalSeats - seatsRequested;
       const targetTotalSeats = subscription.seatsIncluded + targetAdditionalSeats;
 
       if (targetAdditionalSeats < 0 || targetTotalSeats < minTotalSeats) {
@@ -437,11 +438,16 @@ export async function action({ request }: Route.ActionArgs) {
       }
 
       const tierConfig = TIER_CONFIG[subscription.tier as Exclude<SubscriptionTier, 'free'>];
-      const currentAdditionalSeats = Math.max(0, subscription.seatsTotal - subscription.seatsIncluded);
+      const currentAdditionalSeats = Math.max(
+        0,
+        subscription.seatsTotal - subscription.seatsIncluded
+      );
       const seatsActive = subscription.seatsActive ?? 0;
       const minTotalSeats = Math.max(subscription.seatsIncluded, seatsActive);
       const targetAdditionalSeats =
-        mode === 'add' ? currentAdditionalSeats + seatsRequested : currentAdditionalSeats - seatsRequested;
+        mode === 'add'
+          ? currentAdditionalSeats + seatsRequested
+          : currentAdditionalSeats - seatsRequested;
       const targetTotalSeats = subscription.seatsIncluded + targetAdditionalSeats;
 
       if (targetAdditionalSeats < 0 || targetTotalSeats < minTotalSeats) {
@@ -493,7 +499,8 @@ export async function action({ request }: Route.ActionArgs) {
         return data<SeatActionResponse>({
           intent: 'applySeatChange',
           ok: false,
-          error: error instanceof Error ? error.message : 'Failed to update seats. Please try again.',
+          error:
+            error instanceof Error ? error.message : 'Failed to update seats. Please try again.',
         });
       }
     }
@@ -518,7 +525,10 @@ export default function BillingSettings() {
   const [seatMode, setSeatMode] = useState<SeatAdjustmentMode>('add');
   const [seatsRequested, setSeatsRequested] = useState(1);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [lastPreviewRequest, setLastPreviewRequest] = useState<{ mode: SeatAdjustmentMode; seats: number } | null>(null);
+  const [lastPreviewRequest, setLastPreviewRequest] = useState<{
+    mode: SeatAdjustmentMode;
+    seats: number;
+  } | null>(null);
 
   const tierConfig = useMemo(() => {
     if (subscription?.tier && subscription.tier !== 'free') {
@@ -535,10 +545,6 @@ export default function BillingSettings() {
         effectiveDate: subscription.pendingDowngrade.effectiveDate,
       }
     : undefined;
-
-  const currentAdditionalSeats = subscription
-    ? Math.max(0, subscription.seatsTotal - subscription.seatsIncluded)
-    : 0;
 
   const seatsAvailable = stats?.seatsAvailable ?? 0;
   const isOverLimit = stats?.isOverLimit ?? false;
@@ -589,26 +595,23 @@ export default function BillingSettings() {
     const hasTaxLines = preview.prorationLines.some(line => (line.taxes ?? []).length > 0);
     const taxGroups = preview.prorationLines
       .flatMap(line => (line.taxes ?? []).map(tax => ({ line, tax })))
-      .reduce<Record<string, TaxGroupSummary>>(
-        (acc, { tax }) => {
-          const taxDetails = ((tax.tax_rate_details ?? {}) as unknown) as Record<string, unknown>;
-          const displayName = (taxDetails.display_name as string | undefined) ?? 'Tax';
-          const percentage =
-            typeof taxDetails.percentage === 'number' ? (taxDetails.percentage as number) : undefined;
-          const key = displayName;
-          if (!acc[key]) {
-            acc[key] = {
-              label: displayName,
-              amount: 0,
-              percentage,
-              reason: tax.taxability_reason,
-            };
-          }
-          acc[key].amount += tax.amount ?? 0;
-          return acc;
-        },
-        {}
-      );
+      .reduce<Record<string, TaxGroupSummary>>((acc, { tax }) => {
+        const taxDetails = (tax.tax_rate_details ?? {}) as unknown as Record<string, unknown>;
+        const displayName = (taxDetails.display_name as string | undefined) ?? 'Tax';
+        const percentage =
+          typeof taxDetails.percentage === 'number' ? (taxDetails.percentage as number) : undefined;
+        const key = displayName;
+        if (!acc[key]) {
+          acc[key] = {
+            label: displayName,
+            amount: 0,
+            percentage,
+            reason: tax.taxability_reason,
+          };
+        }
+        acc[key].amount += tax.amount ?? 0;
+        return acc;
+      }, {});
 
     return {
       chargeLines,
@@ -643,8 +646,14 @@ export default function BillingSettings() {
     [previousSeatTotals]
   );
 
-  const previewSummary = useMemo(() => summarizePreview(previewResult), [summarizePreview, previewResult]);
-  const previewSeatDelta = useMemo(() => computeSeatDelta(previewResult), [computeSeatDelta, previewResult]);
+  const previewSummary = useMemo(
+    () => summarizePreview(previewResult),
+    [summarizePreview, previewResult]
+  );
+  const previewSeatDelta = useMemo(
+    () => computeSeatDelta(previewResult),
+    [computeSeatDelta, previewResult]
+  );
   const taxGroupSummaries = useMemo(
     () => Object.values(previewSummary.taxGroups) as TaxGroupSummary[],
     [previewSummary]
@@ -666,11 +675,17 @@ export default function BillingSettings() {
     ? Math.max(0, subscription.seatsTotal - Math.max(subscription.seatsIncluded, seatsActive))
     : 0;
 
-  const seatsAvailableToAdd = subscription && tierConfig ? tierConfig.seats.max - subscription.seatsTotal : 0;
+  const seatsAvailableToAdd =
+    subscription && tierConfig ? tierConfig.seats.max - subscription.seatsTotal : 0;
 
-  const seatAdjustmentLimitExceeded = seatMode === 'add'
-    ? Boolean(subscription && tierConfig && subscription.seatsTotal + seatsRequested > tierConfig.seats.max)
-    : seatsRequested > seatsRemovable;
+  const seatAdjustmentLimitExceeded =
+    seatMode === 'add'
+      ? Boolean(
+          subscription &&
+            tierConfig &&
+            subscription.seatsTotal + seatsRequested > tierConfig.seats.max
+        )
+      : seatsRequested > seatsRemovable;
 
   const isSeatRequestValid =
     Number.isInteger(seatsRequested) && seatsRequested > 0 && !seatAdjustmentLimitExceeded;
@@ -681,7 +696,11 @@ export default function BillingSettings() {
     }
 
     if (seatMode === 'add') {
-      if (subscription && tierConfig && subscription.seatsTotal + seatsRequested > tierConfig.seats.max) {
+      if (
+        subscription &&
+        tierConfig &&
+        subscription.seatsTotal + seatsRequested > tierConfig.seats.max
+      ) {
         return `Cannot exceed ${tierConfig.seats.max} seats on the ${tierConfig.name} plan.`;
       }
     } else if (seatsRequested > seatsRemovable) {
@@ -742,8 +761,8 @@ export default function BillingSettings() {
 
   useEffect(() => {
     if (successMessage) {
-      const timeout = setTimeout(() => setSuccessMessage(null), 5000);
-      return () => clearTimeout(timeout);
+      const timeout = globalThis.setTimeout(() => setSuccessMessage(null), 5000);
+      return () => globalThis.clearTimeout(timeout);
     }
   }, [successMessage]);
 
@@ -754,9 +773,10 @@ export default function BillingSettings() {
   const seatModalTitle = seatMode === 'add' ? 'Add Seats' : 'Remove Seats';
   const seatInputLabel = seatMode === 'add' ? 'Seats to add' : 'Seats to remove';
   const seatInputId = seatMode === 'add' ? 'seatsToAdd' : 'seatsToRemove';
-  const seatModalSubtext = seatMode === 'add'
-    ? `Seats remaining on this plan: ${Math.max(0, seatsAvailableToAdd)}`
-    : `Removable seats before reaching your limit: ${seatsRemovable}`;
+  const seatModalSubtext =
+    seatMode === 'add'
+      ? `Seats remaining on this plan: ${Math.max(0, seatsAvailableToAdd)}`
+      : `Removable seats before reaching your limit: ${seatsRemovable}`;
   const seatInputMax =
     seatMode === 'add'
       ? tierConfig && subscription
@@ -766,9 +786,7 @@ export default function BillingSettings() {
   const confirmButtonLabel = seatMode === 'add' ? 'Confirm & Add' : 'Confirm & Remove';
   const confirmButtonSubmittingLabel = seatMode === 'add' ? 'Adding…' : 'Removing…';
   const confirmButtonClasses =
-    seatMode === 'add'
-      ? 'bg-indigo-600 hover:bg-indigo-700'
-      : 'bg-rose-600 hover:bg-rose-700';
+    seatMode === 'add' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-rose-600 hover:bg-rose-700';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -776,8 +794,8 @@ export default function BillingSettings() {
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-semibold text-gray-900">Billing</h1>
           <p className="text-sm text-gray-600">
-            Manage your subscription, seats, and billing history. Owners and admins can update billing
-            details here.
+            Manage your subscription, seats, and billing history. Owners and admins can update
+            billing details here.
           </p>
         </div>
       </div>
@@ -915,7 +933,8 @@ export default function BillingSettings() {
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 {previewFetcher.state === 'submitting' ? (
                   <p className="text-sm text-gray-600">Calculating proration…</p>
-                ) : previewFetcher.data?.intent === 'previewSeatChange' && previewFetcher.data?.ok ? (
+                ) : previewFetcher.data?.intent === 'previewSeatChange' &&
+                  previewFetcher.data?.ok ? (
                   <div className="space-y-4 text-sm text-gray-700">
                     <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
                       <div className="flex items-start justify-between">
@@ -929,7 +948,9 @@ export default function BillingSettings() {
                         </div>
                         <p
                           className={`text-lg font-semibold ${
-                            previewSummary.immediateTotal >= 0 ? 'text-gray-900' : 'text-emerald-600'
+                            previewSummary.immediateTotal >= 0
+                              ? 'text-gray-900'
+                              : 'text-emerald-600'
                           }`}
                         >
                           {formatSignedAmount(previewSummary.immediateTotal)}
@@ -940,12 +961,14 @@ export default function BillingSettings() {
                           <p>
                             <span className="font-medium text-gray-700">Seats:</span>{' '}
                             {previewSeatDelta.totalBefore} → {previewSeatDelta.totalAfter}{' '}
-                            {(previewSeatDelta.totalChange >= 0 ? '+' : '') + previewSeatDelta.totalChange}
+                            {(previewSeatDelta.totalChange >= 0 ? '+' : '') +
+                              previewSeatDelta.totalChange}
                           </p>
                           <p>
                             <span className="font-medium text-gray-700">Paid seats:</span>{' '}
                             {previewSeatDelta.paidBefore} → {previewSeatDelta.paidAfter}{' '}
-                            {(previewSeatDelta.paidChange >= 0 ? '+' : '') + previewSeatDelta.paidChange}
+                            {(previewSeatDelta.paidChange >= 0 ? '+' : '') +
+                              previewSeatDelta.paidChange}
                           </p>
                         </div>
                       ) : null}
@@ -953,7 +976,9 @@ export default function BillingSettings() {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-gray-700">Charges for additional seats</span>
+                        <span className="font-medium text-gray-700">
+                          Charges for additional seats
+                        </span>
                         <span>{formatPrice(previewSummary.chargesTotal)}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm text-gray-600">
@@ -993,7 +1018,10 @@ export default function BillingSettings() {
                       </summary>
                       <ul className="mt-2 space-y-1">
                         {previewResult?.prorationLines.map((line, index) => (
-                          <li key={`detail-${line.description}-${index}`} className="flex justify-between">
+                          <li
+                            key={`detail-${line.description}-${index}`}
+                            className="flex justify-between"
+                          >
                             <span>
                               {line.description}{' '}
                               {line.isProration ? (
@@ -1010,13 +1038,18 @@ export default function BillingSettings() {
 
                     {previewResult?.upcomingLines?.length ? (
                       <div className="border-t border-gray-200 pt-3 text-xs text-gray-500">
-                        <p className="font-semibold uppercase tracking-wide text-gray-500">Next invoice</p>
+                        <p className="font-semibold uppercase tracking-wide text-gray-500">
+                          Next invoice
+                        </p>
                         <p className="mt-1">
                           These amounts will appear on your next regular Stripe invoice.
                         </p>
                         <ul className="mt-2 space-y-1 text-gray-600">
                           {previewResult.upcomingLines.map((line, index) => (
-                            <li key={`upcoming-${line.description}-${index}`} className="flex justify-between">
+                            <li
+                              key={`upcoming-${line.description}-${index}`}
+                              className="flex justify-between"
+                            >
                               <span>{line.description}</span>
                               <span>{formatPrice(line.amount)}</span>
                             </li>
@@ -1025,10 +1058,13 @@ export default function BillingSettings() {
                       </div>
                     ) : null}
                   </div>
-                ) : previewFetcher.data?.intent === 'previewSeatChange' && !previewFetcher.data?.ok ? (
+                ) : previewFetcher.data?.intent === 'previewSeatChange' &&
+                  !previewFetcher.data?.ok ? (
                   <p className="text-sm text-red-600">{previewFetcher.data?.error}</p>
                 ) : (
-                  <p className="text-sm text-gray-600">Enter the number of seats to preview charges.</p>
+                  <p className="text-sm text-gray-600">
+                    Enter the number of seats to preview charges.
+                  </p>
                 )}
               </div>
             </div>
@@ -1048,7 +1084,11 @@ export default function BillingSettings() {
               <applySeatFetcher.Form method="post">
                 <input type="hidden" name="intent" value="applySeatChange" />
                 <input type="hidden" name="mode" value={seatMode} />
-                <input type="hidden" name="seats" value={Number.isNaN(seatsRequested) ? '' : seatsRequested} />
+                <input
+                  type="hidden"
+                  name="seats"
+                  value={Number.isNaN(seatsRequested) ? '' : seatsRequested}
+                />
                 <button
                   type="submit"
                   className={`rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:bg-gray-300 ${confirmButtonClasses}`}

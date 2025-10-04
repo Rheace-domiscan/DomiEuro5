@@ -38,11 +38,11 @@ export const mockConvexSubscription = {
   _id: 'jx7sub123' as Id<'subscriptions'>,
   _creationTime: Date.now(),
   organizationId: 'org_01HTEST123456789',
-  tier: 'starter' as const,
+  tier: 'starter',
   stripeCustomerId: 'cus_test123',
   stripeSubscriptionId: 'sub_test123',
-  stripeStatus: 'active' as const,
-  billingInterval: 'monthly' as const,
+  stripeStatus: 'active',
+  billingInterval: 'monthly',
   seats: {
     included: 5,
     current: 3,
@@ -54,7 +54,7 @@ export const mockConvexSubscription = {
     perSeatPrice: 1000, // £10 in pence
   },
   status: {
-    accessStatus: 'active' as const,
+    accessStatus: 'active',
     gracePeriodEndsAt: null,
   },
   currentPeriod: {
@@ -175,8 +175,8 @@ export class MockConvexDatabase {
     const id = `jx7_user_${this.nextId++}`;
     const now = Date.now();
 
-    const user = {
-      _id: id as any,
+    const user: typeof mockConvexUser = {
+      _id: id as Id<'users'>,
       _creationTime: now,
       email: data.email,
       name: data.name,
@@ -263,15 +263,16 @@ export class MockConvexDatabase {
     const id = `jx7_sub_${this.nextId++}`;
     const now = Date.now();
 
-    const subscription = {
-      _id: id as any,
+    const subscription: typeof mockConvexSubscription = {
+      _id: id as Id<'subscriptions'>,
       _creationTime: now,
       organizationId: data.organizationId,
-      tier: data.tier as any,
-      stripeCustomerId: data.stripeCustomerId || null,
-      stripeSubscriptionId: data.stripeSubscriptionId || null,
-      stripeStatus: null,
-      billingInterval: null,
+      tier: data.tier,
+      stripeCustomerId: data.stripeCustomerId ?? mockConvexSubscription.stripeCustomerId,
+      stripeSubscriptionId:
+        data.stripeSubscriptionId ?? mockConvexSubscription.stripeSubscriptionId,
+      stripeStatus: mockConvexSubscription.stripeStatus,
+      billingInterval: mockConvexSubscription.billingInterval,
       seats: {
         included: 1,
         current: 1,
@@ -283,14 +284,17 @@ export class MockConvexDatabase {
         perSeatPrice: 0,
       },
       status: {
-        accessStatus: 'active' as const,
+        accessStatus: mockConvexSubscription.status.accessStatus,
         gracePeriodEndsAt: null,
       },
-      currentPeriod: null,
+      currentPeriod: {
+        start: now,
+        end: now,
+      },
       metadata: {},
       createdAt: now,
       updatedAt: now,
-    } as any;
+    };
 
     this.subscriptions.set(id, subscription);
     return id;

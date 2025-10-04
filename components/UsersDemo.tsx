@@ -1,4 +1,5 @@
 import { useGetAllUsers, useCreateUser } from '../lib/useConvex';
+import { logError } from '~/lib/logger';
 
 /**
  * UsersDemo Component
@@ -41,7 +42,7 @@ export function UsersDemo() {
     } catch (error) {
       // Log errors in development for debugging
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to create user:', error);
+        logError('Failed to create user', error);
       }
       // In production, you'd want to show a user-friendly error message
     }

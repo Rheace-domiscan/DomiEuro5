@@ -340,8 +340,9 @@ describe('Session Management (session.server.ts)', () => {
 
     it('should require SESSION_SECRET to be set', () => {
       // This is verified at module load time in session.server.ts:3-5
-      expect(process.env.SESSION_SECRET).toBeDefined();
-      expect(process.env.SESSION_SECRET!.length).toBeGreaterThan(0);
+      const sessionSecret = process.env.SESSION_SECRET;
+      expect(sessionSecret).toBeDefined();
+      expect((sessionSecret ?? '').length).toBeGreaterThan(0);
     });
   });
 });

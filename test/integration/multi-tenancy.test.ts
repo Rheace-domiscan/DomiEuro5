@@ -405,7 +405,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
         email: org1AuthResponse.user.email,
         name: 'Org1 Auth User',
         workosUserId: org1AuthResponse.user.id,
-        organizationId: org1AuthResponse.organizationId!,
+        organizationId: org1AuthResponse.organizationId,
         role: 'owner',
       });
 
@@ -413,7 +413,7 @@ describe('Multi-Tenancy Data Isolation (CRITICAL)', () => {
         email: org2AuthResponse.user.email,
         name: 'Org2 Auth User',
         workosUserId: org2AuthResponse.user.id,
-        organizationId: org2AuthResponse.organizationId!,
+        organizationId: org2AuthResponse.organizationId,
         role: 'owner',
       });
 

@@ -338,6 +338,135 @@ export async function createOrganizationMembership(
   }
 }
 
+export async function inviteUserToOrganization(options: {
+  email: string;
+  organizationId: string;
+  roleSlug: string;
+  inviterUserId?: string;
+}) {
+  try {
+    return await workos.userManagement.sendInvitation({
+      email: options.email,
+      organizationId: options.organizationId,
+      roleSlug: options.roleSlug,
+      inviterUserId: options.inviterUserId,
+    });
+  } catch (error) {
+    console.error('Failed to send WorkOS invitation:', error);
+    throw error;
+  }
+}
+
+export async function getOrganizationMembershipForUser(organizationId: string, userId: string) {
+  try {
+    const memberships = await workos.userManagement.listOrganizationMemberships({
+      organizationId,
+      userId,
+    });
+
+    return memberships.data[0] ?? null;
+  } catch (error) {
+    console.error('Failed to fetch organization membership:', error);
+    throw error;
+  }
+}
+
+export async function deactivateOrganizationMembership(membershipId: string) {
+  try {
+    return await workos.userManagement.deactivateOrganizationMembership(membershipId);
+  } catch (error) {
+    console.error('Failed to deactivate organization membership:', error);
+    throw error;
+  }
+}
+
+export async function reactivateOrganizationMembership(membershipId: string) {
+  try {
+    return await workos.userManagement.reactivateOrganizationMembership(membershipId);
+  } catch (error) {
+    console.error('Failed to reactivate organization membership:', error);
+    throw error;
+  }
+}
+
+export async function updateOrganizationMembershipRole(membershipId: string, roleSlug: string) {
+  try {
+    return await workos.userManagement.updateOrganizationMembership(membershipId, {
+      roleSlug,
+    });
+  } catch (error) {
+    console.error('Failed to update organization membership role:', error);
+    throw error;
+  }
+}
+
+export async function inviteOrAddUserToOrganization(options: {
+  email: string;
+  organizationId: string;
+  roleSlug: string;
+  inviterUserId?: string;
+}) {
+  const normalizedEmail = options.email.trim().toLowerCase();
+
+  try {
+    const existingUsers = await workos.userManagement.listUsers({ email: normalizedEmail });
+    const existingUser = existingUsers.data[0];
+
+    if (existingUser) {
+      const membership = await getOrganizationMembershipForUser(
+        options.organizationId,
+        existingUser.id
+      );
+
+      if (membership) {
+        if (membership.status === 'inactive') {
+          await reactivateOrganizationMembership(membership.id);
+        }
+
+        if (membership.role?.slug !== options.roleSlug) {
+          await updateOrganizationMembershipRole(membership.id, options.roleSlug);
+        }
+
+        return {
+          type: 'existing_member' as const,
+          workosUserId: existingUser.id,
+          membershipId: membership.id,
+          user: existingUser,
+        };
+      }
+
+      const createdMembership = await createOrganizationMembership(
+        options.organizationId,
+        existingUser.id,
+        options.roleSlug
+      );
+
+      return {
+        type: 'membership_created' as const,
+        workosUserId: existingUser.id,
+        membershipId: createdMembership.id,
+        user: existingUser,
+      };
+    }
+
+    const invitation = await inviteUserToOrganization({
+      email: normalizedEmail,
+      organizationId: options.organizationId,
+      roleSlug: options.roleSlug,
+      inviterUserId: options.inviterUserId,
+    });
+
+    return {
+      type: 'invited' as const,
+      invitation,
+      user: null,
+    };
+  } catch (error) {
+    console.error('Failed to invite or add user to organization:', error);
+    throw error;
+  }
+}
+
 export async function listOrganizations() {
   try {
     const { data: organizations } = await workos.organizations.listOrganizations();

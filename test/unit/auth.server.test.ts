@@ -7,6 +7,8 @@
  * Coverage Target: 85%+ (security-critical code)
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockWorkOS, resetWorkOSMocks } from '../mocks/workos';
 import { mockConvexServer, resetConvexMocks } from '../mocks/convex';
