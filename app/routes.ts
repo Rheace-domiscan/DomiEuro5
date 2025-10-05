@@ -15,7 +15,10 @@ export default [
   route('auth/logout', 'routes/auth/logout.tsx'),
   route('webhooks/stripe', 'routes/webhooks/stripe.tsx'),
   route('settings', 'routes/settings.tsx', [
-    route('team', 'routes/settings/team.tsx'),
+    route('team', 'routes/settings.team.tsx', [
+      index('routes/settings.team._index.tsx'),
+      route('transfer-ownership', 'routes/settings.team.transfer-ownership.tsx'),
+    ]),
     route('billing', 'routes/settings/billing.tsx'),
   ]),
 ] satisfies RouteConfig;

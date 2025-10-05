@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Link,
   data,
   redirect,
   useFetcher,
@@ -7,7 +8,7 @@ import {
   useRevalidator,
   type FetcherWithComponents,
 } from 'react-router';
-import type { Route } from './+types/team';
+import type { Route } from './+types/settings.team._index';
 import type { Role } from '~/lib/permissions';
 import { getRoleName, ROLES } from '~/lib/permissions';
 import type { SubscriptionTier } from '~/types/billing';
@@ -21,12 +22,12 @@ import {
   updateOrganizationMembershipRole,
 } from '~/lib/auth.server';
 import { logError } from '~/lib/logger';
-import type { Id } from '../../../convex/_generated/dataModel';
-import { api } from '../../../convex/_generated/api';
-import { convexServer, createOrUpdateUserInConvex } from '../../../lib/convex.server';
-import { InviteUserModal } from '../../../components/team/InviteUserModal';
-import { TeamTable, type TeamMemberRow } from '../../../components/team/TeamTable';
-import { SeatWarningBanner } from '../../../components/billing/SeatWarningBanner';
+import type { Id } from '../../convex/_generated/dataModel';
+import { api } from '../../convex/_generated/api';
+import { convexServer, createOrUpdateUserInConvex } from '../../lib/convex.server';
+import { InviteUserModal } from '../../components/team/InviteUserModal';
+import { TeamTable, type TeamMemberRow } from '../../components/team/TeamTable';
+import { SeatWarningBanner } from '../../components/billing/SeatWarningBanner';
 
 interface SeatStats {
   hasSubscription: boolean;
@@ -514,20 +515,30 @@ export default function TeamSettingsRoute() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Team Management</h1>
           <p className="mt-1 text-sm text-gray-600">
             Invite teammates, manage roles, and keep seat usage under control.
           </p>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          onClick={() => setInviteOpen(true)}
-        >
-          Invite teammate
-        </button>
+        <div className="flex items-center gap-3">
+          {user.role === ROLES.OWNER && (
+            <Link
+              to="/settings/team/transfer-ownership"
+              className="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            >
+              Transfer ownership
+            </Link>
+          )}
+          <button
+            type="button"
+            className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            onClick={() => setInviteOpen(true)}
+          >
+            Invite teammate
+          </button>
+        </div>
       </div>
 
       {feedback && (

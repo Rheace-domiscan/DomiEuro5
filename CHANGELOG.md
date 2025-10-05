@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 
 - Reworked WorkOS logout to persist the WorkOS session id, revoke it on sign-out, and always return users to `/auth/login`, preventing automatic re-authentication or external error pages after logout.
 
+### 👥 Team Management
+
+- Split the team settings route into a nested layout so `/settings/team` keeps the existing invite and membership controls while exposing a dedicated `/settings/team/transfer-ownership` screen for owner handoffs.
+- Added a Convex `auditLog` module plus WorkOS/Stripe wiring to record ownership transfers, update billing contacts when the owner changes, and surface integration coverage with new Vitest integration suites.
+
 ### 🧹 Maintenance
 
 - Resolved lint failures in the billing settings route by normalizing early returns with hook usage and reformatting Stripe action responses to meet Prettier expectations, restoring CI compatibility.
@@ -19,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - `npm run typecheck`
 - `npm run test -- test/unit/auth.server.test.ts`
 - `npm run test -- test/integration/billing-dashboard.test.ts`
+- `npm run test -- test/integration/team-management.test.ts`
+- `npm run test -- test/integration/ownership-transfer.test.ts`
 - `npm run test:coverage`
 
 ## [1.12.2] - 2025-10-05

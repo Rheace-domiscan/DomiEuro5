@@ -1,7 +1,7 @@
 /**
  * Team Management Route Tests (Phase 8)
  *
- * Validates loader/action behaviour for app/routes/settings/team.tsx:
+ * Validates loader/action behaviour for app/routes/settings.team._index.tsx:
  * - Role-based access (owner/admin vs manager)
  * - Invite flow responses for owner/admin roles
  * - Membership management operations (deactivate/reactivate)
@@ -30,7 +30,7 @@ vi.mock('../../lib/convex.server', () => ({
   createOrUpdateUserInConvex: vi.fn(),
 }));
 
-import { loader, action } from '../../app/routes/settings/team';
+import { loader, action } from '../../app/routes/settings.team._index';
 import {
   requireRole,
   inviteOrAddUserToOrganization,
