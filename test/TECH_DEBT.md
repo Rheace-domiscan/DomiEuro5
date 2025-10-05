@@ -106,14 +106,14 @@ This document tracks testing gaps and technical debt in the test suite.
 
 **Last Updated:** 2025-10-03 (Phase 5 Complete)
 
-| Phase     | Tests Added                           | Coverage Impact     | Status        |
-| --------- | ------------------------------------- | ------------------- | ------------- |
-| Phase 1-4 | Auth, Permissions, Session            | 95%+ app/lib        | ✅ Complete   |
-| Phase 5   | Stripe integration, Billing constants | Added 28 tests      | ✅ Complete   |
-| Phase 6   | TBD                                   | TBD                 | 📋 Planned    |
-| Phase 7   | **Convex unit tests**                 | **+15-20% overall** | ✅ Complete   |
-| Phase 8   | UI component tests                    | +5-10%              | 📋 Planned    |
-| Phase 9+  | E2E tests                             | N/A (not counted)   | 📋 Future     |
+| Phase     | Tests Added                           | Coverage Impact     | Status      |
+| --------- | ------------------------------------- | ------------------- | ----------- |
+| Phase 1-4 | Auth, Permissions, Session            | 95%+ app/lib        | ✅ Complete |
+| Phase 5   | Stripe integration, Billing constants | Added 28 tests      | ✅ Complete |
+| Phase 6   | TBD                                   | TBD                 | 📋 Planned  |
+| Phase 7   | **Convex unit tests**                 | **+15-20% overall** | ✅ Complete |
+| Phase 8   | UI component tests                    | +5-10%              | 📋 Planned  |
+| Phase 9+  | E2E tests                             | N/A (not counted)   | 📋 Future   |
 
 ---
 

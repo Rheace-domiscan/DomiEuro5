@@ -49,7 +49,6 @@ All notable changes to this project will be documented in this file.
 - Closed out lint regressions introduced during grace-period work so the webhooks, Convex cron, and UI banner ship with a clean ESLint/Prettier pass.
 - Captured Phase 10 verification artefacts (Stripe dunning cadence + CLI flows) and published the audit record under `.claude/verification-reports/phase-10-2025-10-05.md`.
 
-
 ## [1.12.0] - 2025-10-05
 
 ### 🚨 Grace Period & Failed Payments
@@ -216,11 +215,13 @@ This patch release enhances the seat preview display with tax information and cl
 ### Why This Update Matters
 
 **User Experience:**
+
 - ✅ Users can now see exactly how many seats they're adding (clear delta)
 - ✅ Tax transparency prevents confusion about "total due today"
 - ✅ Visual clarity helps users confirm seat additions before submitting
 
 **Accuracy:**
+
 - ✅ Tax amounts properly extracted from Stripe invoice preview
 - ✅ Seat counts accurately show before/after state
 - ✅ Charge breakdown includes all fee components
@@ -403,11 +404,13 @@ This patch release fixes a type definition inconsistency between billing constan
 ### Technical Notes
 
 This completes the role slug alignment started in v1.8.2:
+
 - ✅ billing-constants.ts: `TEAM_MEMBER: 'member'` (v1.8.2)
 - ✅ billing-constants.test.ts: `expect(...).toBe('member')` (v1.8.2)
 - ✅ billing.ts types: `UserRole = ... | 'member'` (v1.8.3) ← This fix
 
 **Verification:**
+
 - TypeScript: 0 errors
 - Tests: 363/363 passing
 - ESLint: 0 errors, 48 warnings
