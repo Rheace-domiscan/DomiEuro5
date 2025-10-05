@@ -87,6 +87,14 @@ export const mockWorkOS = {
       },
     }),
 
+    listUsers: vi.fn().mockResolvedValue({
+      data: [],
+      listMetadata: {
+        after: null,
+        before: null,
+      },
+    }),
+
     authenticateWithCode: vi.fn().mockResolvedValue(mockAuthenticationResponse),
 
     authenticateWithOrganizationSelection: vi.fn().mockResolvedValue(mockAuthenticationResponse),
@@ -99,11 +107,21 @@ export const mockWorkOS = {
 
     createOrganizationMembership: vi.fn().mockResolvedValue(mockWorkOSMembership),
 
-    deleteOrganizationMembership: vi.fn().mockResolvedValue(undefined),
+    deactivateOrganizationMembership: vi
+      .fn()
+      .mockResolvedValue({ ...mockWorkOSMembership, status: 'inactive' }),
+
+    reactivateOrganizationMembership: vi.fn().mockResolvedValue(mockWorkOSMembership),
 
     updateOrganizationMembership: vi.fn().mockResolvedValue({
       ...mockWorkOSMembership,
       role: { slug: 'admin' },
+    }),
+
+    sendInvitation: vi.fn().mockResolvedValue({
+      id: 'invitation_01HTEST123456789',
+      email: 'invitee@example.com',
+      status: 'pending',
     }),
   },
 
@@ -146,8 +164,24 @@ export function resetWorkOSMocks() {
     data: [mockWorkOSMembership],
     listMetadata: { after: null, before: null },
   });
+  mockWorkOS.userManagement.listUsers.mockResolvedValue({
+    data: [],
+    listMetadata: { after: null, before: null },
+  });
   mockWorkOS.userManagement.authenticateWithCode.mockResolvedValue(mockAuthenticationResponse);
   mockWorkOS.userManagement.revokeSession.mockResolvedValue(undefined);
+  mockWorkOS.userManagement.deactivateOrganizationMembership.mockResolvedValue({
+    ...mockWorkOSMembership,
+    status: 'inactive',
+  });
+  mockWorkOS.userManagement.reactivateOrganizationMembership.mockResolvedValue(
+    mockWorkOSMembership
+  );
+  mockWorkOS.userManagement.sendInvitation.mockResolvedValue({
+    id: 'invitation_01HTEST123456789',
+    email: 'invitee@example.com',
+    status: 'pending',
+  });
   mockWorkOS.organizations.createOrganization.mockResolvedValue(mockWorkOSOrganization);
   mockWorkOS.organizations.listOrganizations.mockResolvedValue({
     data: [mockWorkOSOrganization],

@@ -10,7 +10,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mockWorkOS, resetWorkOSMocks } from '../mocks/workos';
+import { mockWorkOS, mockWorkOSMembership, resetWorkOSMocks } from '../mocks/workos';
 import { mockConvexServer, resetConvexMocks } from '../mocks/convex';
 import { mockUser, mockOrganization } from '../helpers/test-data';
 import { createMockRequest } from '../helpers/test-utils';
@@ -1039,6 +1039,276 @@ describe('Authentication Module (auth.server.ts)', () => {
       await expect(
         authModule.createOrganizationMembership(mockOrganization.id, mockUser.id)
       ).rejects.toThrow('User already member');
+    });
+  });
+
+  describe('getOrganizationMembershipForUser()', () => {
+    it('returns the first membership when WorkOS responds with data', async () => {
+      const membership = { ...mockWorkOSMembership, role: { slug: 'admin' } };
+      mockWorkOS.userManagement.listOrganizationMemberships.mockResolvedValue({
+        data: [membership],
+        listMetadata: { after: null, before: null },
+      });
+
+      const result = await authModule.getOrganizationMembershipForUser(
+        mockOrganization.id,
+        mockUser.id
+      );
+
+      expect(mockWorkOS.userManagement.listOrganizationMemberships).toHaveBeenCalledWith({
+        organizationId: mockOrganization.id,
+        userId: mockUser.id,
+      });
+      expect(result).toEqual(membership);
+    });
+
+    it('returns null when WorkOS returns no memberships', async () => {
+      mockWorkOS.userManagement.listOrganizationMemberships.mockResolvedValue({
+        data: [],
+        listMetadata: { after: null, before: null },
+      });
+
+      const result = await authModule.getOrganizationMembershipForUser(
+        mockOrganization.id,
+        mockUser.id
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it('propagates WorkOS errors', async () => {
+      mockWorkOS.userManagement.listOrganizationMemberships.mockRejectedValue(
+        new Error('API error')
+      );
+
+      await expect(
+        authModule.getOrganizationMembershipForUser(mockOrganization.id, mockUser.id)
+      ).rejects.toThrow('API error');
+    });
+  });
+
+  describe('deactivateOrganizationMembership()', () => {
+    it('delegates to WorkOS and returns the response', async () => {
+      const membership = { ...mockWorkOSMembership, status: 'inactive' as const };
+      mockWorkOS.userManagement.deactivateOrganizationMembership.mockResolvedValue(membership);
+
+      const result = await authModule.deactivateOrganizationMembership('om_inactive');
+
+      expect(mockWorkOS.userManagement.deactivateOrganizationMembership).toHaveBeenCalledWith(
+        'om_inactive'
+      );
+      expect(result).toEqual(membership);
+    });
+
+    it('throws when WorkOS deactivation fails', async () => {
+      mockWorkOS.userManagement.deactivateOrganizationMembership.mockRejectedValue(
+        new Error('WorkOS failure')
+      );
+
+      await expect(authModule.deactivateOrganizationMembership('om_fail')).rejects.toThrow(
+        'WorkOS failure'
+      );
+    });
+  });
+
+  describe('reactivateOrganizationMembership()', () => {
+    it('reactivates a membership via WorkOS', async () => {
+      const membership = { ...mockWorkOSMembership, status: 'active' as const };
+      mockWorkOS.userManagement.reactivateOrganizationMembership.mockResolvedValue(membership);
+
+      const result = await authModule.reactivateOrganizationMembership('om_reactivate');
+
+      expect(mockWorkOS.userManagement.reactivateOrganizationMembership).toHaveBeenCalledWith(
+        'om_reactivate'
+      );
+      expect(result).toEqual(membership);
+    });
+
+    it('throws when WorkOS reactivation fails', async () => {
+      mockWorkOS.userManagement.reactivateOrganizationMembership.mockRejectedValue(
+        new Error('Reactivate error')
+      );
+
+      await expect(authModule.reactivateOrganizationMembership('om_fail')).rejects.toThrow(
+        'Reactivate error'
+      );
+    });
+  });
+
+  describe('updateOrganizationMembershipRole()', () => {
+    it('updates the WorkOS membership role', async () => {
+      const updated = { ...mockWorkOSMembership, role: { slug: 'admin' } };
+      mockWorkOS.userManagement.updateOrganizationMembership.mockResolvedValue(updated);
+
+      const result = await authModule.updateOrganizationMembershipRole('om_123', 'admin');
+
+      expect(mockWorkOS.userManagement.updateOrganizationMembership).toHaveBeenCalledWith(
+        'om_123',
+        { roleSlug: 'admin' }
+      );
+      expect(result).toEqual(updated);
+    });
+
+    it('throws when WorkOS role update fails', async () => {
+      mockWorkOS.userManagement.updateOrganizationMembership.mockRejectedValue(
+        new Error('Role update failed')
+      );
+
+      await expect(authModule.updateOrganizationMembershipRole('om_123', 'owner')).rejects.toThrow(
+        'Role update failed'
+      );
+    });
+  });
+
+  describe('inviteOrAddUserToOrganization()', () => {
+    const baseOptions = {
+      email: 'Invitee@example.com ',
+      organizationId: mockOrganization.id,
+      roleSlug: 'admin',
+      inviterUserId: mockUser.id,
+    };
+
+    it('returns existing_member when membership is already active with correct role', async () => {
+      const existingUser = { id: 'user_existing', email: 'invitee@example.com' };
+      mockWorkOS.userManagement.listUsers.mockResolvedValue({
+        data: [existingUser],
+        listMetadata: { after: null, before: null },
+      });
+      mockWorkOS.userManagement.listOrganizationMemberships.mockResolvedValue({
+        data: [
+          {
+            ...mockWorkOSMembership,
+            id: 'om_existing',
+            userId: existingUser.id,
+            status: 'active',
+            role: { slug: baseOptions.roleSlug },
+          },
+        ],
+        listMetadata: { after: null, before: null },
+      });
+
+      const result = await authModule.inviteOrAddUserToOrganization(baseOptions);
+
+      expect(mockWorkOS.userManagement.reactivateOrganizationMembership).not.toHaveBeenCalled();
+      expect(mockWorkOS.userManagement.updateOrganizationMembership).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        type: 'existing_member',
+        workosUserId: existingUser.id,
+        membershipId: 'om_existing',
+        user: existingUser,
+      });
+    });
+
+    it('reactivates inactive memberships before returning existing_member', async () => {
+      const existingUser = { id: 'user_inactive', email: 'invitee@example.com' };
+      mockWorkOS.userManagement.listUsers.mockResolvedValue({
+        data: [existingUser],
+        listMetadata: { after: null, before: null },
+      });
+      mockWorkOS.userManagement.listOrganizationMemberships.mockResolvedValue({
+        data: [
+          {
+            ...mockWorkOSMembership,
+            id: 'om_inactive',
+            userId: existingUser.id,
+            status: 'inactive',
+            role: { slug: baseOptions.roleSlug },
+          },
+        ],
+        listMetadata: { after: null, before: null },
+      });
+
+      const result = await authModule.inviteOrAddUserToOrganization(baseOptions);
+
+      expect(mockWorkOS.userManagement.reactivateOrganizationMembership).toHaveBeenCalledWith(
+        'om_inactive'
+      );
+      expect(mockWorkOS.userManagement.updateOrganizationMembership).not.toHaveBeenCalled();
+      expect(result.type).toBe('existing_member');
+    });
+
+    it('updates membership role when slugs differ', async () => {
+      const existingUser = { id: 'user_role', email: 'invitee@example.com' };
+      mockWorkOS.userManagement.listUsers.mockResolvedValue({
+        data: [existingUser],
+        listMetadata: { after: null, before: null },
+      });
+      mockWorkOS.userManagement.listOrganizationMemberships.mockResolvedValue({
+        data: [
+          {
+            ...mockWorkOSMembership,
+            id: 'om_role',
+            userId: existingUser.id,
+            status: 'active',
+            role: { slug: 'member' },
+          },
+        ],
+        listMetadata: { after: null, before: null },
+      });
+      mockWorkOS.userManagement.updateOrganizationMembership.mockResolvedValue({
+        ...mockWorkOSMembership,
+        id: 'om_role',
+        role: { slug: baseOptions.roleSlug },
+      });
+
+      await authModule.inviteOrAddUserToOrganization(baseOptions);
+
+      expect(mockWorkOS.userManagement.updateOrganizationMembership).toHaveBeenCalledWith(
+        'om_role',
+        { roleSlug: baseOptions.roleSlug }
+      );
+    });
+
+    it('creates a membership when user exists without one', async () => {
+      const existingUser = { id: 'user_new_membership', email: 'invitee@example.com' };
+      mockWorkOS.userManagement.listUsers.mockResolvedValue({
+        data: [existingUser],
+        listMetadata: { after: null, before: null },
+      });
+      mockWorkOS.userManagement.listOrganizationMemberships.mockResolvedValue({
+        data: [],
+        listMetadata: { after: null, before: null },
+      });
+      mockWorkOS.userManagement.createOrganizationMembership.mockResolvedValue({
+        ...mockWorkOSMembership,
+        id: 'om_created',
+        userId: existingUser.id,
+        organizationId: baseOptions.organizationId,
+      });
+
+      const result = await authModule.inviteOrAddUserToOrganization(baseOptions);
+
+      expect(mockWorkOS.userManagement.createOrganizationMembership).toHaveBeenCalledWith({
+        organizationId: baseOptions.organizationId,
+        userId: existingUser.id,
+        roleSlug: baseOptions.roleSlug,
+      });
+      expect(result.type).toBe('membership_created');
+    });
+
+    it('sends an invitation when no matching user exists', async () => {
+      mockWorkOS.userManagement.listUsers.mockResolvedValue({
+        data: [],
+        listMetadata: { after: null, before: null },
+      });
+
+      const result = await authModule.inviteOrAddUserToOrganization(baseOptions);
+
+      expect(mockWorkOS.userManagement.sendInvitation).toHaveBeenCalledWith({
+        email: 'invitee@example.com',
+        organizationId: baseOptions.organizationId,
+        roleSlug: baseOptions.roleSlug,
+        inviterUserId: baseOptions.inviterUserId,
+      });
+      expect(result.type).toBe('invited');
+    });
+
+    it('propagates errors from WorkOS', async () => {
+      mockWorkOS.userManagement.listUsers.mockRejectedValue(new Error('WorkOS unavailable'));
+
+      await expect(authModule.inviteOrAddUserToOrganization(baseOptions)).rejects.toThrow(
+        'WorkOS unavailable'
+      );
     });
   });
 

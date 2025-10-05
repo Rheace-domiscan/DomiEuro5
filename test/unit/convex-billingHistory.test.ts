@@ -105,4 +105,74 @@ describe('convex/billingHistory', () => {
     expect(alreadyProcessed).toBe(true);
     expect(newEventProcessed).toBe(false);
   });
+
+  it('filters events by event type', async () => {
+    await createEvent({
+      eventType: 'invoice.payment_failed',
+      stripeEventId: 'evt_failed_1',
+      status: 'failed',
+    });
+    await createEvent({
+      eventType: 'invoice.payment_succeeded',
+      stripeEventId: 'evt_succeeded_1',
+    });
+
+    const failures = await t.query(api.billingHistory.getByEventType, {
+      organizationId,
+      eventType: 'invoice.payment_failed',
+      limit: 10,
+    });
+
+    expect(failures).toHaveLength(1);
+    expect(failures[0].eventType).toBe('invoice.payment_failed');
+  });
+
+  it('returns recent payment failures for an organization', async () => {
+    await createEvent({
+      eventType: 'invoice.payment_failed',
+      stripeEventId: 'evt_failed_2',
+      status: 'failed',
+    });
+    await createEvent({
+      eventType: 'invoice.payment_failed',
+      stripeEventId: 'evt_failed_3',
+      status: 'failed',
+    });
+    await createEvent({
+      eventType: 'invoice.payment_succeeded',
+      stripeEventId: 'evt_success_ignore',
+    });
+
+    const failures = await t.query(api.billingHistory.getPaymentFailures, {
+      organizationId,
+      limit: 5,
+    });
+
+    expect(failures).toHaveLength(2);
+    expect(failures.every(event => event.eventType === 'invoice.payment_failed')).toBe(true);
+  });
+
+  it('returns successful payments for an organization', async () => {
+    await createEvent({
+      eventType: 'invoice.payment_succeeded',
+      stripeEventId: 'evt_success_1',
+    });
+    await createEvent({
+      eventType: 'invoice.payment_succeeded',
+      stripeEventId: 'evt_success_2',
+    });
+    await createEvent({
+      eventType: 'invoice.payment_failed',
+      stripeEventId: 'evt_failed_ignore',
+      status: 'failed',
+    });
+
+    const payments = await t.query(api.billingHistory.getSuccessfulPayments, {
+      organizationId,
+      limit: 10,
+    });
+
+    expect(payments).toHaveLength(2);
+    expect(payments.every(event => event.eventType === 'invoice.payment_succeeded')).toBe(true);
+  });
 });

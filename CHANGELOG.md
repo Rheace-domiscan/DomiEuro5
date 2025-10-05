@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### 🧹 Maintenance
 
 - Resolved lint failures in the billing settings route by normalizing early returns with hook usage and reformatting Stripe action responses to meet Prettier expectations, restoring CI compatibility.
+- Expanded billing and Convex coverage suites to satisfy the CI coverage gates by exercising organization membership helpers and billing history filters.
 
 ### ✅ Verification
 
@@ -18,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - `npm run typecheck`
 - `npm run test -- test/unit/auth.server.test.ts`
 - `npm run test -- test/integration/billing-dashboard.test.ts`
+- `npm run test:coverage`
 
 ## [1.12.2] - 2025-10-05
 
