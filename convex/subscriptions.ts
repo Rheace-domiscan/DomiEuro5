@@ -16,7 +16,10 @@
  */
 
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, internalMutation } from './_generated/server';
+import { api } from './_generated/api';
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 /**
  * List all subscriptions (for testing)
@@ -200,13 +203,25 @@ export const startGracePeriod = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const gracePeriodEndsAt = now + args.gracePeriodDays * 24 * 60 * 60 * 1000;
+    const subscription = await ctx.db.get(args.subscriptionId);
+
+    if (!subscription) {
+      return args.subscriptionId;
+    }
+
+    if (subscription.accessStatus === 'locked') {
+      return args.subscriptionId;
+    }
+
+    const existingStart = subscription.gracePeriodStartedAt ?? now;
+    const existingEnd = subscription.gracePeriodEndsAt
+      ?? existingStart + args.gracePeriodDays * DAY_IN_MS;
 
     await ctx.db.patch(args.subscriptionId, {
       status: 'past_due',
       accessStatus: 'grace_period',
-      gracePeriodStartedAt: now,
-      gracePeriodEndsAt,
+      gracePeriodStartedAt: existingStart,
+      gracePeriodEndsAt: existingEnd,
       updatedAt: now,
     });
 
@@ -343,6 +358,47 @@ export const getGracePeriodSubscriptions = query({
       .collect();
 
     return subscriptions;
+  },
+});
+
+/**
+ * Internal job: lock subscriptions whose grace period has expired
+ */
+export const checkGracePeriods = internalMutation({
+  args: {},
+  handler: async ctx => {
+    const now = Date.now();
+    const subscriptions = await ctx.db
+      .query('subscriptions')
+      .withIndex('by_access_status', q => q.eq('accessStatus', 'grace_period'))
+      .collect();
+
+    await Promise.all(
+      subscriptions.map(async subscription => {
+        if (!subscription.gracePeriodEndsAt || subscription.gracePeriodEndsAt > now) {
+          return;
+        }
+
+        await ctx.runMutation(api.subscriptions.endGracePeriod, {
+          subscriptionId: subscription._id,
+          paymentSuccessful: false,
+        });
+
+        await ctx.runMutation(api.billingHistory.create, {
+          organizationId: subscription.organizationId,
+          subscriptionId: subscription.stripeSubscriptionId,
+          eventType: 'grace_period.expired',
+          stripeEventId: `cron.grace_period.expired.${subscription._id}.${now}`,
+          status: 'failed',
+          description:
+            'Grace period expired: account locked after 28 days without successful payment',
+          metadata: {
+            gracePeriodStartedAt: subscription.gracePeriodStartedAt,
+            gracePeriodEndsAt: subscription.gracePeriodEndsAt,
+          },
+        });
+      })
+    );
   },
 });
 

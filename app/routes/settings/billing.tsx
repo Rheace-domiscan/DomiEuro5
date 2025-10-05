@@ -35,6 +35,7 @@ import { BillingOverview } from '../../../components/billing/BillingOverview';
 import { SeatManagement } from '../../../components/billing/SeatManagement';
 import { BillingHistory } from '../../../components/billing/BillingHistory';
 import { SeatWarningBanner } from '../../../components/billing/SeatWarningBanner';
+import { GracePeriodBanner } from '../../../components/billing/GracePeriodBanner';
 
 type SeatPreviewLine = {
   description: string;
@@ -539,6 +540,12 @@ export default function BillingSettings() {
 
   const currentTier = (subscription?.tier ?? 'free') as SubscriptionTier;
   const currentAccessStatus = (subscription?.accessStatus ?? 'active') as AccessStatus;
+  const isGracePeriod = currentAccessStatus === 'grace_period';
+  const isLocked = currentAccessStatus === 'locked';
+  const seatChangesDisabled = isLocked;
+  const seatChangesDisabledReason = seatChangesDisabled
+    ? 'Account locked after repeated payment failures. Update billing details to manage seats.'
+    : undefined;
   const normalizedPendingDowngrade = subscription?.pendingDowngrade
     ? {
         tier: subscription.pendingDowngrade.tier as SubscriptionTier,
@@ -567,6 +574,33 @@ export default function BillingSettings() {
       paid: Math.max(0, subscription.seatsTotal - subscription.seatsIncluded),
     };
   }, [subscription]);
+
+  const renderManageBillingAction = () => {
+    if (!subscription) {
+      return (
+        <button
+          type="button"
+          className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-500"
+          disabled
+        >
+          Manage Billing (available on paid plans)
+        </button>
+      );
+    }
+
+    return (
+      <manageBillingFetcher.Form method="post">
+        <input type="hidden" name="intent" value="manageBilling" />
+        <button
+          type="submit"
+          className="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+          disabled={manageBillingFetcher.state !== 'idle'}
+        >
+          {manageBillingFetcher.state === 'submitting' ? 'Opening…' : 'Manage Billing'}
+        </button>
+      </manageBillingFetcher.Form>
+    );
+  };
 
   const summarizePreview = useCallback((preview: SeatPreview | null) => {
     if (!preview) {
@@ -811,6 +845,14 @@ export default function BillingSettings() {
           />
         ) : null}
 
+        {(isGracePeriod || isLocked) && (
+          <GracePeriodBanner
+            accessStatus={isLocked ? 'locked' : 'grace_period'}
+            gracePeriodEndsAt={subscription?.gracePeriodEndsAt}
+            manageBillingAction={renderManageBillingAction()}
+          />
+        )}
+
         {successMessage ? (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
             {successMessage}
@@ -851,34 +893,18 @@ export default function BillingSettings() {
               maxSeats={maxSeats}
               tierName={TIER_CONFIG[currentTier].name}
               isAtSeatCap={isAtSeatCap}
-              manageBillingAction={
-                subscription ? (
-                  <manageBillingFetcher.Form method="post">
-                    <input type="hidden" name="intent" value="manageBilling" />
-                    <button
-                      type="submit"
-                      className="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-                      disabled={manageBillingFetcher.state !== 'idle'}
-                    >
-                      {manageBillingFetcher.state === 'submitting' ? 'Opening…' : 'Manage Billing'}
-                    </button>
-                  </manageBillingFetcher.Form>
-                ) : (
-                  <button
-                    type="button"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-500"
-                    disabled
-                  >
-                    Manage Billing (available on paid plans)
-                  </button>
-                )
-              }
+              manageBillingAction={renderManageBillingAction()}
               onAdjustSeats={mode => {
+                if (seatChangesDisabled) {
+                  return;
+                }
                 setSeatMode(mode);
                 setSeatsRequested(1);
                 setLastPreviewRequest(null);
                 setIsModalOpen(true);
               }}
+              seatChangesDisabled={seatChangesDisabled}
+              seatChangesDisabledReason={seatChangesDisabledReason}
             />
           </div>
         </div>

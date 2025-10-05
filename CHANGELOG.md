@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0] - 2025-10-05
+
+### 🚨 Grace Period & Failed Payments
+
+**Stripe + Convex orchestration**
+
+- Hardened `invoice.payment_failed` / `invoice.payment_succeeded` handlers to start, persist, and resolve 28‑day grace periods while logging previous access status.
+- Added `convex/subscriptions.checkGracePeriods` internal job plus daily cron wiring to lock subscriptions automatically when grace windows expire.
+- Prevented seat mutations and routed locked users to `/settings/billing?status=locked` by extending auth middleware.
+
+**Billing UX updates**
+
+- Introduced `GracePeriodBanner` and surfaced it on the billing dashboard with explicit countdown messaging and disabled seat actions while locked.
+- Updated seat management controls to explain why actions are disabled and reuse the “Manage Billing” CTA across active and grace states.
+
+**Testing & verification**
+
+- `npm test`
+- Manual Stripe CLI flows:
+  - `stripe trigger invoice.payment_failed --override invoice:customer=cus_TAYgMn6uqY9ghQ --override invoice:subscription=sub_1SEDZHRfqBJAosbRAC5u0U5T --override payment_method:customer=cus_TAYgMn6uqY9ghQ --remove invoice:pending_invoice_items_behavior`
+  - `stripe trigger invoice.payment_succeeded --override invoice:customer=cus_TAYgMn6uqY9ghQ --override invoice:subscription=sub_1SEDZHRfqBJAosbRAC5u0U5T --override payment_method:customer=cus_TAYgMn6uqY9ghQ --remove invoice:pending_invoice_items_behavior`
+
+## [1.11.2] - 2025-10-05
+
+### ♻️ Polish
+
+- Normalized Prettier formatting across dashboard routes, feature gating components, and Stripe checkout metadata for consistent lint output.
+
+### 🧪 Verification
+
+- Captured Phase 9 verification evidence in `.claude/verification-reports/phase-9-2025-10-04.md` to document test coverage for feature gating.
+
 ## [1.11.1] - 2025-10-05
 
 ### 🧹 Maintenance

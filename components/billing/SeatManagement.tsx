@@ -19,6 +19,8 @@ interface SeatManagementProps {
   isAtSeatCap: boolean;
   manageBillingAction: ReactNode;
   onAdjustSeats: (mode: SeatAdjustmentMode) => void;
+  seatChangesDisabled?: boolean;
+  seatChangesDisabledReason?: string;
 }
 
 export function SeatManagement({
@@ -31,16 +33,20 @@ export function SeatManagement({
   isAtSeatCap,
   manageBillingAction,
   onAdjustSeats,
+  seatChangesDisabled = false,
+  seatChangesDisabledReason,
 }: SeatManagementProps) {
   const utilization = Math.min((seatsActive / Math.max(seatsTotal, 1)) * 100, 100);
   const seatsOver = Math.max(0, seatsActive - seatsTotal);
   const minimumSeatTotal = Math.max(seatsIncluded, seatsActive);
   const canRemoveSeats = seatsTotal > minimumSeatTotal;
-  const removalDisabledReason = canRemoveSeats
+  const removalDisabledReason = seatChangesDisabled
     ? null
-    : seatsTotal <= seatsIncluded
-      ? 'All seats are included in your plan'
-      : 'Remove team members before reducing seats';
+    : canRemoveSeats
+      ? null
+      : seatsTotal <= seatsIncluded
+        ? 'All seats are included in your plan'
+        : 'Remove team members before reducing seats';
 
   return (
     <aside className="rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -98,7 +104,7 @@ export function SeatManagement({
               type="button"
               onClick={() => onAdjustSeats('add')}
               className="w-full rounded-lg border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400"
-              disabled={isAtSeatCap}
+              disabled={isAtSeatCap || seatChangesDisabled}
             >
               {isAtSeatCap ? 'Seat limit reached' : 'Add Seats'}
             </button>
@@ -107,7 +113,7 @@ export function SeatManagement({
               type="button"
               onClick={() => onAdjustSeats('remove')}
               className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400"
-              disabled={!canRemoveSeats}
+              disabled={!canRemoveSeats || seatChangesDisabled}
             >
               Remove Seats
             </button>
@@ -117,6 +123,12 @@ export function SeatManagement({
             <p className="text-xs text-amber-600">
               You&apos;re at the maximum seat capacity for this plan. Upgrade to a higher tier to
               unlock more seats.
+            </p>
+          ) : null}
+
+          {seatChangesDisabled && !isAtSeatCap ? (
+            <p className="text-xs text-rose-600">
+              {seatChangesDisabledReason ?? 'Update your payment method to manage seats.'}
             </p>
           ) : null}
 

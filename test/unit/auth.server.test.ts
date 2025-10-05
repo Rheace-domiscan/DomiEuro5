@@ -246,6 +246,65 @@ describe('Authentication Module (auth.server.ts)', () => {
 
       await expect(authModule.requireUser(request)).rejects.toThrow('Redirect to /auth/login');
     });
+
+    it('should redirect locked subscriptions to billing settings', async () => {
+      const request = createMockRequest('/dashboard');
+
+      mockSession.get.mockImplementation((key: string) => {
+        if (key === 'userId') return mockUser.id;
+        if (key === 'organizationId') return mockOrganization.id;
+        if (key === 'role') return 'owner';
+        return undefined;
+      });
+
+      mockWorkOS.userManagement.getUser.mockResolvedValue({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        emailVerified: true,
+        profilePictureUrl: null,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      });
+
+      mockConvexServer.query.mockResolvedValueOnce({
+        _id: 'sub_locked_1',
+        organizationId: mockOrganization.id,
+        accessStatus: 'locked',
+      });
+
+      await expect(authModule.requireUser(request)).rejects.toThrow(
+        'Redirect to /settings/billing?status=locked'
+      );
+    });
+
+    it('allows locked accounts to load billing settings', async () => {
+      const request = createMockRequest('/settings/billing');
+
+      mockSession.get.mockImplementation((key: string) => {
+        if (key === 'userId') return mockUser.id;
+        if (key === 'organizationId') return mockOrganization.id;
+        if (key === 'role') return 'owner';
+        return undefined;
+      });
+
+      mockWorkOS.userManagement.getUser.mockResolvedValue({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        emailVerified: true,
+        profilePictureUrl: null,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      });
+
+      const user = await authModule.requireUser(request);
+
+      expect(user).toBeTruthy();
+      expect(user.organizationId).toBe(mockOrganization.id);
+    });
   });
 
   describe('requireRole()', () => {

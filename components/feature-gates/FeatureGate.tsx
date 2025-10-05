@@ -1,13 +1,6 @@
 import type { ReactNode } from 'react';
 import { LockedFeature } from './LockedFeature';
-import {
-  hasRole,
-  hasTierAccess,
-  ROLES,
-  TIERS,
-  type Role,
-  type Tier,
-} from '~/lib/permissions';
+import { hasRole, hasTierAccess, ROLES, TIERS, type Role, type Tier } from '~/lib/permissions';
 
 export interface FeatureGateProps {
   feature: string;

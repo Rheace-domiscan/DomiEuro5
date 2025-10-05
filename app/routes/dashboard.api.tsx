@@ -46,8 +46,8 @@ function ApiExplorer() {
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">API Credentials</h2>
         <p className="mt-2 text-sm text-gray-500">
-          Starter plan includes rate-limited API access. Professional removes limits and
-          unlocks priority support.
+          Starter plan includes rate-limited API access. Professional removes limits and unlocks
+          priority support.
         </p>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-gray-200 bg-gray-50/70 p-4">

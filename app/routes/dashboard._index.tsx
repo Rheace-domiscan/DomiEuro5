@@ -7,7 +7,7 @@ export default function DashboardIndex() {
   const user = parentData?.user;
 
   const nameParts = user ? [user.firstName, user.lastName].filter(Boolean) : [];
-  const displayName = nameParts.length > 0 ? nameParts.join(' ') : user?.email ?? 'there';
+  const displayName = nameParts.length > 0 ? nameParts.join(' ') : (user?.email ?? 'there');
 
   const canAccessBilling = hasRole(user?.role, ['owner', 'admin']);
   const canManageTeam = hasRole(user?.role, ['owner', 'admin']);
@@ -16,9 +16,12 @@ export default function DashboardIndex() {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0">
         <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to your Dashboard, {displayName}!</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Welcome to your Dashboard, {displayName}!
+          </h2>
           <p className="text-gray-600 mb-4">
-            This is a protected route that requires authentication. Only logged-in users can see this page.
+            This is a protected route that requires authentication. Only logged-in users can see
+            this page.
           </p>
           {user && (
             <div className="mt-6 space-y-2">

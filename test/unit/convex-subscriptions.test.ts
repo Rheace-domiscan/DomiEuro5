@@ -11,9 +11,11 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { convexTest } from 'convex-test';
 import schema from '../../convex/schema';
-import { api } from '../../convex/_generated/api';
+import { api, internal } from '../../convex/_generated/api';
 
 const modules = import.meta.glob('../../convex/**/*.ts');
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 describe('convex/subscriptions', () => {
   const organizationId = 'org_test_123';
@@ -98,6 +100,7 @@ describe('convex/subscriptions', () => {
 
     const withGrace = await t.query(api.subscriptions.getByOrganization, { organizationId });
     expect(withGrace?.accessStatus).toBe('grace_period');
+    expect(withGrace?.gracePeriodStartedAt).toBe(baseTimestamp.getTime());
     expect(withGrace?.gracePeriodEndsAt).toBe(
       baseTimestamp.getTime() + gracePeriodDays * 24 * 60 * 60 * 1000
     );
@@ -149,5 +152,53 @@ describe('convex/subscriptions', () => {
     expect(stats.seatsActive).toBe(7);
     expect(stats.seatsAvailable).toBe(-1);
     expect(stats.isOverLimit).toBe(true);
+  });
+
+  it('does not reset grace period when already active', async () => {
+    const subscriptionId = await seedSubscription();
+
+    await t.mutation(api.subscriptions.startGracePeriod, {
+      subscriptionId,
+      gracePeriodDays: 28,
+    });
+
+    const initial = await t.query(api.subscriptions.getByOrganization, { organizationId });
+
+    expect(initial?.gracePeriodStartedAt).toBe(baseTimestamp.getTime());
+
+    vi.advanceTimersByTime(5 * DAY_IN_MS);
+
+    await t.mutation(api.subscriptions.startGracePeriod, {
+      subscriptionId,
+      gracePeriodDays: 28,
+    });
+
+    const afterRetry = await t.query(api.subscriptions.getByOrganization, { organizationId });
+
+    expect(afterRetry?.gracePeriodStartedAt).toBe(initial?.gracePeriodStartedAt);
+    expect(afterRetry?.gracePeriodEndsAt).toBe(initial?.gracePeriodEndsAt);
+  });
+
+  it('locks subscriptions when grace period expires', async () => {
+    const subscriptionId = await seedSubscription();
+
+    await t.mutation(api.subscriptions.startGracePeriod, {
+      subscriptionId,
+      gracePeriodDays: 28,
+    });
+
+    vi.advanceTimersByTime(29 * DAY_IN_MS);
+
+    await t.mutation(internal.subscriptions.checkGracePeriods, {});
+
+    const locked = await t.query(api.subscriptions.getByOrganization, { organizationId });
+    expect(locked?.accessStatus).toBe('locked');
+
+    const events = await t.query(api.billingHistory.getByOrganization, {
+      organizationId,
+      limit: 5,
+    });
+
+    expect(events?.some(event => event.eventType === 'grace_period.expired')).toBe(true);
   });
 });

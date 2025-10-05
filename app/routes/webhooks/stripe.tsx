@@ -23,7 +23,7 @@ import { verifyWebhookSignature, getTierFromPriceId } from '~/lib/stripe.server'
 import { convexServer } from '../../../lib/convex.server';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { TIER_CONFIG, GRACE_PERIOD_DAYS } from '~/lib/billing-constants';
+import { TIER_CONFIG, GRACE_PERIOD_DAYS, GRACE_PERIOD_MS } from '~/lib/billing-constants';
 import type { SubscriptionTier } from '~/types/billing';
 
 /**
@@ -345,8 +345,10 @@ async function handleInvoicePaymentSucceeded(event: Stripe.Event) {
     return;
   }
 
+  const previousAccessStatus = existing.accessStatus;
+
   // End grace period if active
-  if (existing.accessStatus === 'grace_period') {
+  if (previousAccessStatus === 'grace_period' || previousAccessStatus === 'locked') {
     await convexServer.mutation(api.subscriptions.endGracePeriod, {
       subscriptionId: existing._id,
       paymentSuccessful: true,
@@ -363,7 +365,12 @@ async function handleInvoicePaymentSucceeded(event: Stripe.Event) {
     currency: invoice.currency,
     status: 'succeeded',
     description: `Payment succeeded: ${invoice.amount_paid / 100} ${invoice.currency.toUpperCase()}`,
-    metadata: { invoiceId: invoice.id },
+    metadata: {
+      invoiceId: invoice.id,
+      statusBefore: previousAccessStatus,
+      gracePeriodResolved:
+        previousAccessStatus === 'grace_period' || previousAccessStatus === 'locked',
+    },
   });
 }
 
@@ -388,11 +395,18 @@ async function handleInvoicePaymentFailed(event: Stripe.Event) {
     return;
   }
 
+  const previousAccessStatus = existing.accessStatus;
+  const gracePeriodEndsAt =
+    existing.gracePeriodEndsAt ??
+    (previousAccessStatus === 'locked' ? undefined : Date.now() + GRACE_PERIOD_MS);
+
   // Start grace period
-  await convexServer.mutation(api.subscriptions.startGracePeriod, {
-    subscriptionId: existing._id,
-    gracePeriodDays: GRACE_PERIOD_DAYS,
-  });
+  if (previousAccessStatus !== 'locked') {
+    await convexServer.mutation(api.subscriptions.startGracePeriod, {
+      subscriptionId: existing._id,
+      gracePeriodDays: GRACE_PERIOD_DAYS,
+    });
+  }
 
   // Log failed payment
   await convexServer.mutation(api.billingHistory.create, {
@@ -404,7 +418,12 @@ async function handleInvoicePaymentFailed(event: Stripe.Event) {
     currency: invoice.currency,
     status: 'failed',
     description: `Payment failed: ${invoice.amount_due / 100} ${invoice.currency.toUpperCase()}`,
-    metadata: { invoiceId: invoice.id, attemptCount: invoice.attempt_count },
+    metadata: {
+      invoiceId: invoice.id,
+      attemptCount: invoice.attempt_count,
+      statusBefore: previousAccessStatus,
+      gracePeriodEndsAt,
+    },
   });
 }
 

@@ -14,6 +14,34 @@ export interface User {
   role?: string;
 }
 
+const LOCKED_ACCESS_ALLOWED_PREFIXES = ['/settings/billing', '/auth/logout', '/auth/login'];
+
+function isLockedAccessAllowedPath(pathname: string) {
+  return LOCKED_ACCESS_ALLOWED_PREFIXES.some(prefix =>
+    pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
+async function enforceSubscriptionAccess(request: Request, organizationId?: string) {
+  if (!organizationId) {
+    return;
+  }
+
+  const pathname = new URL(request.url).pathname;
+
+  if (isLockedAccessAllowedPath(pathname)) {
+    return;
+  }
+
+  const subscription = await convexServer.query(api.subscriptions.getByOrganization, {
+    organizationId,
+  });
+
+  if (subscription?.accessStatus === 'locked') {
+    throw redirect('/settings/billing?status=locked');
+  }
+}
+
 /**
  * Get the currently authenticated user from the session
  *
@@ -88,6 +116,7 @@ export async function requireUser(request: Request): Promise<User> {
   if (!user) {
     throw redirect('/auth/login');
   }
+  await enforceSubscriptionAccess(request, user.organizationId);
   return user;
 }
 

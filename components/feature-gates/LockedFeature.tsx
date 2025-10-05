@@ -28,7 +28,7 @@ export function LockedFeature({
   const tierName = getTierName(requiredTier);
   const encodedFeature = encodeURIComponent(upgradeTriggerFeature ?? feature);
   const upgradeUrl = upgradeHref ?? `/pricing?upgrade=${encodedFeature}`;
-  const featureSlug = feature.includes(':') ? feature.split(':')[1] ?? feature : feature;
+  const featureSlug = feature.includes(':') ? (feature.split(':')[1] ?? feature) : feature;
   const featureLabel = featureSlug
     .split(/[-_]/)
     .filter(Boolean)
@@ -38,7 +38,12 @@ export function LockedFeature({
   return (
     <div className="rounded-2xl border border-dashed border-indigo-300 bg-indigo-50/60 p-8 text-center shadow-sm">
       <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow">
-        <svg className="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg
+          className="h-8 w-8 text-indigo-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -54,9 +59,7 @@ export function LockedFeature({
         </svg>
       </div>
 
-      <h2 className="text-2xl font-bold text-gray-900">
-        {title ?? 'Unlock this feature'}
-      </h2>
+      <h2 className="text-2xl font-bold text-gray-900">{title ?? 'Unlock this feature'}</h2>
       <p className="mt-3 text-sm text-gray-600">
         {description ?? `Upgrade to the ${tierName} plan to access this feature.`}
       </p>

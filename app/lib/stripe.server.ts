@@ -293,7 +293,9 @@ export async function createCheckoutSession(params: {
       tier,
       interval,
       seats: seats.toString(),
-      ...(params.upgradeTriggerFeature ? { upgradeTriggerFeature: params.upgradeTriggerFeature } : {}),
+      ...(params.upgradeTriggerFeature
+        ? { upgradeTriggerFeature: params.upgradeTriggerFeature }
+        : {}),
     },
     subscription_data: {
       metadata: {
