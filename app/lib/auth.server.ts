@@ -17,8 +17,8 @@ export interface User {
 const LOCKED_ACCESS_ALLOWED_PREFIXES = ['/settings/billing', '/auth/logout', '/auth/login'];
 
 function isLockedAccessAllowedPath(pathname: string) {
-  return LOCKED_ACCESS_ALLOWED_PREFIXES.some(prefix =>
-    pathname === prefix || pathname.startsWith(`${prefix}/`)
+  return LOCKED_ACCESS_ALLOWED_PREFIXES.some(
+    prefix => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 }
 

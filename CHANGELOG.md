@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.1] - 2025-10-05
+
+### ✅ Phase 10 Verification
+
+- Closed out lint regressions introduced during grace-period work so the webhooks, Convex cron, and UI banner ship with a clean ESLint/Prettier pass.
+- Captured Phase 10 verification artefacts (Stripe dunning cadence + CLI flows) and published the audit record under `.claude/verification-reports/phase-10-2025-10-05.md`.
+
+
 ## [1.12.0] - 2025-10-05
 
 ### 🚨 Grace Period & Failed Payments

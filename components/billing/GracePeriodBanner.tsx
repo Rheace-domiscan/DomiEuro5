@@ -45,9 +45,7 @@ export function GracePeriodBanner({
     ? 'We were unable to collect payment within the 28 day grace period. Access is limited until the payment method is updated.'
     : 'We could not process your latest payment. Update your payment method to restore full access before the grace period ends.';
 
-  const bannerClasses = isLocked
-    ? 'border-rose-200 bg-rose-50'
-    : 'border-amber-200 bg-amber-50';
+  const bannerClasses = isLocked ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50';
 
   const badgeClasses = isLocked ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700';
 
@@ -58,7 +56,9 @@ export function GracePeriodBanner({
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-3">
-          <div className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${badgeClasses}`}>
+          <div
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${badgeClasses}`}
+          >
             {isLocked ? 'Locked' : 'Grace period active'}
           </div>
           <div className="space-y-2">

@@ -214,8 +214,8 @@ export const startGracePeriod = mutation({
     }
 
     const existingStart = subscription.gracePeriodStartedAt ?? now;
-    const existingEnd = subscription.gracePeriodEndsAt
-      ?? existingStart + args.gracePeriodDays * DAY_IN_MS;
+    const existingEnd =
+      subscription.gracePeriodEndsAt ?? existingStart + args.gracePeriodDays * DAY_IN_MS;
 
     await ctx.db.patch(args.subscriptionId, {
       status: 'past_due',
