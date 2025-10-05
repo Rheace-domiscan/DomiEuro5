@@ -8,8 +8,14 @@ All notable changes to this project will be documented in this file.
 
 - Reworked WorkOS logout to persist the WorkOS session id, revoke it on sign-out, and always return users to `/auth/login`, preventing automatic re-authentication or external error pages after logout.
 
+### 🧹 Maintenance
+
+- Resolved lint failures in the billing settings route by normalizing early returns with hook usage and reformatting Stripe action responses to meet Prettier expectations, restoring CI compatibility.
+
 ### ✅ Verification
 
+- `npm run lint`
+- `npm run typecheck`
 - `npm run test -- test/unit/auth.server.test.ts`
 
 ## [1.12.2] - 2025-10-05

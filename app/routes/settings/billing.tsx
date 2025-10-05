@@ -348,16 +348,22 @@ export async function action({ request }: Route.ActionArgs) {
   const isReadOnly = subscription.accessStatus === 'read_only';
 
   if (!canManageBilling && intent !== 'reactivateSubscription') {
-    return data({ intent: 'error', error: 'You do not have permission to manage billing.' }, { status: 403 });
+    return data(
+      { intent: 'error', error: 'You do not have permission to manage billing.' },
+      { status: 403 }
+    );
   }
 
   switch (intent) {
     case 'reactivateSubscription': {
       if (!isOwner) {
-        return data({
-          intent: 'error',
-          error: 'Only the owner can reactivate the subscription.',
-        }, { status: 403 });
+        return data(
+          {
+            intent: 'error',
+            error: 'Only the owner can reactivate the subscription.',
+          },
+          { status: 403 }
+        );
       }
 
       if (!isReadOnly) {
@@ -365,7 +371,10 @@ export async function action({ request }: Route.ActionArgs) {
       }
 
       if (subscription.tier === 'free') {
-        return data({ intent: 'error', error: 'Free plans do not require reactivation.' }, { status: 400 });
+        return data(
+          { intent: 'error', error: 'Free plans do not require reactivation.' },
+          { status: 400 }
+        );
       }
 
       if (!subscription.stripeCustomerId) {
@@ -417,10 +426,13 @@ export async function action({ request }: Route.ActionArgs) {
 
     case 'manageBilling': {
       if (isReadOnly) {
-        return data({
-          intent: 'error',
-          error: 'Subscription cancelled. Reactivate before managing billing.',
-        }, { status: 400 });
+        return data(
+          {
+            intent: 'error',
+            error: 'Subscription cancelled. Reactivate before managing billing.',
+          },
+          { status: 400 }
+        );
       }
 
       if (!subscription.stripeCustomerId) {
@@ -434,7 +446,10 @@ export async function action({ request }: Route.ActionArgs) {
       );
 
       if (!portalSession.url) {
-        return data({ intent: 'error', error: 'Unable to create billing portal session' }, { status: 500 });
+        return data(
+          { intent: 'error', error: 'Unable to create billing portal session' },
+          { status: 500 }
+        );
       }
 
       throw redirect(portalSession.url);
@@ -632,7 +647,6 @@ export async function action({ request }: Route.ActionArgs) {
   }
 }
 
-
 function useSeatActionFetcher(): FetcherWithComponents<SeatActionResponse> {
   return useFetcher<SeatActionResponse>();
 }
@@ -645,45 +659,6 @@ export default function BillingSettings() {
   const applySeatFetcher = useSeatActionFetcher();
   const reactivateFetcher = useFetcher();
   const revalidator = useRevalidator();
-
-  if (readOnlyBlocked) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
-            <div className="mb-4 inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700">
-              Subscription cancelled
-            </div>
-            <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
-              Your workspace is in read-only mode
-            </h1>
-            <p className="mt-4 text-sm text-gray-600 sm:text-base">
-              Billing access is limited until the owner reactivates the subscription. Contact your
-              owner to restore full access.
-            </p>
-            <p className="mt-3 text-xs text-gray-500 sm:text-sm">
-              If you believe this is a mistake, please reach out to your workspace owner or billing
-              administrator.
-            </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="/auth/logout"
-                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-              >
-                Sign out
-              </a>
-              <a
-                href="/settings/billing"
-                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-              >
-                Refresh status
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [seatMode, setSeatMode] = useState<SeatAdjustmentMode>('add');
@@ -1019,6 +994,45 @@ export default function BillingSettings() {
   const confirmButtonClasses =
     seatMode === 'add' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-rose-600 hover:bg-rose-700';
 
+  if (readOnlyBlocked) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
+            <div className="mb-4 inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700">
+              Subscription cancelled
+            </div>
+            <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
+              Your workspace is in read-only mode
+            </h1>
+            <p className="mt-4 text-sm text-gray-600 sm:text-base">
+              Billing access is limited until the owner reactivates the subscription. Contact your
+              owner to restore full access.
+            </p>
+            <p className="mt-3 text-xs text-gray-500 sm:text-sm">
+              If you believe this is a mistake, please reach out to your workspace owner or billing
+              administrator.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <a
+                href="/auth/logout"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Sign out
+              </a>
+              <a
+                href="/settings/billing"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Refresh status
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white">
@@ -1043,10 +1057,7 @@ export default function BillingSettings() {
         ) : null}
 
         {isReadOnly && isOwner && subscription ? (
-          <ReactivateBanner
-            reactivationAction={renderReactivateAction()}
-            canceledAt={canceledAt}
-          />
+          <ReactivateBanner reactivationAction={renderReactivateAction()} canceledAt={canceledAt} />
         ) : null}
 
         {(isGracePeriod || isLocked) && (

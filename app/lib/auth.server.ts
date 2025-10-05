@@ -15,11 +15,7 @@ export interface User {
 }
 
 const LOCKED_ACCESS_ALLOWED_PREFIXES = ['/settings/billing', '/auth/logout', '/auth/login'];
-const READ_ONLY_ACCESS_ALLOWED_PREFIXES = [
-  '/settings/billing',
-  '/auth/logout',
-  '/auth/login',
-];
+const READ_ONLY_ACCESS_ALLOWED_PREFIXES = ['/settings/billing', '/auth/logout', '/auth/login'];
 
 function getWorkOSSessionIdFromAccessToken(accessToken?: string | null): string | undefined {
   if (!accessToken) {
