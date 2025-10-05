@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test -- test/unit/auth.server.test.ts`
+- `npm run test -- test/integration/billing-dashboard.test.ts`
 
 ## [1.12.2] - 2025-10-05
 

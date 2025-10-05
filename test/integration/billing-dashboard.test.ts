@@ -8,13 +8,12 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { redirect } from 'react-router';
 import type Stripe from 'stripe';
 import type { User } from '~/lib/auth.server';
 import { createMockRequest } from '../helpers/test-utils';
 
 vi.mock('~/lib/auth.server', () => ({
-  requireRole: vi.fn(),
+  requireUser: vi.fn(),
 }));
 
 vi.mock('../../lib/convex.server', () => ({
@@ -41,7 +40,7 @@ vi.mock('~/lib/stripe.server', () => ({
 }));
 
 import { loader, action } from '../../app/routes/settings/billing';
-import { requireRole } from '~/lib/auth.server';
+import { requireUser } from '~/lib/auth.server';
 import { convexServer } from '../../lib/convex.server';
 import {
   createBillingPortalSession,
@@ -168,7 +167,7 @@ afterEach(() => {
 
 describe('billing settings loader', () => {
   it('returns subscription data for owner', async () => {
-    vi.mocked(requireRole).mockResolvedValue(ownerUser);
+    vi.mocked(requireUser).mockResolvedValue(ownerUser);
     vi.mocked(convexServer.query)
       .mockResolvedValueOnce(subscriptionRecord)
       .mockResolvedValueOnce(statsRecord)
@@ -188,9 +187,16 @@ describe('billing settings loader', () => {
   });
 
   it('redirects managers to /dashboard', async () => {
-    vi.mocked(requireRole).mockImplementation(() => {
-      throw redirect('/dashboard');
-    });
+    const managerUser: User = {
+      ...ownerUser,
+      role: 'manager',
+    };
+
+    vi.mocked(requireUser).mockResolvedValue(managerUser);
+    vi.mocked(convexServer.query)
+      .mockResolvedValueOnce({ ...subscriptionRecord, accessStatus: 'active' })
+      .mockResolvedValueOnce({ ...statsRecord, accessStatus: 'active' })
+      .mockResolvedValueOnce(billingHistory);
 
     await expect(
       loader({
@@ -204,7 +210,7 @@ describe('billing settings loader', () => {
 
 describe('billing settings action', () => {
   it('opens Stripe billing portal for manageBilling intent', async () => {
-    vi.mocked(requireRole).mockResolvedValue(ownerUser);
+    vi.mocked(requireUser).mockResolvedValue(ownerUser);
     vi.mocked(convexServer.query).mockResolvedValue(subscriptionRecord);
     vi.mocked(createBillingPortalSession).mockResolvedValue({
       url: 'https://stripe.test/portal',
@@ -230,7 +236,7 @@ describe('billing settings action', () => {
   });
 
   it('returns seat preview details for previewSeatChange intent', async () => {
-    vi.mocked(requireRole).mockResolvedValue(ownerUser);
+    vi.mocked(requireUser).mockResolvedValue(ownerUser);
     vi.mocked(convexServer.query).mockResolvedValue(subscriptionRecord);
 
     stripeSubscriptionsRetrieve.mockResolvedValue(
@@ -293,7 +299,7 @@ describe('billing settings action', () => {
   });
 
   it('adds seats and updates subscription totals for applySeatChange intent', async () => {
-    vi.mocked(requireRole).mockResolvedValue(ownerUser);
+    vi.mocked(requireUser).mockResolvedValue(ownerUser);
     vi.mocked(convexServer.query).mockResolvedValue(subscriptionRecord);
     stripeSubscriptionsRetrieve.mockResolvedValue(
       makeStripeResponse<Stripe.Subscription>({
