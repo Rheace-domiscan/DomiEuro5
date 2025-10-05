@@ -13,6 +13,7 @@ import { renderWithProviders } from '../helpers/test-utils';
 import { BillingOverview } from '../../components/billing/BillingOverview';
 import { SeatWarningBanner } from '../../components/billing/SeatWarningBanner';
 import { SeatManagement } from '../../components/billing/SeatManagement';
+import { ReactivateBanner } from '../../components/billing/ReactivateBanner';
 
 const currentPeriodEnd = new Date('2025-03-01T00:00:00Z').getTime();
 
@@ -180,5 +181,28 @@ describe('SeatManagement', () => {
     fireEvent.click(removeButton);
     expect(onAdjustSeats).not.toHaveBeenCalled();
     expect(screen.getByText(/All seats are included in your plan/)).toBeInTheDocument();
+  });
+});
+
+describe('ReactivateBanner', () => {
+  it('renders reactivation messaging and action button', () => {
+    renderWithProviders(
+      <ReactivateBanner
+        canceledAt={new Date('2025-01-15T00:00:00Z').getTime()}
+        reactivationAction={<button>Reactivate Now</button>}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: /read-only mode/i })).toBeInTheDocument();
+    expect(screen.getByText('Reactivate Now')).toBeInTheDocument();
+    expect(screen.getByText(/15 Jan 2025/)).toBeInTheDocument();
+  });
+
+  it('omits cancellation date when not provided', () => {
+    renderWithProviders(
+      <ReactivateBanner reactivationAction={<button>Reactivate</button>} canceledAt={null} />
+    );
+
+    expect(screen.queryByText(/Cancellation processed on/i)).not.toBeInTheDocument();
   });
 });

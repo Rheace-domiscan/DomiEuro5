@@ -18,12 +18,14 @@ import {
 } from 'react-router';
 import type { Route } from './+types/billing';
 import { data, redirect } from 'react-router';
-import { requireRole } from '~/lib/auth.server';
+import { requireUser } from '~/lib/auth.server';
+import { hasRole, ROLES, type Role } from '~/lib/permissions';
 import { TIER_CONFIG, formatPrice } from '~/lib/billing-constants';
 import type { AccessStatus, SubscriptionTier } from '~/types/billing';
 import { convexServer } from '../../../lib/convex.server';
 import { api } from '../../../convex/_generated/api';
 import {
+  createCheckoutSession,
   createBillingPortalSession,
   getAdditionalSeatPriceId,
   getStripePriceId,
@@ -36,6 +38,7 @@ import { SeatManagement } from '../../../components/billing/SeatManagement';
 import { BillingHistory } from '../../../components/billing/BillingHistory';
 import { SeatWarningBanner } from '../../../components/billing/SeatWarningBanner';
 import { GracePeriodBanner } from '../../../components/billing/GracePeriodBanner';
+import { ReactivateBanner } from '../../../components/billing/ReactivateBanner';
 
 type SeatPreviewLine = {
   description: string;
@@ -88,6 +91,8 @@ type SeatActionResponse =
       ok: false;
       error: string;
     };
+
+const BILLING_ALLOWED_ROLES: Role[] = [ROLES.OWNER, ROLES.ADMIN];
 
 /**
  * Helper to format timestamps into friendly date strings.
@@ -252,7 +257,7 @@ async function applySeatQuantityChange(options: {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireRole(request, ['owner', 'admin']);
+  const user = await requireUser(request);
 
   if (!user.organizationId) {
     throw redirect('/auth/create-organization');
@@ -271,16 +276,36 @@ export async function loader({ request }: Route.LoaderArgs) {
     }),
   ]);
 
+  const isReadOnly = subscription?.accessStatus === 'read_only';
+  const userRole = user.role;
+  const isOwner = userRole === ROLES.OWNER;
+  const canAccessBilling = hasRole(userRole, BILLING_ALLOWED_ROLES);
+
+  if (isReadOnly && !isOwner) {
+    return data({
+      user,
+      subscription: null,
+      stats: null,
+      billingHistory: [],
+      readOnlyBlocked: true,
+    });
+  }
+
+  if (!canAccessBilling) {
+    throw redirect('/dashboard');
+  }
+
   return data({
     user,
     subscription,
     stats,
     billingHistory: billingHistory ?? [],
+    readOnlyBlocked: false,
   });
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const user = await requireRole(request, ['owner', 'admin']);
+  const user = await requireUser(request);
 
   if (!user.organizationId) {
     return data({ intent: 'error', error: 'Organization required' }, { status: 400 });
@@ -294,6 +319,10 @@ export async function action({ request }: Route.ActionArgs) {
   });
 
   if (!subscription) {
+    if (intent === 'reactivateSubscription') {
+      return data({ intent: 'error', error: 'No subscription to reactivate.' }, { status: 400 });
+    }
+
     if (intent === 'previewSeatChange') {
       return data<SeatActionResponse>({
         intent: 'previewSeatChange',
@@ -313,8 +342,87 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ intent: 'error', error: 'Subscription not found' }, { status: 404 });
   }
 
+  const userRole = user.role;
+  const isOwner = userRole === ROLES.OWNER;
+  const canManageBilling = hasRole(userRole, BILLING_ALLOWED_ROLES);
+  const isReadOnly = subscription.accessStatus === 'read_only';
+
+  if (!canManageBilling && intent !== 'reactivateSubscription') {
+    return data({ intent: 'error', error: 'You do not have permission to manage billing.' }, { status: 403 });
+  }
+
   switch (intent) {
+    case 'reactivateSubscription': {
+      if (!isOwner) {
+        return data({
+          intent: 'error',
+          error: 'Only the owner can reactivate the subscription.',
+        }, { status: 403 });
+      }
+
+      if (!isReadOnly) {
+        return data({ intent: 'error', error: 'Subscription is already active.' }, { status: 400 });
+      }
+
+      if (subscription.tier === 'free') {
+        return data({ intent: 'error', error: 'Free plans do not require reactivation.' }, { status: 400 });
+      }
+
+      if (!subscription.stripeCustomerId) {
+        return data({ intent: 'error', error: 'Stripe customer not found' }, { status: 400 });
+      }
+
+      if (!subscription.stripeSubscriptionId) {
+        return data({ intent: 'error', error: 'Stripe subscription not found' }, { status: 400 });
+      }
+
+      const interval = subscription.billingInterval === 'annual' ? 'annual' : 'monthly';
+      const seats = Math.max(subscription.seatsTotal, subscription.seatsIncluded);
+      const origin = new URL(request.url).origin;
+
+      const session = await createCheckoutSession({
+        customerId: subscription.stripeCustomerId,
+        customerEmail: user.email,
+        tier: subscription.tier as Exclude<SubscriptionTier, 'free'>,
+        interval,
+        seats,
+        organizationId: user.organizationId,
+        successUrl: `${origin}/settings/billing?reactivated=1`,
+        cancelUrl: `${origin}/settings/billing?status=canceled`,
+      });
+
+      if (!session.url) {
+        throw new Error('Stripe checkout session URL is missing');
+      }
+
+      const eventId = `manual-reactivation-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      await convexServer.mutation(api.billingHistory.create, {
+        organizationId: subscription.organizationId,
+        subscriptionId: subscription.stripeSubscriptionId,
+        eventType: 'reactivation.initiated',
+        stripeEventId: eventId,
+        status: 'pending',
+        description: 'Owner initiated subscription reactivation',
+        metadata: {
+          triggeredBy: user.id,
+          seatsTotal: subscription.seatsTotal,
+          tier: subscription.tier,
+          interval,
+        },
+      });
+
+      throw redirect(session.url);
+    }
+
     case 'manageBilling': {
+      if (isReadOnly) {
+        return data({
+          intent: 'error',
+          error: 'Subscription cancelled. Reactivate before managing billing.',
+        }, { status: 400 });
+      }
+
       if (!subscription.stripeCustomerId) {
         return data({ intent: 'error', error: 'Stripe customer not found' }, { status: 400 });
       }
@@ -326,16 +434,21 @@ export async function action({ request }: Route.ActionArgs) {
       );
 
       if (!portalSession.url) {
-        return data(
-          { intent: 'error', error: 'Unable to create billing portal session' },
-          { status: 500 }
-        );
+        return data({ intent: 'error', error: 'Unable to create billing portal session' }, { status: 500 });
       }
 
       throw redirect(portalSession.url);
     }
 
     case 'previewSeatChange': {
+      if (isReadOnly) {
+        return data<SeatActionResponse>({
+          intent: 'previewSeatChange',
+          ok: false,
+          error: 'Subscription cancelled. Reactivate to manage seats.',
+        });
+      }
+
       const mode = (formData.get('mode') as SeatAdjustmentMode) ?? 'add';
       const seatsRequested = Number(formData.get('seats') || 0);
 
@@ -419,6 +532,14 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     case 'applySeatChange': {
+      if (isReadOnly) {
+        return data<SeatActionResponse>({
+          intent: 'applySeatChange',
+          ok: false,
+          error: 'Subscription cancelled. Reactivate to manage seats.',
+        });
+      }
+
       const mode = (formData.get('mode') as SeatAdjustmentMode) ?? 'add';
       const seatsRequested = Number(formData.get('seats') || 0);
 
@@ -511,16 +632,58 @@ export async function action({ request }: Route.ActionArgs) {
   }
 }
 
+
 function useSeatActionFetcher(): FetcherWithComponents<SeatActionResponse> {
   return useFetcher<SeatActionResponse>();
 }
 
 export default function BillingSettings() {
-  const { subscription, stats, billingHistory } = useLoaderData<typeof loader>();
+  const { user, subscription, stats, billingHistory, readOnlyBlocked } =
+    useLoaderData<typeof loader>();
   const manageBillingFetcher = useFetcher();
   const previewFetcher = useSeatActionFetcher();
   const applySeatFetcher = useSeatActionFetcher();
+  const reactivateFetcher = useFetcher();
   const revalidator = useRevalidator();
+
+  if (readOnlyBlocked) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
+            <div className="mb-4 inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700">
+              Subscription cancelled
+            </div>
+            <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
+              Your workspace is in read-only mode
+            </h1>
+            <p className="mt-4 text-sm text-gray-600 sm:text-base">
+              Billing access is limited until the owner reactivates the subscription. Contact your
+              owner to restore full access.
+            </p>
+            <p className="mt-3 text-xs text-gray-500 sm:text-sm">
+              If you believe this is a mistake, please reach out to your workspace owner or billing
+              administrator.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <a
+                href="/auth/logout"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Sign out
+              </a>
+              <a
+                href="/settings/billing"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Refresh status
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [seatMode, setSeatMode] = useState<SeatAdjustmentMode>('add');
@@ -542,10 +705,22 @@ export default function BillingSettings() {
   const currentAccessStatus = (subscription?.accessStatus ?? 'active') as AccessStatus;
   const isGracePeriod = currentAccessStatus === 'grace_period';
   const isLocked = currentAccessStatus === 'locked';
-  const seatChangesDisabled = isLocked;
-  const seatChangesDisabledReason = seatChangesDisabled
+  const isReadOnly = currentAccessStatus === 'read_only';
+  const isOwner = user.role === ROLES.OWNER;
+
+  const seatChangesDisabled = isLocked || isReadOnly;
+  const seatChangesDisabledReason = isLocked
     ? 'Account locked after repeated payment failures. Update billing details to manage seats.'
-    : undefined;
+    : isReadOnly
+      ? 'Subscription cancelled. Reactivate to manage seats.'
+      : undefined;
+  const manageBillingDisabled = isLocked || isReadOnly;
+  const manageBillingDisabledReason = isLocked
+    ? 'Account locked after repeated payment failures. Update billing details to manage billing.'
+    : isReadOnly
+      ? 'Subscription cancelled. Reactivate before managing billing.'
+      : undefined;
+  const canceledAt = subscription?.updatedAt ?? null;
   const normalizedPendingDowngrade = subscription?.pendingDowngrade
     ? {
         tier: subscription.pendingDowngrade.tier as SubscriptionTier,
@@ -589,18 +764,40 @@ export default function BillingSettings() {
     }
 
     return (
-      <manageBillingFetcher.Form method="post">
-        <input type="hidden" name="intent" value="manageBilling" />
-        <button
-          type="submit"
-          className="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
-          disabled={manageBillingFetcher.state !== 'idle'}
-        >
-          {manageBillingFetcher.state === 'submitting' ? 'Opening…' : 'Manage Billing'}
-        </button>
-      </manageBillingFetcher.Form>
+      <div className="space-y-2">
+        <manageBillingFetcher.Form method="post">
+          <input type="hidden" name="intent" value="manageBilling" />
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+            disabled={manageBillingDisabled || manageBillingFetcher.state !== 'idle'}
+          >
+            {manageBillingFetcher.state === 'submitting' ? 'Opening…' : 'Manage Billing'}
+          </button>
+        </manageBillingFetcher.Form>
+
+        {manageBillingDisabledReason ? (
+          <p className="text-xs text-gray-500">{manageBillingDisabledReason}</p>
+        ) : null}
+      </div>
     );
   };
+
+  const renderReactivateAction = () => (
+    <reactivateFetcher.Form method="post" className="space-y-2">
+      <input type="hidden" name="intent" value="reactivateSubscription" />
+      <button
+        type="submit"
+        className="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+        disabled={reactivateFetcher.state !== 'idle'}
+      >
+        {reactivateFetcher.state === 'submitting' ? 'Redirecting…' : 'Reactivate Subscription'}
+      </button>
+      <p className="text-xs text-gray-500">
+        Reactivation will redirect you to Stripe Checkout to confirm payment details.
+      </p>
+    </reactivateFetcher.Form>
+  );
 
   const summarizePreview = useCallback((preview: SeatPreview | null) => {
     if (!preview) {
@@ -842,6 +1039,13 @@ export default function BillingSettings() {
             tier={currentTier}
             pendingDowngrade={normalizedPendingDowngrade}
             cancelAtPeriodEnd={subscription.cancelAtPeriodEnd}
+          />
+        ) : null}
+
+        {isReadOnly && isOwner && subscription ? (
+          <ReactivateBanner
+            reactivationAction={renderReactivateAction()}
+            canceledAt={canceledAt}
           />
         ) : null}
 

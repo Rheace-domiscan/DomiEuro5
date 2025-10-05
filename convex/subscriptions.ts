@@ -180,12 +180,25 @@ export const updateStatus = mutation({
     cancelAtPeriodEnd: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.subscriptionId, {
+    const updates: Record<string, unknown> = {
       status: args.status,
-      accessStatus: args.accessStatus,
-      cancelAtPeriodEnd: args.cancelAtPeriodEnd,
       updatedAt: Date.now(),
-    });
+    };
+
+    if (args.accessStatus !== undefined) {
+      updates.accessStatus = args.accessStatus;
+    }
+
+    if (args.cancelAtPeriodEnd !== undefined) {
+      updates.cancelAtPeriodEnd = args.cancelAtPeriodEnd;
+    }
+
+    if (args.status === 'canceled') {
+      updates.gracePeriodStartedAt = undefined;
+      updates.gracePeriodEndsAt = undefined;
+    }
+
+    await ctx.db.patch(args.subscriptionId, updates);
 
     return args.subscriptionId;
   },

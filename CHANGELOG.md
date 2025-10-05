@@ -12,6 +12,20 @@ All notable changes to this project will be documented in this file.
 
 - `npm run test -- test/unit/auth.server.test.ts`
 
+## [1.12.2] - 2025-10-05
+
+### 🛎️ Subscription Cancellation & Reactivation
+
+- Mark cancelled Stripe subscriptions as read-only via the `customer.subscription.deleted` webhook and clear grace-period metadata in Convex for consistent access control.
+- Extend auth middleware to redirect non-owners on cancelled plans while letting owners reach billing with a Reactivate banner and CTA that launches a fresh checkout session.
+- Added `ReactivateBanner` UI, owner-only reactivation flow on `/settings/billing`, and unit coverage for both auth gating and the new component.
+
+### ✅ Verification
+
+- `npm run typecheck`
+- `npm run test -- test/unit/auth.server.test.ts test/unit/billing-components.test.tsx`
+- Manual Stripe sandbox cancellation/reactivation to confirm owner read-only mode and successful restoration.
+
 ## [1.12.1] - 2025-10-05
 
 ### ✅ Phase 10 Verification
