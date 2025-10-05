@@ -7,6 +7,7 @@ import {
   createOrganizationMembership,
   syncUserRoleFromWorkOS,
   createUserSession,
+  getWorkOSSessionIdFromAccessToken,
 } from '~/lib/auth.server';
 import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
 
@@ -99,7 +100,9 @@ export async function action({ request }: Route.ActionArgs): Promise<Response | 
     const userRole = await syncUserRoleFromWorkOS(tempUserId, organization.id);
 
     // Step 4: Create permanent session with organizationId and role, then redirect
-    return createUserSession(tempUserId, '/', organization.id, userRole);
+    const workosSessionId = getWorkOSSessionIdFromAccessToken(tempAccessToken);
+
+    return createUserSession(tempUserId, '/', organization.id, userRole, workosSessionId);
   } catch (error: unknown) {
     const creationError = error as OrganizationCreationError;
 

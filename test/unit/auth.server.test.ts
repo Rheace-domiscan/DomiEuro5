@@ -305,6 +305,105 @@ describe('Authentication Module (auth.server.ts)', () => {
       expect(user).toBeTruthy();
       expect(user.organizationId).toBe(mockOrganization.id);
     });
+
+    it('redirects non-owners to billing when subscription is read-only', async () => {
+      const request = createMockRequest('/dashboard');
+
+      mockSession.get.mockImplementation((key: string) => {
+        if (key === 'userId') return mockUser.id;
+        if (key === 'organizationId') return mockOrganization.id;
+        if (key === 'role') return 'admin';
+        return undefined;
+      });
+
+      mockWorkOS.userManagement.getUser.mockResolvedValue({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        emailVerified: true,
+        profilePictureUrl: null,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      });
+
+      mockConvexServer.query.mockResolvedValueOnce({
+        _id: 'sub_readonly_1',
+        organizationId: mockOrganization.id,
+        accessStatus: 'read_only',
+      });
+
+      await expect(authModule.requireUser(request)).rejects.toThrow(
+        'Redirect to /settings/billing?status=canceled'
+      );
+    });
+
+    it('allows owners to continue when subscription is read-only', async () => {
+      const request = createMockRequest('/dashboard');
+
+      mockSession.get.mockImplementation((key: string) => {
+        if (key === 'userId') return mockUser.id;
+        if (key === 'organizationId') return mockOrganization.id;
+        if (key === 'role') return 'owner';
+        return undefined;
+      });
+
+      mockWorkOS.userManagement.getUser.mockResolvedValue({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        emailVerified: true,
+        profilePictureUrl: null,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      });
+
+      mockConvexServer.query.mockResolvedValueOnce({
+        _id: 'sub_readonly_2',
+        organizationId: mockOrganization.id,
+        accessStatus: 'read_only',
+      });
+
+      const userResult = await authModule.requireUser(request);
+
+      expect(userResult).toBeTruthy();
+      expect(userResult.organizationId).toBe(mockOrganization.id);
+    });
+
+    it('allows read-only subscriptions to load billing settings for non-owners', async () => {
+      const request = createMockRequest('/settings/billing');
+
+      mockSession.get.mockImplementation((key: string) => {
+        if (key === 'userId') return mockUser.id;
+        if (key === 'organizationId') return mockOrganization.id;
+        if (key === 'role') return 'admin';
+        return undefined;
+      });
+
+      mockWorkOS.userManagement.getUser.mockResolvedValue({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        emailVerified: true,
+        profilePictureUrl: null,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      });
+
+      mockConvexServer.query.mockResolvedValueOnce({
+        _id: 'sub_readonly_3',
+        organizationId: mockOrganization.id,
+        accessStatus: 'read_only',
+      });
+
+      const userResult = await authModule.requireUser(request);
+
+      expect(userResult).toBeTruthy();
+      expect(userResult.organizationId).toBe(mockOrganization.id);
+      expect(userResult.role).toBe('admin');
+    });
   });
 
   describe('requireRole()', () => {
@@ -543,6 +642,14 @@ describe('Authentication Module (auth.server.ts)', () => {
       expect(mockSession.set).toHaveBeenCalledWith('role', 'owner');
     });
 
+    it('should store WorkOS session id when provided', async () => {
+      await expect(
+        authModule.createUserSession('user_123', '/dashboard', 'org_456', 'owner', 'wsess_123')
+      ).rejects.toThrow();
+
+      expect(mockSession.set).toHaveBeenCalledWith('workosSessionId', 'wsess_123');
+    });
+
     it('should not store organizationId or role when not provided', async () => {
       const setCallsBefore = mockSession.set.mock.calls.length;
 
@@ -555,6 +662,7 @@ describe('Authentication Module (auth.server.ts)', () => {
       expect(newCalls.filter(([key]: [string, any]) => key === 'userId')).toHaveLength(1);
       expect(newCalls.filter(([key]: [string, any]) => key === 'organizationId')).toHaveLength(0);
       expect(newCalls.filter(([key]: [string, any]) => key === 'role')).toHaveLength(0);
+      expect(newCalls.filter(([key]: [string, any]) => key === 'workosSessionId')).toHaveLength(0);
     });
   });
 
@@ -632,13 +740,56 @@ describe('Authentication Module (auth.server.ts)', () => {
   });
 
   describe('logout()', () => {
-    it('should destroy session and redirect to login', async () => {
+    it('should revoke WorkOS session and redirect to local login when session id present', async () => {
       const request = createMockRequest('/dashboard');
 
-      await expect(authModule.logout(request)).rejects.toThrow('Redirect to /auth/login');
+      mockSession.get.mockImplementation((key: string) =>
+        key === 'workosSessionId' ? 'wsess_123' : undefined
+      );
+
+      let redirectError: any;
+      await expect(
+        (async () => {
+          try {
+            await authModule.logout(request);
+          } catch (error) {
+            redirectError = error;
+            throw error;
+          }
+        })()
+      ).rejects.toThrow('Redirect to /auth/login');
+
+      expect(redirectError.headers['Set-Cookie']).toBe('destroyed_session_cookie');
 
       expect(sessionModule.getSession).toHaveBeenCalledWith(request);
       expect(sessionModule.destroySession).toHaveBeenCalled();
+      expect(mockWorkOS.userManagement.revokeSession).toHaveBeenCalledWith({
+        sessionId: 'wsess_123',
+      });
+    });
+
+    it('should fall back to local logout when WorkOS session id missing', async () => {
+      const request = createMockRequest('/dashboard');
+
+      mockSession.get.mockReturnValue(undefined);
+
+      let redirectError: any;
+      await expect(
+        (async () => {
+          try {
+            await authModule.logout(request);
+          } catch (error) {
+            redirectError = error;
+            throw error;
+          }
+        })()
+      ).rejects.toThrow('Redirect to /auth/login');
+
+      expect(redirectError.headers['Set-Cookie']).toBe('destroyed_session_cookie');
+
+      expect(sessionModule.getSession).toHaveBeenCalledWith(request);
+      expect(sessionModule.destroySession).toHaveBeenCalled();
+      expect(mockWorkOS.userManagement.revokeSession).not.toHaveBeenCalled();
     });
   });
 
@@ -650,6 +801,7 @@ describe('Authentication Module (auth.server.ts)', () => {
         clientId: 'test_client_id',
         redirectUri: 'http://localhost:5173/auth/callback',
         provider: 'authkit',
+        prompt: 'login',
       });
     });
 
@@ -660,6 +812,7 @@ describe('Authentication Module (auth.server.ts)', () => {
         clientId: 'test_client_id',
         redirectUri: 'http://localhost:5173/auth/callback',
         provider: 'authkit',
+        prompt: 'login',
         state: 'test_state',
       });
     });
@@ -671,6 +824,7 @@ describe('Authentication Module (auth.server.ts)', () => {
         clientId: 'test_client_id',
         redirectUri: 'http://localhost:5173/auth/callback',
         provider: 'authkit',
+        prompt: 'login',
         organizationId: 'org_123',
       });
     });
@@ -682,6 +836,7 @@ describe('Authentication Module (auth.server.ts)', () => {
         clientId: 'test_client_id',
         redirectUri: 'http://localhost:5173/auth/callback',
         provider: 'authkit',
+        prompt: 'login',
         state: 'test_state',
         organizationId: 'org_123',
       });

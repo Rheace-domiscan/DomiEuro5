@@ -1,6 +1,10 @@
 import { redirect } from 'react-router';
 import type { Route } from './+types/callback';
-import { authenticateWithCode, createUserSession } from '~/lib/auth.server';
+import {
+  authenticateWithCode,
+  createUserSession,
+  getWorkOSSessionIdFromAccessToken,
+} from '~/lib/auth.server';
 import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
 import { sessionStorage, commitSession } from '~/lib/session.server';
 
@@ -85,7 +89,14 @@ export async function loader({ request }: Route.LoaderArgs) {
     );
 
     // Step 4: Create permanent session with organizationId and role, then redirect to application
-    return createUserSession(authResponse.user.id, '/', authResponse.organizationId, userRole);
+    const workosSessionId = getWorkOSSessionIdFromAccessToken(authResponse.accessToken);
+    return createUserSession(
+      authResponse.user.id,
+      '/',
+      authResponse.organizationId,
+      userRole,
+      workosSessionId
+    );
   } catch (error: unknown) {
     const workosError = error as WorkOSError;
 

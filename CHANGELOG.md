@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### 🔐 Authentication
+
+- Reworked WorkOS logout to persist the WorkOS session id, revoke it on sign-out, and always return users to `/auth/login`, preventing automatic re-authentication or external error pages after logout.
+
+### ✅ Verification
+
+- `npm run test -- test/unit/auth.server.test.ts`
+
 ## [1.12.1] - 2025-10-05
 
 ### ✅ Phase 10 Verification

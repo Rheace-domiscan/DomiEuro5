@@ -15,30 +15,70 @@ export interface User {
 }
 
 const LOCKED_ACCESS_ALLOWED_PREFIXES = ['/settings/billing', '/auth/logout', '/auth/login'];
+const READ_ONLY_ACCESS_ALLOWED_PREFIXES = [
+  '/settings/billing',
+  '/auth/logout',
+  '/auth/login',
+];
 
-function isLockedAccessAllowedPath(pathname: string) {
-  return LOCKED_ACCESS_ALLOWED_PREFIXES.some(
-    prefix => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
+function getWorkOSSessionIdFromAccessToken(accessToken?: string | null): string | undefined {
+  if (!accessToken) {
+    return undefined;
+  }
+
+  const [, payload] = accessToken.split('.');
+  if (!payload) {
+    return undefined;
+  }
+
+  try {
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    const decoded = Buffer.from(padded, 'base64').toString('utf8');
+    const tokenPayload = JSON.parse(decoded) as { sid?: string };
+    return tokenPayload.sid;
+  } catch (error) {
+    console.error('Failed to parse WorkOS session ID from access token', error);
+    return undefined;
+  }
 }
 
-async function enforceSubscriptionAccess(request: Request, organizationId?: string) {
+export { getWorkOSSessionIdFromAccessToken };
+
+function isPathAllowed(pathname: string, prefixes: string[]) {
+  return prefixes.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+async function enforceSubscriptionAccess(request: Request, user: User | null) {
+  const organizationId = user?.organizationId;
   if (!organizationId) {
     return;
   }
 
   const pathname = new URL(request.url).pathname;
 
-  if (isLockedAccessAllowedPath(pathname)) {
-    return;
-  }
-
   const subscription = await convexServer.query(api.subscriptions.getByOrganization, {
     organizationId,
   });
 
-  if (subscription?.accessStatus === 'locked') {
+  if (!subscription) {
+    return;
+  }
+
+  if (subscription.accessStatus === 'locked') {
+    if (isPathAllowed(pathname, LOCKED_ACCESS_ALLOWED_PREFIXES)) {
+      return;
+    }
+
     throw redirect('/settings/billing?status=locked');
+  }
+
+  if (subscription.accessStatus === 'read_only' && user?.role !== 'owner') {
+    if (isPathAllowed(pathname, READ_ONLY_ACCESS_ALLOWED_PREFIXES)) {
+      return;
+    }
+
+    throw redirect('/settings/billing?status=canceled');
   }
 }
 
@@ -116,7 +156,7 @@ export async function requireUser(request: Request): Promise<User> {
   if (!user) {
     throw redirect('/auth/login');
   }
-  await enforceSubscriptionAccess(request, user.organizationId);
+  await enforceSubscriptionAccess(request, user);
   return user;
 }
 
@@ -202,7 +242,8 @@ export async function createUserSession(
   userId: string,
   redirectTo: string = '/',
   organizationId?: string,
-  role?: string
+  role?: string,
+  workosSessionId?: string
 ) {
   const session = await sessionStorage.getSession();
   session.set('userId', userId);
@@ -213,6 +254,10 @@ export async function createUserSession(
 
   if (role) {
     session.set('role', role);
+  }
+
+  if (workosSessionId) {
+    session.set('workosSessionId', workosSessionId);
   }
 
   return redirect(redirectTo, {
@@ -260,9 +305,20 @@ export async function syncUserRoleFromWorkOS(
 
 export async function logout(request: Request) {
   const session = await getSession(request);
+  const workosSessionId = session.get('workosSessionId') as string | undefined;
+  const destroyedSessionCookie = await destroySession(session);
+
+  if (workosSessionId) {
+    try {
+      await workos.userManagement.revokeSession({ sessionId: workosSessionId });
+    } catch (error) {
+      console.error('Failed to revoke WorkOS session during logout:', error);
+    }
+  }
+
   return redirect('/auth/login', {
     headers: {
-      'Set-Cookie': await destroySession(session),
+      'Set-Cookie': destroyedSessionCookie,
     },
   });
 }
@@ -274,6 +330,8 @@ export function getAuthorizationUrl(state?: string, organizationId?: string) {
     clientId: WORKOS_CLIENT_ID,
     redirectUri: WORKOS_REDIRECT_URI,
     provider: 'authkit',
+    // Force a fresh login each time to avoid silently reusing an existing WorkOS session
+    prompt: 'login',
     // Enable organization selection/creation
     // If no organizationId provided, WorkOS will handle org selection/creation
     ...(organizationId && { organizationId }),

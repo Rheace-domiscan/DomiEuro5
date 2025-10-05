@@ -95,6 +95,8 @@ export const mockWorkOS = {
 
     getAuthorizationUrl: vi.fn().mockReturnValue('https://auth.workos.com/authorize?...'),
 
+    revokeSession: vi.fn().mockResolvedValue(undefined),
+
     createOrganizationMembership: vi.fn().mockResolvedValue(mockWorkOSMembership),
 
     deleteOrganizationMembership: vi.fn().mockResolvedValue(undefined),
@@ -145,6 +147,7 @@ export function resetWorkOSMocks() {
     listMetadata: { after: null, before: null },
   });
   mockWorkOS.userManagement.authenticateWithCode.mockResolvedValue(mockAuthenticationResponse);
+  mockWorkOS.userManagement.revokeSession.mockResolvedValue(undefined);
   mockWorkOS.organizations.createOrganization.mockResolvedValue(mockWorkOSOrganization);
   mockWorkOS.organizations.listOrganizations.mockResolvedValue({
     data: [mockWorkOSOrganization],

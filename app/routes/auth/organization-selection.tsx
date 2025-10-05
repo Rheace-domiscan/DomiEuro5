@@ -4,6 +4,7 @@ import type { Organization } from '@workos-inc/node';
 import {
   authenticateWithOrganizationSelection,
   createUserSession,
+  getWorkOSSessionIdFromAccessToken,
   syncUserRoleFromWorkOS,
 } from '~/lib/auth.server';
 import { createOrUpdateUserInConvex } from '../../../lib/convex.server';
@@ -64,7 +65,14 @@ export async function action({ request }: { request: Request }) {
     );
 
     // Create user session and redirect to home
-    return createUserSession(authResponse.user.id, '/', authResponse.organizationId, userRole);
+    const workosSessionId = getWorkOSSessionIdFromAccessToken(authResponse.accessToken);
+    return createUserSession(
+      authResponse.user.id,
+      '/',
+      authResponse.organizationId,
+      userRole,
+      workosSessionId
+    );
   } catch (_error) {
     return redirect('/auth/login?error=' + encodeURIComponent('Organization selection failed'));
   }
