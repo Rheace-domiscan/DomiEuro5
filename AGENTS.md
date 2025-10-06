@@ -1,44 +1,32 @@
 # Repository Guidelines
 
-This guide helps new agents contribute to the DomiEuro React Router + Convex workspace efficiently.
-
 ## Project Structure & Module Organization
-
-- `app/` holds React Router entrypoints; `app/routes/` defines route modules and their loaders/actions.
-- Shared UI lives in `components/`; cross-cutting services sit in `lib/` (WorkOS, Convex clients, helpers).
-- Serverless database logic is under `convex/`; regenerate types with `npx convex codegen` whenever the schema changes.
-- Static assets go in `public/`; routing config lives in `react-router.config.ts`, and environment setup docs in `WORKOS_SETUP.md` & `CONVEX_SETUP.md`.
+- Route logic lives in `app/`; `app/routes/` mirrors the URL tree, while shared UI sits in `components/` and cross-cutting services in `lib/` (WorkOS, Stripe, Convex clients).
+- Convex schema and server functions are under `convex/`; regenerate generated code after schema edits with `npx convex dev --once`.
+- Tests co-locate with features and aggregate in `test/`; static assets land in `public/`.
 
 ## Build, Test, and Development Commands
-
-- `npm install` installs dependencies and React Router dev tooling.
-- `npm run dev` starts the Vite-powered dev server with SSR/HMR.
-- `npm run build` outputs production bundles to `build/`; follow with `npm run start` to serve them locally.
-- `npm run typecheck` runs route typegen followed by `tsc`; block merges on failures.
-- `npm run lint` / `npm run lint:fix` enforce ESLint + Prettier rules; `npm run format:check` ensures no drift.
-- Use the provided `Dockerfile` for parity builds: `docker build -t domieuro .`.
+- `npm run dev` starts the Vite-backed SSR dev server for local work.
+- `npm run build && npm run start` produces production bundles in `build/` and serves them for smoke testing.
+- `npm run typecheck` regenerates Remix route types, then runs `tsc`; fix blockers before committing.
+- `npm run lint` (or `npm run lint:fix`) applies ESLint + Prettier rules.
+- `npm run test:run` executes the Vitest suite, including Convex integrations via `convex-test`.
 
 ## Coding Style & Naming Conventions
-
-- TypeScript everywhere; prefer explicit component, loader, and action return types.
-- Prettier defaults (2 spaces, semicolons on, trailing commas where valid) control formatting—avoid manual reflow.
-- React components and Convex mutations live in PascalCase files (e.g., `UsersDemo.tsx`); hooks/utilities stay camelCase.
-- Tailwind utility classes live alongside JSX; central styles belong in `app/app.css` when abstractions are needed.
+- TypeScript is mandatory; prefer explicit return types for loaders, actions, Convex functions, and shared utilities.
+- Formatting is enforced by Prettier (2-space indentation, semicolons, trailing commas). Avoid manual wrapping.
+- File naming: components and Convex modules in PascalCase, hooks and utilities in camelCase, tests mirror their targets.
+- Use Tailwind utilities inline with JSX; fall back to `app/app.css` only for shared styles.
 
 ## Testing Guidelines
-
-- Linting and type checks act as baseline gates; run both before opening a PR.
-- End-to-end auth can be smoke-tested via `app/routes/test-workos.tsx` at `/test-workos`.
-- When adding automated tests, colocate them near features (e.g., `app/routes/__tests__/foo.spec.tsx`) and document any new `npm run test` script.
+- Write Vitest specs alongside features or in `test/`; follow patterns in `test/unit/convex-*.test.ts`.
+- Use `convex-test` helpers for Convex logic and ensure key flows hit the test runner before PR review.
+- Capture manual Stripe smoke checks with `stripe listen --forward-to http://localhost:5173/webhooks/stripe` when touching billing.
 
 ## Commit & Pull Request Guidelines
+- Follow Conventional Commits (e.g., `feat:`, `fix:`); mention schema or webhook updates in the body and commit regenerated `convex/_generated/*` artifacts.
+- PRs should summarize scope, list validation commands (`npm run lint`, `npm run typecheck`, `npm run test:run`), link roadmap issues, and attach UI screenshots when relevant.
 
-- Follow Conventional Commits (`feat:`, `fix:`, `refactor:`) as seen in recent history.
-- Scope commits tightly; note schema migrations or env variable changes in the body.
-- PRs should outline the change, manual verification steps (`npm run dev`, `/test-workos`), and link relevant issues.
-- Update `CONVEX_SETUP.md` and `WORKOS_SETUP.md` when integration steps change; attach screenshots or recordings for UI-facing work.
-
-## Security & Configuration Notes
-
-- Store secrets in `.env.local`; never commit keys sourced from WorkOS or Convex dashboards.
-- Review `WORKOS_SETUP.md` before touching auth flows, and keep redirect URIs aligned with `WORKOS_REDIRECT_URI`.
+## Security & Configuration Tips
+- Secrets reside in `.env.local`; never commit WorkOS, Stripe, or Convex keys. Keep `CONVEX_URL` and `VITE_CONVEX_URL` aligned with the active dev deployment.
+- Re-run `npx convex dev --once` after schema changes, and review `WORKOS_SETUP.md`, `STRIPE_SETUP.md`, `CONVEX_SETUP.md` before tweaking auth or billing.

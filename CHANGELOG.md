@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### 📝 Documentation
+
+- Added `AGENTS.md` contributor guide for automation agents, summarizing structure, workflows, and security expectations for quick onboarding.
+
 ### 📧 Email Notifications
 
 - Added `app/lib/email.server.ts` with structured helpers for welcome, seat change, user removal, and ownership transfer notifications so future ESP integration can reuse the same templates.
