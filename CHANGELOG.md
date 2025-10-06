@@ -30,12 +30,17 @@ All notable changes to this project will be documented in this file.
 - Resolved lint failures in the billing settings route by normalizing early returns with hook usage and reformatting Stripe action responses to meet Prettier expectations, restoring CI compatibility.
 - Expanded billing and Convex coverage suites to satisfy the CI coverage gates by exercising organization membership helpers and billing history filters.
 
+### 📊 Billing Analytics
+
+- Tracked free-to-paid conversion metadata in `convex/subscriptions.ts`, including free-tier start, upgrade timestamp, trigger feature, and days-on-free tier for new upgrades.
+- Added the `convex/analytics.getConversionMetrics` query plus tests so product analytics surfaces conversion counts by feature with average time-to-upgrade.
+- Backfilled conversion tracking defaults and updated shared billing types and webhook handlers to keep metadata consistent across loaders, actions, and Convex mutations.
+
 ### ✅ Verification
 
 - `npm run lint`
 - `npm run typecheck`
-- `npm run test -- test/integration/team-management.test.ts`
-- `npm run test -- test/integration/ownership-transfer.test.ts`
+- `npm run test:run`
 
 ## [1.12.2] - 2025-10-05
 

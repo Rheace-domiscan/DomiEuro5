@@ -32,6 +32,13 @@ export type BillingInterval = 'monthly' | 'annual';
  */
 export type AccessStatus = 'active' | 'grace_period' | 'locked' | 'read_only';
 
+export interface ConversionTracking {
+  freeTierCreatedAt: number;
+  upgradedAt: number;
+  triggerFeature?: string;
+  daysOnFreeTier: number;
+}
+
 /**
  * User roles in the system
  */
@@ -64,6 +71,7 @@ export interface Subscription {
   upgradedFrom?: SubscriptionTier;
   upgradedAt?: number;
   upgradeTriggerFeature?: string;
+  conversionTracking?: ConversionTracking;
   createdAt: number;
   updatedAt: number;
 }

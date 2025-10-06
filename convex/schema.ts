@@ -47,6 +47,14 @@ export default defineSchema({
     upgradedFrom: v.optional(v.string()), // Previous tier
     upgradedAt: v.optional(v.number()), // Unix timestamp
     upgradeTriggerFeature: v.optional(v.string()), // Which feature triggered upgrade
+    conversionTracking: v.optional(
+      v.object({
+        freeTierCreatedAt: v.number(),
+        upgradedAt: v.number(),
+        triggerFeature: v.optional(v.string()),
+        daysOnFreeTier: v.number(),
+      })
+    ),
     // Metadata
     createdAt: v.number(),
     updatedAt: v.number(),

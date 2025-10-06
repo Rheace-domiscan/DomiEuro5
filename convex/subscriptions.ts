@@ -16,10 +16,42 @@
  */
 
 import { v } from 'convex/values';
-import { mutation, query, internalMutation } from './_generated/server';
+import { mutation, query, internalMutation, type MutationCtx } from './_generated/server';
 import { api } from './_generated/api';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+type ConversionTracking = {
+  freeTierCreatedAt: number;
+  upgradedAt: number;
+  triggerFeature?: string;
+  daysOnFreeTier: number;
+};
+
+async function resolveFreeTierCreatedAt(
+  ctx: MutationCtx,
+  organizationId: string,
+  fallbackTimestamp: number
+): Promise<number> {
+  const users = await ctx.db
+    .query('users')
+    .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+    .collect();
+
+  if (users.length === 0) {
+    return fallbackTimestamp;
+  }
+
+  const [firstUser] = users;
+  let earliest = firstUser.createdAt;
+  for (const user of users) {
+    if (user.createdAt < earliest) {
+      earliest = user.createdAt;
+    }
+  }
+
+  return earliest;
+}
 
 /**
  * List all subscriptions (for testing)
@@ -105,6 +137,19 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
+    let conversionTracking: ConversionTracking | undefined;
+    if (args.upgradedFrom) {
+      const freeTierCreatedAt = await resolveFreeTierCreatedAt(ctx, args.organizationId, now);
+      const daysOnFreeTier = Math.max(0, Math.round((now - freeTierCreatedAt) / DAY_IN_MS));
+
+      conversionTracking = {
+        freeTierCreatedAt,
+        upgradedAt: now,
+        triggerFeature: args.upgradeTriggerFeature,
+        daysOnFreeTier,
+      };
+    }
+
     const subscriptionId = await ctx.db.insert('subscriptions', {
       organizationId: args.organizationId,
       stripeCustomerId: args.stripeCustomerId,
@@ -122,6 +167,7 @@ export const create = mutation({
       upgradedFrom: args.upgradedFrom,
       upgradedAt: args.upgradedFrom ? now : undefined,
       upgradeTriggerFeature: args.upgradeTriggerFeature,
+      conversionTracking,
       createdAt: now,
       updatedAt: now,
     });
@@ -458,6 +504,65 @@ export const getStats = query({
       pendingDowngrade: subscription.pendingDowngrade,
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       currentPeriodEnd: subscription.currentPeriodEnd,
+    };
+  },
+});
+
+/**
+ * Track free-to-paid conversion metadata
+ */
+export const trackConversion = mutation({
+  args: {
+    organizationId: v.string(),
+    upgradedAt: v.optional(v.number()),
+    triggerFeature: v.optional(v.string()),
+    freeTierCreatedAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const subscription = await ctx.db
+      .query('subscriptions')
+      .withIndex('by_organization', q => q.eq('organizationId', args.organizationId))
+      .first();
+
+    if (!subscription) {
+      throw new Error('Subscription not found for organization');
+    }
+
+    if (subscription.tier === 'free') {
+      return { status: 'ignored_free_tier' as const };
+    }
+
+    const now = Date.now();
+    const upgradedAt = args.upgradedAt ?? subscription.upgradedAt ?? now;
+    const freeTierCreatedAt =
+      args.freeTierCreatedAt ??
+      subscription.conversionTracking?.freeTierCreatedAt ??
+      (await resolveFreeTierCreatedAt(ctx, args.organizationId, upgradedAt));
+    const triggerFeature =
+      args.triggerFeature ??
+      subscription.conversionTracking?.triggerFeature ??
+      subscription.upgradeTriggerFeature;
+
+    const daysOnFreeTier = Math.max(0, Math.round((upgradedAt - freeTierCreatedAt) / DAY_IN_MS));
+
+    const conversionTracking: ConversionTracking = {
+      freeTierCreatedAt,
+      upgradedAt,
+      triggerFeature,
+      daysOnFreeTier,
+    };
+
+    await ctx.db.patch(subscription._id, {
+      conversionTracking,
+      upgradedFrom: subscription.upgradedFrom ?? 'free',
+      upgradedAt,
+      upgradeTriggerFeature: triggerFeature,
+      updatedAt: now,
+    });
+
+    return {
+      status: 'tracked' as const,
+      conversionTracking,
     };
   },
 });

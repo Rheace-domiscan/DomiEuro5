@@ -201,4 +201,39 @@ describe('convex/subscriptions', () => {
 
     expect(events?.some(event => event.eventType === 'grace_period.expired')).toBe(true);
   });
+
+  it('captures conversion tracking when upgrading from free', async () => {
+    await t.mutation(api.users.createUser, {
+      email: 'owner@example.com',
+      name: 'Owner',
+      workosUserId: 'user_owner_01',
+      organizationId,
+    });
+
+    vi.advanceTimersByTime(5 * DAY_IN_MS);
+
+    await t.mutation(api.subscriptions.create, {
+      organizationId,
+      stripeCustomerId,
+      stripeSubscriptionId,
+      tier: 'starter',
+      status: 'active',
+      billingInterval,
+      seatsIncluded: 5,
+      seatsTotal: 5,
+      seatsActive: 4,
+      currentPeriodStart: Date.now(),
+      currentPeriodEnd: Date.now() + 30 * DAY_IN_MS,
+      cancelAtPeriodEnd: false,
+      upgradedFrom: 'free',
+      upgradeTriggerFeature: 'dashboard-analytics',
+    });
+
+    const subscription = await t.query(api.subscriptions.getByOrganization, { organizationId });
+
+    expect(subscription?.upgradedFrom).toBe('free');
+    expect(subscription?.conversionTracking?.triggerFeature).toBe('dashboard-analytics');
+    expect(subscription?.conversionTracking?.daysOnFreeTier).toBe(5);
+    expect(subscription?.conversionTracking?.freeTierCreatedAt).toBe(baseTimestamp.getTime());
+  });
 });
