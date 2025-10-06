@@ -20,6 +20,11 @@ All notable changes to this project will be documented in this file.
 - Split the team settings route into a nested layout so `/settings/team` keeps the existing invite and membership controls while exposing a dedicated `/settings/team/transfer-ownership` screen for owner handoffs.
 - Added a Convex `auditLog` module plus WorkOS/Stripe wiring to record ownership transfers, update billing contacts when the owner changes, and surface integration coverage with new Vitest integration suites.
 
+### ⚖️ Legal Pages
+
+- Introduced a `/legal` route family with a shared layout, navigation, and disclaimer so Terms, Privacy, Refund, Cookie, and Acceptable Use templates share consistent presentation.
+- Added a Professional-tier gated SLA route that reuses `requireTier` to ensure only signed-in Pro customers can review uptime commitments before customizing the template.
+
 ### 🧹 Maintenance
 
 - Resolved lint failures in the billing settings route by normalizing early returns with hook usage and reformatting Stripe action responses to meet Prettier expectations, restoring CI compatibility.
