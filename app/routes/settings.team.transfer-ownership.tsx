@@ -12,6 +12,7 @@ import { convexServer } from '../../lib/convex.server';
 import { api } from '../../convex/_generated/api';
 import { stripe } from '~/lib/stripe.server';
 import { logError } from '~/lib/logger';
+import { sendOwnershipTransferEmails } from '~/lib/email.server';
 
 interface LoaderMember {
   id: string;
@@ -350,42 +351,6 @@ async function updateBillingEmailIfNeeded(options: UpdateBillingEmailOptions): P
   } catch (error) {
     logError('Failed to update billing email after ownership transfer', error);
     return false;
-  }
-}
-
-interface OwnershipTransferEmailOptions {
-  previousOwnerEmail?: string | null;
-  newOwnerEmail?: string | null;
-  newOwnerName?: string | null;
-}
-
-async function sendOwnershipTransferEmails(options: OwnershipTransferEmailOptions) {
-  const { previousOwnerEmail, newOwnerEmail, newOwnerName } = options;
-
-  try {
-    const messages: string[] = [];
-
-    if (previousOwnerEmail) {
-      messages.push(
-        `Ownership transfer confirmation sent to previous owner (${previousOwnerEmail}).`
-      );
-    }
-
-    if (newOwnerEmail) {
-      messages.push(`Ownership transfer confirmation sent to new owner (${newOwnerEmail}).`);
-    }
-
-    if (messages.length === 0) {
-      return;
-    }
-
-    // Placeholder implementation until dedicated email service is added (Phase 13)
-    for (const message of messages) {
-      // eslint-disable-next-line no-console
-      console.info(message, newOwnerName ? { newOwnerName } : undefined);
-    }
-  } catch (error) {
-    logError('Failed to send ownership transfer confirmation emails', error);
   }
 }
 

@@ -22,6 +22,7 @@ import {
   updateOrganizationMembershipRole,
 } from '~/lib/auth.server';
 import { logError } from '~/lib/logger';
+import { sendUserRemovedEmail, sendWelcomeEmail } from '~/lib/email.server';
 import type { Id } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { convexServer, createOrUpdateUserInConvex } from '../../lib/convex.server';
@@ -86,6 +87,15 @@ type ActionResponse = ActionSuccess | ActionError;
 
 type TargetAction = 'invite' | 'deactivate' | 'reactivate' | 'update-role';
 
+function buildDisplayName(fallback: string, ...parts: Array<string | null | undefined>): string {
+  const name = parts
+    .map(part => (typeof part === 'string' ? part.trim() : ''))
+    .filter(Boolean)
+    .join(' ');
+
+  return name.length > 0 ? name : fallback;
+}
+
 function getAvailableRolesForUser(role: string | undefined): Role[] {
   if (role === ROLES.OWNER) {
     return [ROLES.OWNER, ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.TEAM_MEMBER];
@@ -148,6 +158,8 @@ export async function action({ request }: Route.ActionArgs) {
     throw redirect('/auth/create-organization');
   }
 
+  const actingUserDisplayName = buildDisplayName(user.email, user.firstName, user.lastName);
+
   const formData = await request.formData();
   const intent = formData.get('intent');
 
@@ -192,6 +204,8 @@ export async function action({ request }: Route.ActionArgs) {
           workosUserId: result.user.id,
         });
 
+        const createdConvexUser = !existingRecord;
+
         await createOrUpdateUserInConvex({
           id: result.user.id,
           email: result.user.email,
@@ -211,6 +225,22 @@ export async function action({ request }: Route.ActionArgs) {
           workosUserId: result.user.id,
           role: requestedRole,
         });
+
+        if (createdConvexUser) {
+          const newMemberName = buildDisplayName(
+            result.user.email,
+            result.user.firstName,
+            result.user.lastName
+          );
+
+          await sendWelcomeEmail({
+            to: result.user.email,
+            recipientName: newMemberName,
+            inviterName: actingUserDisplayName,
+          }).catch(error => {
+            logError('Failed to send welcome email', error);
+          });
+        }
 
         const message =
           result.type === 'existing_member'
@@ -259,11 +289,22 @@ export async function action({ request }: Route.ActionArgs) {
           targetUser.workosUserId
         );
 
+        const wasActive = targetUser.isActive;
+
         if (membership && membership.status !== 'inactive') {
           await deactivateOrganizationMembership(membership.id);
         }
 
         await convexServer.mutation(api.users.deactivateUser, { id: userId });
+
+        if (wasActive) {
+          await sendUserRemovedEmail({
+            to: targetUser.email,
+            performedByName: actingUserDisplayName,
+          }).catch(error => {
+            logError('Failed to send user removal email', error);
+          });
+        }
 
         return successResponse('deactivate', `Deactivated ${targetUser.email}.`);
       } catch (error) {

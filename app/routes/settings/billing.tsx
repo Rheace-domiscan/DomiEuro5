@@ -24,6 +24,7 @@ import { TIER_CONFIG, formatPrice } from '~/lib/billing-constants';
 import type { AccessStatus, SubscriptionTier } from '~/types/billing';
 import { convexServer } from '../../../lib/convex.server';
 import { api } from '../../../convex/_generated/api';
+import { sendSeatChangeEmail } from '~/lib/email.server';
 import {
   createCheckoutSession,
   createBillingPortalSession,
@@ -93,6 +94,15 @@ type SeatActionResponse =
     };
 
 const BILLING_ALLOWED_ROLES: Role[] = [ROLES.OWNER, ROLES.ADMIN];
+
+function buildDisplayName(fallback: string, ...parts: Array<string | null | undefined>): string {
+  const name = parts
+    .map(part => (typeof part === 'string' ? part.trim() : ''))
+    .filter(Boolean)
+    .join(' ');
+
+  return name.length > 0 ? name : fallback;
+}
 
 /**
  * Helper to format timestamps into friendly date strings.
@@ -310,6 +320,8 @@ export async function action({ request }: Route.ActionArgs) {
   if (!user.organizationId) {
     return data({ intent: 'error', error: 'Organization required' }, { status: 400 });
   }
+
+  const actingUserDisplayName = buildDisplayName(user.email, user.firstName, user.lastName);
 
   const formData = await request.formData();
   const intent = formData.get('intent');
@@ -624,6 +636,16 @@ export async function action({ request }: Route.ActionArgs) {
         });
 
         const seatsChanged = seatsRequested;
+        const emailMode = mode === 'remove' ? 'removed' : 'added';
+
+        await sendSeatChangeEmail({
+          to: user.email,
+          mode: emailMode,
+          seatsChanged,
+          seatsTotal: targetTotalSeats,
+          performedByName: actingUserDisplayName,
+          manageSeatsUrl: new URL('/settings/billing', request.url).toString(),
+        });
 
         return data<SeatActionResponse>({
           intent: 'applySeatChange',
