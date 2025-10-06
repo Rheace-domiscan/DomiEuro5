@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Added `app/lib/email.server.ts` with structured helpers for welcome, seat change, user removal, and ownership transfer notifications so future ESP integration can reuse the same templates.
 - Wired team management, seat adjustments, and ownership transfer flows to call the new helpers, logging notification payloads for audit until an email provider is connected.
 - Documented Phase 13 verification artefacts in `.claude/verification-reports/phase-13-2025-10-06.md` after confirming Stripe customer emails are configured and sandbox events fire as expected.
+- Added unit coverage for the email helpers to keep branch coverage above the CI thresholds.
 
 ### 🔐 Authentication
 
