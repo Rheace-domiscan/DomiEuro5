@@ -1,15 +1,27 @@
 import {
-  isRouteErrorResponse,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  data,
+  isRouteErrorResponse,
+  useLoaderData,
 } from 'react-router';
 
 import type { Route } from './+types/root';
 import './app.css';
 import { ConvexClientProvider } from '../lib/ConvexProvider';
+import { TestModeBanner } from '../components/dev/TestModeBanner';
+import { getPublishableKeyPreview, getStripeMode } from '~/lib/stripe.server';
+
+export async function loader(_: Route.LoaderArgs) {
+  return data({
+    stripeMode: getStripeMode(),
+    publishableKeyPreview: getPublishableKeyPreview(),
+    isDevelopment: process.env.NODE_ENV !== 'production',
+  });
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -43,7 +55,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const { stripeMode, publishableKeyPreview, isDevelopment } = useLoaderData<typeof loader>();
+  const showTestBanner = isDevelopment && stripeMode === 'test';
+
+  return (
+    <>
+      <TestModeBanner isVisible={showTestBanner} publishableKeyPreview={publishableKeyPreview} />
+      <Outlet />
+    </>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

@@ -12,6 +12,41 @@ import Stripe from 'stripe';
 import { TIER_CONFIG } from '~/lib/billing-constants';
 import type { SubscriptionTier } from '~/types/billing';
 
+type StripeMode = 'test' | 'live';
+
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripePublishableKey = process.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+const secretKeyIsTest = Boolean(stripeSecretKey?.startsWith('sk_test_'));
+const publishableKeyIsTest = Boolean(stripePublishableKey?.startsWith('pk_test_'));
+
+/**
+ * Determine whether the current Stripe configuration is using test or live keys.
+ */
+export function getStripeMode(): StripeMode {
+  return secretKeyIsTest || publishableKeyIsTest ? 'test' : 'live';
+}
+
+/**
+ * Determine whether the app is running with Stripe test keys.
+ */
+export function isTestMode(): boolean {
+  return getStripeMode() === 'test';
+}
+
+/**
+ * Provide a masked preview of the publishable key for UI/debug output.
+ */
+export function getPublishableKeyPreview(): string | null {
+  if (!stripePublishableKey) {
+    return null;
+  }
+
+  const start = stripePublishableKey.slice(0, 8);
+  const end = stripePublishableKey.slice(-4);
+  return `${start}...${end}`;
+}
+
 /**
  * Validate Stripe environment variables
  *
@@ -30,18 +65,17 @@ function validateStripeConfig() {
     throw new Error('VITE_STRIPE_PUBLISHABLE_KEY environment variable is required');
   }
 
+  if (secretKeyIsTest !== publishableKeyIsTest) {
+    throw new Error(
+      'Stripe key mismatch detected. Secret and publishable keys must both be test keys or both be live keys.'
+    );
+  }
+
   // Prevent accidentally deploying with test keys in production
-  if (process.env.NODE_ENV === 'production') {
-    if (process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
-      throw new Error(
-        'STRIPE_SECRET_KEY is a test key. Production requires a live key (sk_live_...)'
-      );
-    }
-    if (process.env.VITE_STRIPE_PUBLISHABLE_KEY.startsWith('pk_test_')) {
-      throw new Error(
-        'VITE_STRIPE_PUBLISHABLE_KEY is a test key. Production requires a live key (pk_live_...)'
-      );
-    }
+  if (process.env.NODE_ENV === 'production' && isTestMode()) {
+    throw new Error(
+      'Stripe test keys detected while NODE_ENV=production. Provide live keys before deploying.'
+    );
   }
 }
 
@@ -59,7 +93,6 @@ validateStripeConfig();
  * Current version: 2025-09-30.clover
  * Last reviewed: 2025-10-03 (Phase 5)
  */
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
   throw new Error('STRIPE_SECRET_KEY is required');
 }
@@ -128,13 +161,6 @@ export async function settleSubscriptionInvoice(options: {
   }
 
   return invoice;
-}
-
-/**
- * Check if running in test mode
- */
-export function isTestMode(): boolean {
-  return process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_') ?? false;
 }
 
 /**

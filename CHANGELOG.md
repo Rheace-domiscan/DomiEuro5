@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 ### 📝 Documentation
 
 - Added `AGENTS.md` contributor guide for automation agents, summarizing structure, workflows, and security expectations for quick onboarding.
+- Documented Stripe CLI testing workflow in `README.md` and published `test/stripe-test-scenarios.md` covering ten billing QA flows aligned with the roadmap.
+
+### 🧪 Testing & Tooling
+
+- Added runtime helpers in `app/lib/stripe.server.ts` to detect Stripe test mode, mask publishable keys, and prevent key mismatches or test keys in production deployments; surfaced the status via `TestModeBanner` in `app/root.tsx`.
+- Created `components/dev/TestModeBanner.tsx` to guide developers toward the required `stripe listen` command during local billing tests.
 
 ### 📧 Email Notifications
 

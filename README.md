@@ -134,6 +134,21 @@ npx convex deploy   # Deploy Convex functions to production
 npx convex codegen  # Regenerate TypeScript types
 ```
 
+### Stripe CLI Testing
+
+Use the Stripe CLI to replay webhook events against your local server before merging billing changes:
+
+```bash
+stripe listen --forward-to http://localhost:5173/webhooks/stripe
+
+# Core billing flows to simulate
+stripe trigger checkout.session.completed
+stripe trigger customer.subscription.updated
+stripe trigger invoice.payment_failed
+```
+
+See [`test/stripe-test-scenarios.md`](./test/stripe-test-scenarios.md) for the full list of 10 manual billing scenarios to verify during QA.
+
 ## 📁 Project Structure
 
 ```

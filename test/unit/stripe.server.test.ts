@@ -59,6 +59,7 @@ describe('Stripe Server Utilities', () => {
 
     it('should return false when using live API key', async () => {
       process.env.STRIPE_SECRET_KEY = 'sk_live_mock123';
+      process.env.VITE_STRIPE_PUBLISHABLE_KEY = 'pk_live_mock123';
       vi.resetModules();
       const { isTestMode } = await import('~/lib/stripe.server');
       expect(isTestMode()).toBe(false);
@@ -542,7 +543,9 @@ describe('Stripe Environment Validation', () => {
 
     await expect(async () => {
       await import('~/lib/stripe.server');
-    }).rejects.toThrow('STRIPE_SECRET_KEY is a test key. Production requires a live key');
+    }).rejects.toThrow(
+      'Stripe test keys detected while NODE_ENV=production. Provide live keys before deploying.'
+    );
   });
 
   it('should throw error if test publishable key used in production', async () => {
@@ -553,6 +556,8 @@ describe('Stripe Environment Validation', () => {
 
     await expect(async () => {
       await import('~/lib/stripe.server');
-    }).rejects.toThrow('VITE_STRIPE_PUBLISHABLE_KEY is a test key. Production requires a live key');
+    }).rejects.toThrow(
+      'Stripe key mismatch detected. Secret and publishable keys must both be test keys or both be live keys.'
+    );
   });
 });
