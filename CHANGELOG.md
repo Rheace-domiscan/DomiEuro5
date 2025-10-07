@@ -34,6 +34,7 @@ All notable changes to this project will be documented in this file.
 
 - Introduced a `/legal` route family with a shared layout, navigation, and disclaimer so Terms, Privacy, Refund, Cookie, and Acceptable Use templates share consistent presentation.
 - Added a Professional-tier gated SLA route that reuses `requireTier` to ensure only signed-in Pro customers can review uptime commitments before customizing the template.
+- Refined the SLA gate with an internal `api/internal/require-tier` bridge so the client bundle stays server-free while still enforcing Professional access during local development and verification.
 
 ### 🧹 Maintenance
 

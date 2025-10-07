@@ -1,9 +1,9 @@
-import { useLoaderData } from 'react-router';
+import { data, redirect, useLoaderData } from 'react-router';
 import type { Route } from '../+types/legal.sla';
-import { requireTier } from '~/lib/auth.server';
-import { TIERS } from '~/lib/permissions';
+import { INTERNAL_CALLERS, INTERNAL_GUARD_HEADER } from '~/lib/internal-guards';
 
 const LAST_UPDATED_PLACEHOLDER = 'Update this date before publishing';
+const REQUIRED_TIER = 'professional' as const;
 
 const sections: Array<{
   title: string;
@@ -61,9 +61,36 @@ const sections: Array<{
   },
 ];
 
+async function requireProfessionalUser(request: Request) {
+  const url = new URL('/api/internal/require-tier', request.url);
+  url.searchParams.set('tier', REQUIRED_TIER);
+
+  const response = await globalThis.fetch(url, {
+    headers: {
+      cookie: request.headers.get('cookie') ?? '',
+      [INTERNAL_GUARD_HEADER]: INTERNAL_CALLERS.LEGAL_SLA,
+    },
+    redirect: 'manual',
+  });
+
+  if (response.status >= 300 && response.status < 400) {
+    const location = response.headers.get('location') ?? '/pricing';
+    throw redirect(location);
+  }
+
+  if (!response.ok) {
+    throw new Response('Unable to verify subscription tier', {
+      status: 500,
+    });
+  }
+
+  const payload = (await response.json()) as { user: { email: string } };
+  return payload.user;
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireTier(request, TIERS.PROFESSIONAL);
-  return { user };
+  const user = await requireProfessionalUser(request);
+  return data({ user });
 }
 
 export function meta(_: Route.MetaArgs) {
@@ -76,8 +103,14 @@ export function meta(_: Route.MetaArgs) {
   ];
 }
 
+type LoaderData = {
+  user: {
+    email: string;
+  };
+};
+
 export default function ServiceLevelAgreement() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user } = useLoaderData<LoaderData>();
 
   return (
     <article className="space-y-10">
