@@ -8,68 +8,61 @@ This project now includes a fully configured Convex database with a `users` tabl
 
 ### Users Table
 
-- **email**: string (indexed) - User's email address
-- **name**: string - User's display name
-- **createdAt**: number (timestamp, indexed) - Creation timestamp
-- **updatedAt**: number (timestamp) - Last update timestamp
-- **isActive**: boolean - Whether the user account is active
-- **workosUserId**: **REQUIRED** string (indexed) - WorkOS user ID (required for authentication)
-- **organizationId**: **REQUIRED** string (indexed) - WorkOS organization ID (required for multi-tenant support)
-- **role**: string - User role (owner, admin, manager, sales, team_member) - synced from WorkOS RBAC
+- **email**: string — user’s email address (`by_email` index)
+- **name**: string — user’s display name
+- **createdAt**: number — Unix timestamp for creation (`by_created_at` index)
+- **updatedAt**: number — Unix timestamp for last update
+- **isActive**: boolean — soft-delete flag used for deactivation flows
+- **workosUserId**: string — WorkOS user identifier (`by_workos_user_id` index, required)
+- **organizationId**: string — WorkOS organization identifier (`by_organization` index, required)
+- **role**: string | undefined — WorkOS role slug synced at login (owner, admin, manager, sales, team_member)
 
 ### Subscriptions Table (Billing System)
 
-- **organizationId**: string (indexed) - Organization this subscription belongs to
-- **tier**: 'free' | 'starter' | 'professional' - Current subscription tier
-- **stripeStatus**: Stripe subscription status (active, past_due, unpaid, canceled, null)
-- **accessStatus**: 'active' | 'grace_period' | 'locked' | 'read_only' - Our access control status
-- **billingCycle**: 'monthly' | 'annual' - Billing frequency
-- **currency**: 'gbp' - Currency (British pounds)
-- **billingEmail**: string - Email for billing notifications (configurable by owner)
-- **seats**: object - Seat allocation:
-  - `included`: number - Base seats for tier (1/5/20)
-  - `additional`: number - Extra purchased seats
-  - `total`: number - Total seats (included + additional)
-  - `max`: number - Maximum seats allowed for tier (1/19/40)
-- **pricing**: object - Price breakdown:
-  - `baseAmount`: number - Base price in pence
-  - `perSeatAmount`: number - Per-seat price in pence (1000 = £10)
-  - `currentMonthlyTotal`: number - Total monthly cost
-- **stripeCustomerId**: string (indexed) - Stripe customer ID
-- **stripeSubscriptionId**: string (indexed) - Stripe subscription ID (null for free tier)
-- **currentPeriodStart**: number - Billing period start (Unix timestamp)
-- **currentPeriodEnd**: number - Billing period end (Unix timestamp)
-- **cancelAtPeriodEnd**: boolean - Whether subscription is scheduled for cancellation
-- **pendingDowngrade**: object (optional) - Scheduled downgrade details
-- **gracePeriod**: object (optional) - Grace period for failed payments
-- **conversionTracking**: object (optional) - Free-to-paid conversion analytics
-- **createdAt**: number (timestamp) - Creation timestamp
-- **updatedAt**: number (timestamp) - Last update timestamp
+- **organizationId**: string — owning organization (`by_organization` index)
+- **stripeCustomerId**: string — Stripe customer reference (`by_stripe_customer` index)
+- **stripeSubscriptionId**: string — Stripe subscription reference (`by_stripe_subscription` index)
+- **tier**: string — current tier slug (`free`, `starter`, `professional`)
+- **status**: string — Stripe subscription status (`active`, `canceled`, `past_due`, etc.)
+- **billingInterval**: string — `monthly` or `annual`
+- **seatsIncluded**: number — seats bundled in the tier
+- **seatsTotal**: number — total seats purchased (included + add-ons)
+- **seatsActive**: number — active seats currently in use
+- **currentPeriodStart** / **currentPeriodEnd**: number — Unix timestamps for the billing cycle
+- **cancelAtPeriodEnd**: boolean — downgrade scheduled when the term ends
+- **accessStatus**: string — internal access gate (`active`, `grace_period`, `locked`, `read_only`, `by_access_status` index)
+- **gracePeriodStartedAt** / **gracePeriodEndsAt**: number | undefined — timestamps that frame the 28-day grace window
+- **pendingDowngrade**: object | undefined — `{ tier, effectiveDate }` payload applied when downgrades schedule
+- **upgradedFrom**: string | undefined — previous tier slug
+- **upgradedAt**: number | undefined — Unix timestamp for the upgrade moment
+- **upgradeTriggerFeature**: string | undefined — feature flag that prompted the upgrade
+- **conversionTracking**: object | undefined — `{ freeTierCreatedAt, upgradedAt, triggerFeature?, daysOnFreeTier }`
+- **createdAt** / **updatedAt**: number — bookkeeping timestamps (`by_status` index on status)
 
 ### BillingHistory Table
 
-- **organizationId**: string (indexed) - Organization this event belongs to
-- **eventType**: string - Type of billing event (invoice.paid, subscription.updated, etc.)
-- **amount**: number - Amount in pence
-- **currency**: string - Currency code
-- **status**: 'succeeded' | 'failed' | 'pending' | 'refunded' - Event status
-- **stripeInvoiceId**: string (indexed) - Stripe invoice ID
-- **stripeEventId**: string (indexed) - Stripe webhook event ID
-- **stripePaymentIntentId**: string - Stripe payment intent ID
-- **metadata**: object - Additional event metadata
-- **description**: string - Human-readable description
-- **createdAt**: number (timestamp, indexed) - Event timestamp
+- **organizationId**: string — owning organization (`by_organization` index)
+- **subscriptionId**: string — reference to `subscriptions` (`by_subscription` index)
+- **eventType**: string — normalized event name (`subscription.created`, `invoice.payment_failed`, etc.)
+- **stripeEventId**: string — Stripe webhook identifier used for idempotency (`by_stripe_event_id` index)
+- **amount**: number | undefined — amount in pence for monetary events
+- **currency**: string | undefined — ISO currency code (e.g., `gbp`)
+- **status**: string — status of the event (`succeeded`, `failed`, `pending`)
+- **description**: string — human-readable summary
+- **metadata**: JSON | undefined — arbitrary extra data saved for audits
+- **createdAt**: number — Unix timestamp (`by_created_at` index)
 
 ### AuditLog Table
 
-- **organizationId**: string (indexed) - Organization this log belongs to
-- **eventType**: string - Type of event (ownership.transferred, role.changed, etc.)
-- **performedBy**: string (indexed) - User ID who performed the action
-- **affectedUser**: string (optional) - User ID affected by the action
-- **metadata**: object - Event-specific data (previousValue, newValue, reason)
-- **userAgent**: string (optional) - Browser/device information
-- **ipAddress**: string (optional) - IP address of user
-- **createdAt**: number (timestamp, indexed) - Event timestamp
+- **organizationId**: string — owning organization (`by_organization` index)
+- **userId**: string | undefined — actor who triggered the event (`by_user` index)
+- **action**: string — event type (`subscription.upgraded`, `role.changed`, etc., `by_action` index)
+- **targetType**: string — entity type being mutated (`user`, `subscription`, `organization`)
+- **targetId**: string — identifier for the target entity (`by_target` composite index)
+- **changes**: JSON | undefined — before/after payload for audits
+- **metadata**: JSON | undefined — contextual data (reason, seat counts, etc.)
+- **ipAddress** / **userAgent**: string | undefined — captured client context when available
+- **createdAt**: number — Unix timestamp (`by_created_at` index)
 
 ## Available Functions
 

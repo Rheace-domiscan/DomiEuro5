@@ -68,6 +68,15 @@ Your application will be available at `http://localhost:5173`.
 
 ### Billing Features
 
+#### Quick Start
+
+1. Copy `.env.example` to `.env` and add your Convex, Stripe, and WorkOS credentials.
+2. Follow `STRIPE_SETUP.md` to create products, prices, and webhook endpoints in Stripe.
+3. Configure the 5 WorkOS roles (`owner`, `admin`, `manager`, `sales`, `team_member`) using `WORKOS_RBAC_SETUP.md`.
+4. Run `npm run dev` and confirm the pricing and billing settings routes load without type or lint errors.
+
+#### Documentation
+
 - **[Billing Roadmap](./BILLING_ROADMAP.md)** - Step-by-step implementation guide (~100 tasks)
 - **[Stripe Setup](./STRIPE_SETUP.md)** - Configure Stripe products, webhooks, and portal
 - **[WorkOS RBAC Setup](./WORKOS_RBAC_SETUP.md)** - Configure 5 user roles in WorkOS

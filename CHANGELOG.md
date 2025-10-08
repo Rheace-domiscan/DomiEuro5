@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 - Added `AGENTS.md` contributor guide for automation agents, summarizing structure, workflows, and security expectations for quick onboarding.
 - Documented Stripe CLI testing workflow in `README.md` and published `test/stripe-test-scenarios.md` covering ten billing QA flows aligned with the roadmap.
+- Authored the billing documentation suite (`STRIPE_SETUP.md`, `WORKOS_RBAC_SETUP.md`, `BILLING_GUIDE.md`, `FEATURE_GATES.md`) detailing Stripe configuration, WorkOS role setup, system architecture, and tier-based feature gating.
+- Linked the new guides throughout `README.md`, expanded `TEMPLATE_USAGE.md` with tier customization and Stripe removal guidance, and updated `CONVEX_SETUP.md` to describe the subscription schema and Convex billing tables.
 
 ### 🧪 Testing & Tooling
 
@@ -40,6 +42,7 @@ All notable changes to this project will be documented in this file.
 
 - Resolved lint failures in the billing settings route by normalizing early returns with hook usage and reformatting Stripe action responses to meet Prettier expectations, restoring CI compatibility.
 - Expanded billing and Convex coverage suites to satisfy the CI coverage gates by exercising organization membership helpers and billing history filters.
+- Captured Phase 17 verification artefacts in `.claude/verification-reports/phase-17-2025-10-08.md` after validating documentation deliverables and running `npm run typecheck`, `npm run lint`, `npm run build`, and `npx convex deploy --dry-run -y`.
 
 ### 📊 Billing Analytics
 

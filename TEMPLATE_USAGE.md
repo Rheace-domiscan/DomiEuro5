@@ -182,117 +182,94 @@ The template includes a complete billing system with:
 - Stripe Customer Portal for self-service
 - 28-day grace period for failed payments
 
-**To customize pricing:**
+#### Customize Pricing Tiers
 
-**1. Update tier configuration** in `app/lib/billing-constants.ts`:
+1. Update `app/lib/billing-constants.ts` with new pricing, seat counts, or features:
 
-```typescript
-export const TIER_CONFIG = {
-  starter: {
-    name: 'Starter',
-    seats: { included: 5, min: 5, max: 19 },
-    price: { monthly: 5000, annual: 50000 }, // Change prices (in pence)
-  },
-  // ...
-};
-```
+   ```typescript
+   export const TIER_CONFIG = {
+     starter: {
+       name: 'Starter',
+       seats: { included: 5, min: 5, max: 19 },
+       price: { monthly: 5000, annual: 50000 }, // Prices are stored in pence
+       // ...
+     },
+   };
+   ```
 
-**2. Update Stripe products:**
+2. Adjust Stripe products to match the new configuration (Stripe Dashboard → Products) and copy the updated price IDs into `.env`.
+3. Update the pricing UI (`app/routes/pricing.tsx`) and any feature gate rules to reflect new tiers or benefits.
+4. If you add a tier, ensure Stripe webhooks map the new price IDs to tier slugs in `app/lib/stripe.server.ts`.
 
-- Go to Stripe Dashboard → Products
-- Update prices for each tier
-- Update price IDs in `.env`
-
-**3. Add new tier:**
-
-- Add to `TIER_CONFIG` in `billing-constants.ts`
-- Create product in Stripe Dashboard
-- Add to pricing page component
-- Update feature gates
-
-**To customize roles:**
+#### Customize Roles
 
 - Roles are defined in WorkOS Dashboard (see `WORKOS_RBAC_SETUP.md`)
 - Update permissions in `app/lib/permissions.ts`
 - Modify role checks in route loaders
 
-### Removing Stripe Billing
+### Remove Stripe Billing
 
 If you want to remove the billing system entirely:
 
-**1. Remove Stripe Dependencies**
+1. Remove Stripe dependencies:
 
-```bash
-npm uninstall stripe @stripe/stripe-js
-```
+   ```bash
+   npm uninstall stripe @stripe/stripe-js
+   ```
 
-**2. Remove Billing Files**
+2. Delete billing-related files to clean up routes, components, and Convex functions:
 
-```bash
-rm -rf app/routes/webhooks/stripe.tsx
-rm -rf app/routes/settings/billing.tsx
-rm -rf app/routes/pricing.tsx
-rm -rf components/billing/
-rm -rf components/pricing/
-rm -rf components/feature-gates/
-rm app/lib/stripe.server.ts
-rm app/lib/billing-constants.ts
-rm app/lib/permissions.ts
-rm convex/subscriptions.ts
-rm convex/billingHistory.ts
-rm convex/auditLog.ts
-```
+   ```bash
+   rm -rf app/routes/webhooks/stripe.tsx
+   rm -rf app/routes/settings/billing.tsx
+   rm -rf app/routes/pricing.tsx
+   rm -rf components/billing/
+   rm -rf components/pricing/
+   rm -rf components/feature-gates/
+   rm app/lib/stripe.server.ts
+   rm app/lib/billing-constants.ts
+   rm app/lib/permissions.ts
+   rm convex/subscriptions.ts
+   rm convex/billingHistory.ts
+   rm convex/auditLog.ts
+   ```
 
-**3. Remove Billing Documentation**
+3. Remove billing documentation assets to avoid stale references:
 
-```bash
-rm BILLING_ROADMAP.md
-rm STRIPE_SETUP.md
-rm WORKOS_RBAC_SETUP.md
-rm BILLING_GUIDE.md
-rm FEATURE_GATES.md
-```
+   ```bash
+   rm BILLING_ROADMAP.md
+   rm STRIPE_SETUP.md
+   rm WORKOS_RBAC_SETUP.md
+   rm BILLING_GUIDE.md
+   rm FEATURE_GATES.md
+   ```
 
-**4. Update Convex Schema**
-Remove billing tables from `convex/schema.ts`:
+4. Update the Convex schema by removing billing tables and the `role` column from `users`:
 
-```typescript
-// Remove these tables:
-// - subscriptions
-// - billingHistory
-// - auditLog
+   ```typescript
+   // Remove these tables:
+   // - subscriptions
+   // - billingHistory
+   // - auditLog
 
-// Remove role field from users table:
-users: defineTable({
-  // ... keep other fields
-  // Remove: role field
-});
-```
+   users: defineTable({
+     // ... keep other fields
+     // Remove: role field
+   });
+   ```
 
-**5. Update Environment Variables**
-Remove Stripe variables from `.env.example`:
+5. Strip Stripe environment variables from `.env.example` and your deployment configuration:
 
-```bash
-# Remove:
-# STRIPE_SECRET_KEY
-# VITE_STRIPE_PUBLISHABLE_KEY
-# STRIPE_WEBHOOK_SECRET
-# STRIPE_PRICE_*
-```
+   ```bash
+   # Remove:
+   # STRIPE_SECRET_KEY
+   # VITE_STRIPE_PUBLISHABLE_KEY
+   # STRIPE_WEBHOOK_SECRET
+   # STRIPE_PRICE_*
+   ```
 
-**6. Simplify Authentication**
-Update `app/lib/auth.server.ts` to remove role checks:
-
-```typescript
-// Remove: requireRole, requireTier helpers
-// Keep: getUser, requireUser, logout
-```
-
-**7. Update WorkOS**
-If not using RBAC:
-
-- Remove roles from WorkOS Dashboard
-- Update `createOrganizationMembership` calls to remove `roleSlug`
+6. Simplify authentication by removing role requirements inside `app/lib/auth.server.ts` and related loaders.
+7. If you no longer need WorkOS RBAC, delete the roles from the WorkOS Dashboard and remove `roleSlug` arguments when creating memberships.
 
 ### Customizing Feature Gates
 
