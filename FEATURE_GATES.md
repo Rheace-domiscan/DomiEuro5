@@ -97,6 +97,8 @@ export const TIER_FEATURES = {
 } as const;
 ```
 
+When loaders or actions need tier checks plus billing or RBAC helpers, import them from `app/services/providers.server.ts` so the Stripe and WorkOS SDKs remain server-only.
+
 ---
 
 ## Implementation Patterns
@@ -420,12 +422,15 @@ export async function action({ request }: Route.ActionArgs) {
   const feature = formData.get('feature'); // e.g., 'analytics:view'
   const tier = formData.get('tier'); // e.g., 'starter'
 
+  const { rbacService, billingService } = await import('~/services/providers.server');
+  const user = await rbacService.requireUser(request);
+
   // Store in session for checkout
   const session = await getSession(request);
   session.set('upgrade_trigger_feature', feature);
 
   // Redirect to checkout
-  const checkoutUrl = await createCheckoutSession({
+  const checkoutUrl = await billingService.createCheckoutSession({
     tier,
     organizationId: user.organizationId,
     successUrl: `/checkout/success?feature=${feature}`,
@@ -438,12 +443,14 @@ export async function action({ request }: Route.ActionArgs) {
 
 // After checkout completes
 export async function loader({ request }: Route.LoaderArgs) {
+  const { rbacService, convexService } = await import('~/services/providers.server');
   const session = await getSession(request);
   const triggerFeature = session.get('upgrade_trigger_feature');
+  const user = await rbacService.requireUser(request);
 
   // Store in subscription for analytics
-  await convex.mutation(api.subscriptions.trackConversion, {
-    organizationId,
+  await convexService.client.mutation(api.subscriptions.trackConversion, {
+    organizationId: user.organizationId,
     triggerFeature,
     upgradedAt: Date.now(),
   });

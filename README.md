@@ -14,6 +14,8 @@ This template provides everything you need to build a modern B2B SaaS applicatio
 - **🚀 SSR & HMR** - Server-side rendering with hot module replacement
 - **🔒 TypeScript** - Full type safety across frontend, backend, and database
 - **✨ Production Ready** - Error handling, session management, and security best practices
+- **🧩 Shared Service Layer** - Centralized Stripe/WorkOS/Convex helpers via `app/services/providers.server.ts`
+- **🧪 Feature Flag Previews** - Toggle Usage Analytics & Integrations prototypes with env flags
 
 ## 🏗️ Tech Stack
 
@@ -39,7 +41,7 @@ npm install
 cp .env.example .env
 ```
 
-Then edit `.env` and add your credentials (see setup guides below).
+Then edit `.env` and add your credentials (see setup guides below). To manage additional profiles, run `npm run env:copy staging`, `npm run env:activate staging`, and `npm run env:sync staging` (details in `docs/ENVIRONMENTS.md`).
 
 ### 3. Initialize Convex
 
@@ -47,7 +49,7 @@ Then edit `.env` and add your credentials (see setup guides below).
 npx convex dev
 ```
 
-This will provide you with `CONVEX_URL` and `VITE_CONVEX_URL` to add to your `.env` file.
+This will provide you with `CONVEX_URL` and `VITE_CONVEX_URL` to add to your `.env` file. Use `npx convex dev --once` when you just need to regenerate schema types without starting the watcher.
 
 ### 4. Start Development Server
 
@@ -75,7 +77,7 @@ Your application will be available at `http://localhost:5173`.
 3. Configure the 5 WorkOS roles (`owner`, `admin`, `manager`, `sales`, `team_member`) using `WORKOS_RBAC_SETUP.md`.
 4. Run `npm run dev`, sign in, and use the header Settings dropdown (Billing, Team, Pricing) to confirm each page loads without type or lint errors.
 
-Need multiple environment profiles? Use `npm run env:copy <profile>` and `npm run env:activate <profile>` to manage `.env.staging`, `.env.production`, etc. (`docs/ENVIRONMENTS.md`).
+Need multiple environment profiles? The `env:*` scripts accept a name (e.g. `npm run env:copy staging`, `npm run env:activate production`, `npm run env:sync staging`) to keep `.env.staging`, `.env.production`, etc. See `docs/ENVIRONMENTS.md` for the full workflow.
 
 #### Documentation
 
@@ -110,9 +112,17 @@ Need multiple environment profiles? Use `npm run env:copy <profile>` and `npm ru
 - **Central settings hub:** `/settings` surfaces billing, team, pricing, and owner transfer tools via a shared header dropdown
 - Feature flag previews: enable `usageAnalytics` or `integrationsHub` to unlock the placeholder routes at `/settings/usage` and `/settings/integrations`
 
+### Settings Navigation
+
+- Authenticated pages share `TopNav`, which mounts inside `/settings` so owners/admins keep the same context
+- Billing, Team, and Pricing links now live inside the Settings dropdown to cut clutter from the primary navbar
+- Settings loaders lazily import `billingService`/`rbacService` from `app/services/providers.server.ts` to avoid bundling server SDKs in client shells
+
 ## 🧪 Testing
 
-- `npm run test` – Vitest unit/integration suite
+- `npm run lint` – ESLint + Prettier rules
+- `npm run typecheck` – React Router typegen + TypeScript strict mode
+- `npm run test:run` – Vitest unit/integration suite (Convex + Stripe mocks)
 - `npm run test:e2e` – Playwright smoke tests (automatically launches the dev server)
 - `npm run test:coverage` – Coverage report for CI
 
@@ -121,7 +131,7 @@ Run `npx playwright install` after cloning to download the required browsers.
 ## 🔀 Feature Flags
 
 - Toggle preview experiences and staged UI via `FEATURE_FLAGS=usageAnalytics,integrationsHub` or `FF_USAGEANALYTICS=true` style overrides.
-- Flags currently power the admin-only settings previews for usage analytics and integrations. Extend `app/lib/featureFlags.server.ts` when shipping new experiments.
+- Flags currently power the admin-only settings previews for usage analytics and integrations. Extend `app/lib/featureFlags.server.ts` (and matching copy within `app/routes/settings.*`) when shipping new experiments.
 
 ### Multi-Tenant Organization Support
 
@@ -183,26 +193,27 @@ See [`test/stripe-test-scenarios.md`](./test/stripe-test-scenarios.md) for the f
 ## 📁 Project Structure
 
 ```
-├── app/                      # React Router application
-│   ├── routes/              # File-based routing
-│   │   ├── auth/           # Authentication routes
-│   │   ├── dashboard.tsx   # Protected dashboard
-│   │   └── home.tsx        # Public home page
-│   └── lib/                # Server-side utilities
-│       ├── auth.server.ts  # Authentication logic
-│       ├── session.server.ts # Session management
-│       └── workos.server.ts  # WorkOS client
-├── convex/                  # Convex database
-│   ├── schema.ts           # Database schema
-│   ├── users.ts            # User CRUD operations
-│   └── _generated/         # Auto-generated types (gitignored)
-├── lib/                     # Client-side utilities
-│   ├── convex.server.ts    # Server-side Convex client
-│   ├── ConvexProvider.tsx  # Convex React provider
-│   └── useConvex.ts        # Database hooks
-├── components/              # Reusable React components
-├── public/                  # Static assets
-└── .env.example            # Environment variables template
+├── app/                           # React Router application
+│   ├── root.tsx                   # App shell + loader/action wiring
+│   ├── routes/                    # File-based routes (dashboard.*, settings.*, auth/*, pricing)
+│   ├── services/
+│   │   └── providers.server.ts    # Shared Stripe/WorkOS/Convex service exports
+│   ├── lib/                       # Server helpers (auth, feature flags, stripe, workos)
+│   ├── types/                     # Route + domain type definitions
+│   └── welcome/                   # Marketing landing sections
+├── components/
+│   ├── navigation/TopNav.tsx      # Authenticated navigation with settings dropdown
+│   ├── billing/…                  # Billing dashboard widgets
+│   └── team/, feature-gates/, …   # Shared UI primitives
+├── convex/
+│   ├── schema.ts                  # Convex schema
+│   └── _generated/                # Auto-generated types (committed when schema changes)
+├── docs/                          # Developer guides (env profiles, migrations, providers, security)
+├── e2e/                           # Playwright smoke and auth flows
+├── lib/                           # Client-side Convex helpers (provider + hooks)
+├── scripts/manage-env.mjs         # Environment profile helper (copy/activate/sync)
+├── test/                          # Vitest unit + integration suites
+└── public/                        # Static assets
 ```
 
 ## 🏭 Building for Production

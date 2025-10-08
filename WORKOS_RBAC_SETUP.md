@@ -160,7 +160,7 @@ The **default role** is automatically assigned to new organization members.
 
 ```typescript
 // Example: Assign role when creating organization membership
-import { workos } from './lib/workos.server';
+import { workos } from '~/lib/workos.server';
 
 const membership = await workos.userManagement.createOrganizationMembership({
   organizationId: 'org_123',
@@ -395,6 +395,12 @@ Before marking RBAC setup complete, verify:
 - [ ] Manager cannot access `/settings/billing` (redirected)
 - [ ] Team member cannot access `/settings/team`
 - [ ] Permission system works: `hasPermission('admin', 'billing:view')` returns `true`
+
+## Keep the Shared Service Layer Updated
+
+- Stripe/WorkOS/Convex helpers are centralized in `app/services/providers.server.ts`; confirm `rbacService` exports the role utilities you expect (`requireRole`, `hasRole`, etc.).
+- Route loaders (`/settings`, `/settings/team`, `/settings/billing`) dynamically import that module, so adjust their role-guarding logic there when you add or rename roles.
+- After RBAC changes, run `npm run lint`, `npm run typecheck`, `npm run test:run`, and `npm run test:e2e`; Playwright asserts the Settings dropdown visibility for each role.
 
 ---
 

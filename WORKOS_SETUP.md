@@ -1,6 +1,6 @@
 # WorkOS Authentication Setup Guide
 
-Your Remix app is now configured with WorkOS authentication! Follow these steps to complete the setup:
+Your React Router app is now configured with WorkOS authentication! Follow these steps to complete the setup:
 
 ## 1. Create a WorkOS Account
 
@@ -31,12 +31,14 @@ Your Remix app is now configured with WorkOS authentication! Follow these steps 
    ```
 2. Open the `.env` file in your project root
 3. Replace the placeholder values with your actual WorkOS credentials:
-   ```env
-   WORKOS_API_KEY=your_actual_api_key_here
-   WORKOS_CLIENT_ID=your_actual_client_id_here
-   WORKOS_REDIRECT_URI=http://localhost:5173/auth/callback
-   SESSION_SECRET=generate_a_random_string_here
-   ```
+```env
+WORKOS_API_KEY=your_actual_api_key_here
+WORKOS_CLIENT_ID=your_actual_client_id_here
+WORKOS_REDIRECT_URI=http://localhost:5173/auth/callback
+SESSION_SECRET=generate_a_random_string_here
+```
+
+Need additional environment profiles? Use `npm run env:copy staging`, `npm run env:activate staging`, and `npm run env:sync staging`—see `docs/ENVIRONMENTS.md` for the full workflow.
 
 ## 5. Generate Session Secret
 
@@ -55,6 +57,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 2. Visit http://localhost:5173
 3. Click "Sign In with WorkOS"
 4. You should be redirected to WorkOS for authentication
+5. After completing the flow, confirm the authenticated TopNav renders with the Settings dropdown (Billing, Team, Pricing) and that `/settings` loads without Stripe/WorkOS import errors.
 
 ## Available Routes
 
@@ -112,6 +115,12 @@ For local testing without a full WorkOS setup:
    - Create test users with `test_` prefix emails
    - These won't send actual emails during authentication
 
+## Shared Provider Services
+
+- Route loaders/actions import WorkOS helpers from `app/services/providers.server.ts` (`rbacService`, `requireUser`, etc.).
+- Keep those imports inside loaders/actions so the WorkOS Node SDK stays server-only and avoids bundling issues in the browser.
+- When you add custom WorkOS flows (e.g., role sync, organization automation), update `app/services/providers.server.ts` and the related tests to keep all settings pages aligned.
+
 ## Next Steps
 
 - Configure your WorkOS application with identity providers (Google, Microsoft, etc.)
@@ -119,6 +128,7 @@ For local testing without a full WorkOS setup:
 - Add additional protected routes as needed
 - Set up production environment variables
 - Disable or remove the `/test-workos` diagnostic route before sharing publicly (it is dev-only by default)
+- Run `npm run lint`, `npm run typecheck`, `npm run test:run`, and `npm run test:e2e` after any auth changes to confirm the shared service layer still passes tests.
 
 ## Troubleshooting
 

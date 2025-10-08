@@ -98,6 +98,8 @@ User redirected back to app
 UI updates based on new tier (reactive Convex queries)
 ```
 
+Stripe operations are centralized in `billingService` (exported from `app/services/providers.server.ts`); import it dynamically inside route loaders/actions (`const { billingService } = await import('~/services/providers.server');`) to keep the Stripe SDK server-only.
+
 ---
 
 ## Tier System

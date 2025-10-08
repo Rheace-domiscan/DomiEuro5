@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### 📝 Documentation
 
+- Refreshed `README.md`, `TEMPLATE_USAGE.md`, `WORKOS_SETUP.md`, `WORKOS_RBAC_SETUP.md`, `FEATURE_GATES.md`, and `BILLING_GUIDE.md` to document the shared provider service layer, settings dropdown navigation, feature-flag previews, and environment profile workflow.
 - Added `AGENTS.md` contributor guide for automation agents, summarizing structure, workflows, and security expectations for quick onboarding.
 - Documented Stripe CLI testing workflow in `README.md` and published `test/stripe-test-scenarios.md` covering ten billing QA flows aligned with the roadmap.
 - Authored the billing documentation suite (`STRIPE_SETUP.md`, `WORKOS_RBAC_SETUP.md`, `BILLING_GUIDE.md`, `FEATURE_GATES.md`) detailing Stripe configuration, WorkOS role setup, system architecture, and tier-based feature gating.

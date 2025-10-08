@@ -27,6 +27,12 @@ Update the following files:
 - Create a Convex deployment
 - Copy `.env.example` to `.env` and configure
 
+## 🧠 Understand the Base Template Architecture
+
+- React Router data APIs power loaders/actions; import Stripe/WorkOS helpers via `app/services/providers.server.ts` inside those functions to keep SDKs server-only.
+- Feature flag previews live under `/settings/usage` and `/settings/integrations`; toggle them with `FEATURE_FLAGS=usageAnalytics,integrationsHub` or per-flag env vars documented in `docs/ENVIRONMENTS.md`.
+- Authenticated navigation is centralized in `components/navigation/TopNav.tsx`; `/settings` renders the same bar so Billing, Team, and Pricing live in the Settings dropdown.
+
 ## 🔧 Customizing Authentication
 
 ### Keeping WorkOS (Recommended)
@@ -65,6 +71,8 @@ rm app/routes/test-workos.tsx
 rm WORKOS_SETUP.md
 ```
 
+Update `app/services/providers.server.ts` so loaders/actions import your new auth helpers instead of `rbacService` from WorkOS.
+
 **3. Update Environment Variables**
 Remove WorkOS variables from `.env.example` and add your auth provider's variables.
 
@@ -73,6 +81,7 @@ Remove WorkOS variables from `.env.example` and add your auth provider's variabl
 - Replace `app/lib/auth.server.ts` with your auth provider's implementation
 - Update session management in `app/lib/session.server.ts` if needed
 - Create new auth routes for your provider
+- Adjust any WorkOS-specific logic inside settings loaders (e.g., `/settings`, `/settings/team`) to import your updated service exports via `~/services/providers.server`.
 
 **5. Update Convex User Schema**
 If you're removing organizations, update `convex/schema.ts`:
@@ -123,6 +132,8 @@ rm lib/useConvex.ts
 rm convex.json
 rm CONVEX_SETUP.md
 ```
+
+Update `app/services/providers.server.ts` to remove the Convex exports (or swap in your new data layer) so loaders/actions continue to import from a single place.
 
 **3. Remove Convex Provider**
 Remove `ConvexClientProvider` from your app root (check `app/root.tsx` or layout files).
@@ -405,6 +416,24 @@ When customizing:
 ## 🤔 Need Help?
 
 Common customization questions:
+
+## 🧭 Updating Navigation & Settings
+
+- Update the Settings dropdown inside `components/navigation/TopNav.tsx` when you add or rename Billing/Team/Pricing pages.
+- `/settings` renders the shared `TopNav`, keeping the dropdown available even while configuring billing.
+- Add new settings sections to both the sidebar navigation and dropdown inside `app/routes/settings.tsx` so links stay discoverable.
+
+## 🧩 Feature Flags & Previews
+
+- Register new flags in `app/lib/featureFlags.server.ts` and surface copy/previews in the matching `/settings/<flag>` routes.
+- Toggle them via `FEATURE_FLAGS=flagOne,flagTwo` or per-flag overrides (`FF_FLAGONE=true`) inside each environment profile (`docs/ENVIRONMENTS.md`).
+- Document customer-facing gates (what unlocks and who owns them) in `FEATURE_GATES.md`.
+
+## ✅ Verification Suite
+
+- Before publishing a new template clone, run `npm run lint`, `npm run typecheck`, `npm run test:run`, and `npm run test:e2e`.
+- Use the Stripe CLI flows in `test/stripe-test-scenarios.md` to validate manual billing behavior alongside automated tests.
+- Update `CHANGELOG.md` and supporting docs (`docs/PROVIDER_RUNBOOK.md`, `docs/MIGRATIONS.md`, etc.) once the checks pass.
 
 - **Q: Can I use this template with Next.js instead of React Router?**
   - A: This template is specifically built for React Router v7. For Next.js, you'd need significant refactoring as the routing and SSR systems are different.
