@@ -13,12 +13,12 @@ import type { Route } from './+types/root';
 import './app.css';
 import { ConvexClientProvider } from '../lib/ConvexProvider';
 import { TestModeBanner } from '../components/dev/TestModeBanner';
-import { getPublishableKeyPreview, getStripeMode } from '~/lib/stripe.server';
+import { billingService } from '~/services/providers.server';
 
 export async function loader(_: Route.LoaderArgs) {
   return data({
-    stripeMode: getStripeMode(),
-    publishableKeyPreview: getPublishableKeyPreview(),
+    stripeMode: billingService.getStripeMode(),
+    publishableKeyPreview: billingService.getPublishableKeyPreview(),
     isDevelopment: process.env.NODE_ENV !== 'production',
   });
 }

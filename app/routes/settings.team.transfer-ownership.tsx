@@ -1,18 +1,14 @@
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import type { Route } from './+types/settings.team.transfer-ownership';
-import {
-  getOrganizationMembershipForUser,
-  requireRole,
-  updateOrganizationMembershipRole,
-} from '~/lib/auth.server';
 import { getSession, commitSession } from '~/lib/session.server';
-import { ROLES, getRoleName } from '~/lib/permissions';
 import type { Role } from '~/lib/permissions';
-import { convexServer } from '../../lib/convex.server';
+import { billingService, rbacService, convexService } from '~/services/providers.server';
 import { api } from '../../convex/_generated/api';
-import { stripe } from '~/lib/stripe.server';
 import { logError } from '~/lib/logger';
 import { sendOwnershipTransferEmails } from '~/lib/email.server';
+
+const { ROLES, getRoleName } = rbacService;
+const stripeClient = billingService.client;
 
 interface LoaderMember {
   id: string;
@@ -35,13 +31,13 @@ interface ActionError {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireRole(request, [ROLES.OWNER]);
+  const user = await rbacService.requireRole(request, [ROLES.OWNER]);
 
   if (!user.organizationId) {
     throw redirect('/auth/create-organization');
   }
 
-  const members = (await convexServer.query(api.users.getTeamMembers, {
+  const members = (await convexService.client.query(api.users.getTeamMembers, {
     organizationId: user.organizationId,
     includeInactive: false,
   })) as Array<{
@@ -76,7 +72,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const user = await requireRole(request, [ROLES.OWNER]);
+  const user = await rbacService.requireRole(request, [ROLES.OWNER]);
 
   if (!user.organizationId) {
     throw redirect('/auth/create-organization');
@@ -106,7 +102,7 @@ export async function action({ request }: Route.ActionArgs) {
     );
   }
 
-  const adminUser = await convexServer.query(api.users.getUserByWorkosId, {
+  const adminUser = await convexService.client.query(api.users.getUserByWorkosId, {
     workosUserId: selectedAdmin,
   });
 
@@ -147,8 +143,8 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const [currentMembership, targetMembership] = await Promise.all([
-    getOrganizationMembershipForUser(user.organizationId, user.id),
-    getOrganizationMembershipForUser(user.organizationId, selectedAdmin),
+    rbacService.getOrganizationMembershipForUser(user.organizationId, user.id),
+    rbacService.getOrganizationMembershipForUser(user.organizationId, selectedAdmin),
   ]);
 
   if (!currentMembership || currentMembership.role?.slug !== ROLES.OWNER) {
@@ -175,15 +171,15 @@ export async function action({ request }: Route.ActionArgs) {
     );
   }
 
-  await updateOrganizationMembershipRole(targetMembership.id, ROLES.OWNER);
-  await updateOrganizationMembershipRole(currentMembership.id, ROLES.ADMIN);
+  await rbacService.updateOrganizationMembershipRole(targetMembership.id, ROLES.OWNER);
+  await rbacService.updateOrganizationMembershipRole(currentMembership.id, ROLES.ADMIN);
 
   await Promise.all([
-    convexServer.mutation(api.users.updateUserRole, {
+    convexService.client.mutation(api.users.updateUserRole, {
       workosUserId: selectedAdmin,
       role: ROLES.OWNER,
     }),
-    convexServer.mutation(api.users.updateUserRole, {
+    convexService.client.mutation(api.users.updateUserRole, {
       workosUserId: user.id,
       role: ROLES.ADMIN,
     }),
@@ -265,7 +261,7 @@ async function logOwnershipTransferEvent(options: OwnershipTransferLogOptions) {
       forwardedFor?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || undefined;
     const userAgent = request.headers.get('user-agent') || undefined;
 
-    await convexServer.mutation(api.auditLog.create, {
+    await convexService.client.mutation(api.auditLog.create, {
       organizationId,
       userId: performedBy,
       action: 'ownership_transferred',
@@ -316,7 +312,7 @@ async function updateBillingEmailIfNeeded(options: UpdateBillingEmailOptions): P
   }
 
   try {
-    const subscription = await convexServer.query(api.subscriptions.getByOrganization, {
+    const subscription = await convexService.client.query(api.subscriptions.getByOrganization, {
       organizationId,
     });
 
@@ -324,7 +320,7 @@ async function updateBillingEmailIfNeeded(options: UpdateBillingEmailOptions): P
       return false;
     }
 
-    const customer = await stripe.customers.retrieve(subscription.stripeCustomerId);
+    const customer = await stripeClient.customers.retrieve(subscription.stripeCustomerId);
 
     if ('deleted' in customer && customer.deleted) {
       return false;
@@ -342,7 +338,7 @@ async function updateBillingEmailIfNeeded(options: UpdateBillingEmailOptions): P
       return false;
     }
 
-    await stripe.customers.update(subscription.stripeCustomerId, {
+    await stripeClient.customers.update(subscription.stripeCustomerId, {
       email: newOwnerEmail,
       name: newOwnerName ?? undefined,
     });

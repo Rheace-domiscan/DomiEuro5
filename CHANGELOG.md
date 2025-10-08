@@ -10,11 +10,16 @@ All notable changes to this project will be documented in this file.
 - Documented Stripe CLI testing workflow in `README.md` and published `test/stripe-test-scenarios.md` covering ten billing QA flows aligned with the roadmap.
 - Authored the billing documentation suite (`STRIPE_SETUP.md`, `WORKOS_RBAC_SETUP.md`, `BILLING_GUIDE.md`, `FEATURE_GATES.md`) detailing Stripe configuration, WorkOS role setup, system architecture, and tier-based feature gating.
 - Linked the new guides throughout `README.md`, expanded `TEMPLATE_USAGE.md` with tier customization and Stripe removal guidance, and updated `CONVEX_SETUP.md` to describe the subscription schema and Convex billing tables.
+- Published operational runbooks in `docs/` covering environment profiles, theming, security hardening, migration workflows, and provider-specific procedures (Stripe, WorkOS, Convex).
+- Published operational runbooks in `docs/` covering environment profiles, theming, security hardening, and migration workflows for downstream SaaS teams.
 
 ### 🧪 Testing & Tooling
 
 - Added runtime helpers in `app/lib/stripe.server.ts` to detect Stripe test mode, mask publishable keys, and prevent key mismatches or test keys in production deployments; surfaced the status via `TestModeBanner` in `app/root.tsx`.
 - Created `components/dev/TestModeBanner.tsx` to guide developers toward the required `stripe listen` command during local billing tests.
+- Added Playwright end-to-end smoke tests (`npm run test:e2e`) and a Node-based environment profile manager (`npm run env:*`) to accelerate QA and deployment preparation.
+- Expanded Playwright coverage to include protected route redirects for `/dashboard`, `/settings/billing`, and `/settings/team`.
+- Introduced provider service abstractions in `app/services/providers.server.ts` so Stripe/WorkOS/Convex helpers flow through a central interface.
 
 ### 📧 Email Notifications
 
@@ -45,6 +50,12 @@ All notable changes to this project will be documented in this file.
 - Captured Phase 17 verification artefacts in `.claude/verification-reports/phase-17-2025-10-08.md` after validating documentation deliverables and running `npm run typecheck`, `npm run lint`, `npm run build`, and `npx convex deploy --dry-run -y`.
 - Introduced a role-aware settings hub at `/settings` with an overview screen, persistent navigation for Billing/Team/Transfer, dashboard entry point, and a root redirect to `/home`.
 - Unified the dashboard/settings top navigation, moving Billing, Team, and Pricing into a Settings dropdown so the header stays consistent across app shells.
+- Defined theme tokens in `app/app.css` (surface, border, brand colors) with reusable utilities (`bg-surface-raised`, `btn-primary`, `text-secondary`) and documented customization in `docs/THEMING.md`.
+- Added feature flag harness (`app/lib/featureFlags.server.ts`) plus settings placeholders/routes for `usageAnalytics` and `integrationsHub` previews.
+
+### 🎨 Styling
+
+- Defined theme tokens in `app/app.css` (surface, border, brand colors) with reusable utilities (`bg-surface-raised`, `btn-primary`, `text-secondary`) and documented customization in `docs/THEMING.md`.
 
 ### 📊 Billing Analytics
 

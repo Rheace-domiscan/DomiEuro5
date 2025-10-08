@@ -15,9 +15,7 @@ import { redirect, data } from 'react-router';
 import type { Route } from './+types/pricing';
 import { PricingTable } from '../../components/pricing/PricingTable';
 import { FeatureList } from '../../components/pricing/FeatureList';
-import { getUser } from '~/lib/auth.server';
-import { createCheckoutSession } from '~/lib/stripe.server';
-import { convexServer } from '../../lib/convex.server';
+import { billingService, rbacService, convexService } from '~/services/providers.server';
 import { api } from '../../convex/_generated/api';
 import { TIERS, TIER_CONFIG } from '~/lib/billing-constants';
 import type { SubscriptionTier, BillingInterval } from '~/types/billing';
@@ -27,7 +25,7 @@ import type { SubscriptionTier, BillingInterval } from '~/types/billing';
  */
 export async function loader({ request }: Route.LoaderArgs) {
   // Get user (optional - page is public)
-  const user = await getUser(request);
+  const user = await rbacService.getUser(request);
   const url = new URL(request.url);
   const upgradeFeature = url.searchParams.get('upgrade');
 
@@ -36,7 +34,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   // If user is authenticated, fetch their current subscription
   if (user?.organizationId) {
     try {
-      const subscription = await convexServer.query(api.subscriptions.getByOrganization, {
+      const subscription = await convexService.client.query(api.subscriptions.getByOrganization, {
         organizationId: user.organizationId,
       });
 
@@ -74,7 +72,7 @@ export async function action({ request }: Route.ActionArgs) {
   // Free tier doesn't need checkout
   if (tier === TIERS.FREE) {
     // If user is not authenticated, redirect to signup
-    const user = await getUser(request);
+    const user = await rbacService.getUser(request);
     if (!user) {
       return redirect('/auth/login');
     }
@@ -93,7 +91,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   // Require authentication for paid tiers
-  const user = await getUser(request);
+  const user = await rbacService.getUser(request);
   if (!user) {
     // Store intended tier/interval in URL params and redirect to login
     return redirect(`/auth/login?redirect=/pricing&tier=${tier}&interval=${interval}`);
@@ -106,9 +104,12 @@ export async function action({ request }: Route.ActionArgs) {
 
   try {
     // Check if subscription already exists
-    const existingSubscription = await convexServer.query(api.subscriptions.getByOrganization, {
-      organizationId: user.organizationId,
-    });
+    const existingSubscription = await convexService.client.query(
+      api.subscriptions.getByOrganization,
+      {
+        organizationId: user.organizationId,
+      }
+    );
 
     // If they already have this tier or higher, redirect to billing
     if (existingSubscription) {
@@ -136,7 +137,7 @@ export async function action({ request }: Route.ActionArgs) {
     const cancelUrl = `${origin}/pricing`;
 
     // Create Stripe checkout session
-    const session = await createCheckoutSession({
+    const session = await billingService.createCheckoutSession({
       customerId: existingSubscription?.stripeCustomerId,
       customerEmail: user.email,
       tier,

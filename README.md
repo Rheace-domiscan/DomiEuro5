@@ -75,6 +75,8 @@ Your application will be available at `http://localhost:5173`.
 3. Configure the 5 WorkOS roles (`owner`, `admin`, `manager`, `sales`, `team_member`) using `WORKOS_RBAC_SETUP.md`.
 4. Run `npm run dev`, sign in, and use the header Settings dropdown (Billing, Team, Pricing) to confirm each page loads without type or lint errors.
 
+Need multiple environment profiles? Use `npm run env:copy <profile>` and `npm run env:activate <profile>` to manage `.env.staging`, `.env.production`, etc. (`docs/ENVIRONMENTS.md`).
+
 #### Documentation
 
 - **[Billing Roadmap](./BILLING_ROADMAP.md)** - Step-by-step implementation guide (~100 tasks)
@@ -82,6 +84,11 @@ Your application will be available at `http://localhost:5173`.
 - **[WorkOS RBAC Setup](./WORKOS_RBAC_SETUP.md)** - Configure 5 user roles in WorkOS
 - **[Billing Guide](./BILLING_GUIDE.md)** - System architecture and how it works
 - **[Feature Gates](./FEATURE_GATES.md)** - Implement tier-based feature access
+- **[Environment Profiles](./docs/ENVIRONMENTS.md)** - Manage development, staging, and production secrets
+- **[Theming Guide](./docs/THEMING.md)** - Customize brand colors via CSS tokens
+- **[Security Checklist](./docs/SECURITY_CHECKLIST.md)** - Release hardening before every deploy
+- **[Migration Playbook](./docs/MIGRATIONS.md)** - Process for schema/tier updates across environments
+- **[Provider Runbook](./docs/PROVIDER_RUNBOOK.md)** - Operational tips for Stripe, WorkOS, and Convex
 
 ## 🎨 Key Features
 
@@ -101,6 +108,19 @@ Your application will be available at `http://localhost:5173`.
 - **Permission system:** Granular control over billing, user management, and features
 - **Feature gates:** Tier-based access to premium features with upgrade prompts
 - **Central settings hub:** `/settings` surfaces billing, team, pricing, and owner transfer tools via a shared header dropdown
+
+## 🧪 Testing
+
+- `npm run test` – Vitest unit/integration suite
+- `npm run test:e2e` – Playwright smoke tests (automatically launches the dev server)
+- `npm run test:coverage` – Coverage report for CI
+
+Run `npx playwright install` after cloning to download the required browsers.
+
+## 🔀 Feature Flags
+
+- Toggle preview experiences and staged UI via `FEATURE_FLAGS=usageAnalytics,integrationsHub` or `FF_USAGEANALYTICS=true` style overrides.
+- Flags currently power the admin-only settings previews for usage analytics and integrations. Extend `app/lib/featureFlags.server.ts` when shipping new experiments.
 
 ### Multi-Tenant Organization Support
 

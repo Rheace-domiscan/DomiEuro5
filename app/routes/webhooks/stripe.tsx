@@ -19,12 +19,13 @@
 
 import type { ActionFunctionArgs } from 'react-router';
 import Stripe from 'stripe';
-import { verifyWebhookSignature, getTierFromPriceId } from '~/lib/stripe.server';
-import { convexServer } from '../../../lib/convex.server';
+import { billingService, convexService } from '~/services/providers.server';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { TIER_CONFIG, GRACE_PERIOD_DAYS, GRACE_PERIOD_MS } from '~/lib/billing-constants';
 import type { SubscriptionTier } from '~/types/billing';
+
+const convex = convexService.client;
 
 /**
  * POST /webhooks/stripe
@@ -49,7 +50,7 @@ export async function action({ request }: ActionFunctionArgs) {
     // Verify webhook signature
     let event: Stripe.Event;
     try {
-      event = verifyWebhookSignature(payload, signature);
+      event = billingService.verifyWebhookSignature(payload, signature);
     } catch (err) {
       const error = err as Error;
       return new Response(`Webhook Error: ${error.message}`, { status: 400 });
@@ -152,7 +153,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
   }
 
   // Check if subscription already exists
-  const existing = await convexServer.query(api.subscriptions.getByStripeSubscriptionId, {
+  const existing = await convex.query(api.subscriptions.getByStripeSubscriptionId, {
     stripeSubscriptionId: subscriptionId,
   });
 
@@ -164,7 +165,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
   const seatsNumber = parseInt(seats, 10);
 
   // Create subscription in Convex
-  await convexServer.mutation(api.subscriptions.create, {
+  await convex.mutation(api.subscriptions.create, {
     organizationId,
     stripeCustomerId: session.customer as string,
     stripeSubscriptionId: subscriptionId,
@@ -181,7 +182,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
   });
 
   // Log billing event
-  await convexServer.mutation(api.billingHistory.create, {
+  await convex.mutation(api.billingHistory.create, {
     organizationId,
     subscriptionId: subscriptionId,
     eventType: 'checkout.session.completed',
@@ -206,7 +207,7 @@ async function handleSubscriptionCreated(event: Stripe.Event) {
   }
 
   // Check if already exists
-  const existing = await convexServer.query(api.subscriptions.getByStripeSubscriptionId, {
+  const existing = await convex.query(api.subscriptions.getByStripeSubscriptionId, {
     stripeSubscriptionId: subscription.id,
   });
 
@@ -225,7 +226,7 @@ async function handleSubscriptionCreated(event: Stripe.Event) {
   const { currentPeriodStartMs, currentPeriodEndMs, cancelAtPeriodEnd } =
     extractSubscriptionPeriods(subscription);
 
-  await convexServer.mutation(api.subscriptions.create, {
+  await convex.mutation(api.subscriptions.create, {
     organizationId,
     stripeCustomerId: subscription.customer as string,
     stripeSubscriptionId: subscription.id,
@@ -243,7 +244,7 @@ async function handleSubscriptionCreated(event: Stripe.Event) {
     upgradedFrom: 'free',
   });
 
-  await convexServer.mutation(api.billingHistory.create, {
+  await convex.mutation(api.billingHistory.create, {
     organizationId,
     subscriptionId: subscription.id,
     eventType: 'customer.subscription.created',
@@ -261,7 +262,7 @@ async function handleSubscriptionCreated(event: Stripe.Event) {
 async function handleSubscriptionUpdated(event: Stripe.Event) {
   const subscription = event.data.object as Stripe.Subscription;
 
-  const existing = await convexServer.query(api.subscriptions.getByStripeSubscriptionId, {
+  const existing = await convex.query(api.subscriptions.getByStripeSubscriptionId, {
     stripeSubscriptionId: subscription.id,
   });
 
@@ -271,7 +272,7 @@ async function handleSubscriptionUpdated(event: Stripe.Event) {
 
   await updateSubscriptionFromStripe(subscription, existing._id as Id<'subscriptions'>);
 
-  await convexServer.mutation(api.billingHistory.create, {
+  await convex.mutation(api.billingHistory.create, {
     organizationId: existing.organizationId,
     subscriptionId: subscription.id,
     eventType: 'customer.subscription.updated',
@@ -294,7 +295,7 @@ async function handleSubscriptionScheduleCreated(event: Stripe.Event) {
     return;
   }
 
-  const existing = await convexServer.query(api.subscriptions.getByStripeSubscriptionId, {
+  const existing = await convex.query(api.subscriptions.getByStripeSubscriptionId, {
     stripeSubscriptionId: subscriptionId,
   });
 
@@ -307,16 +308,17 @@ async function handleSubscriptionScheduleCreated(event: Stripe.Event) {
   if (futurePhase) {
     // Extract tier from scheduled phase's price ID
     const futurePriceId = futurePhase.items?.[0]?.price;
-    const tier = typeof futurePriceId === 'string' ? getTierFromPriceId(futurePriceId) : null;
+    const tier =
+      typeof futurePriceId === 'string' ? billingService.getTierFromPriceId(futurePriceId) : null;
 
-    await convexServer.mutation(api.subscriptions.setPendingDowngrade, {
+    await convex.mutation(api.subscriptions.setPendingDowngrade, {
       subscriptionId: existing._id,
       tier: tier || existing.tier, // Fallback to current tier if extraction fails
       effectiveDate: futurePhase.start_date * 1000,
     });
   }
 
-  await convexServer.mutation(api.billingHistory.create, {
+  await convex.mutation(api.billingHistory.create, {
     organizationId: existing.organizationId,
     subscriptionId: subscriptionId,
     eventType: 'subscription_schedule.created',
@@ -339,7 +341,7 @@ async function handleInvoicePaymentSucceeded(event: Stripe.Event) {
     return;
   }
 
-  const existing = await convexServer.query(api.subscriptions.getByStripeSubscriptionId, {
+  const existing = await convex.query(api.subscriptions.getByStripeSubscriptionId, {
     stripeSubscriptionId: subscriptionId,
   });
 
@@ -351,14 +353,14 @@ async function handleInvoicePaymentSucceeded(event: Stripe.Event) {
 
   // End grace period if active
   if (previousAccessStatus === 'grace_period' || previousAccessStatus === 'locked') {
-    await convexServer.mutation(api.subscriptions.endGracePeriod, {
+    await convex.mutation(api.subscriptions.endGracePeriod, {
       subscriptionId: existing._id,
       paymentSuccessful: true,
     });
   }
 
   // Log payment
-  await convexServer.mutation(api.billingHistory.create, {
+  await convex.mutation(api.billingHistory.create, {
     organizationId: existing.organizationId,
     subscriptionId: subscriptionId,
     eventType: 'invoice.payment_succeeded',
@@ -389,7 +391,7 @@ async function handleInvoicePaymentFailed(event: Stripe.Event) {
     return;
   }
 
-  const existing = await convexServer.query(api.subscriptions.getByStripeSubscriptionId, {
+  const existing = await convex.query(api.subscriptions.getByStripeSubscriptionId, {
     stripeSubscriptionId: subscriptionId,
   });
 
@@ -404,14 +406,14 @@ async function handleInvoicePaymentFailed(event: Stripe.Event) {
 
   // Start grace period
   if (previousAccessStatus !== 'locked') {
-    await convexServer.mutation(api.subscriptions.startGracePeriod, {
+    await convex.mutation(api.subscriptions.startGracePeriod, {
       subscriptionId: existing._id,
       gracePeriodDays: GRACE_PERIOD_DAYS,
     });
   }
 
   // Log failed payment
-  await convexServer.mutation(api.billingHistory.create, {
+  await convex.mutation(api.billingHistory.create, {
     organizationId: existing.organizationId,
     subscriptionId: subscriptionId,
     eventType: 'invoice.payment_failed',
@@ -437,7 +439,7 @@ async function handleInvoicePaymentFailed(event: Stripe.Event) {
 async function handleSubscriptionDeleted(event: Stripe.Event) {
   const subscription = event.data.object as Stripe.Subscription;
 
-  const existing = await convexServer.query(api.subscriptions.getByStripeSubscriptionId, {
+  const existing = await convex.query(api.subscriptions.getByStripeSubscriptionId, {
     stripeSubscriptionId: subscription.id,
   });
 
@@ -446,14 +448,14 @@ async function handleSubscriptionDeleted(event: Stripe.Event) {
   }
 
   // Update status to canceled with read-only access
-  await convexServer.mutation(api.subscriptions.updateStatus, {
+  await convex.mutation(api.subscriptions.updateStatus, {
     subscriptionId: existing._id,
     status: 'canceled',
     accessStatus: 'read_only',
     cancelAtPeriodEnd: false,
   });
 
-  await convexServer.mutation(api.billingHistory.create, {
+  await convex.mutation(api.billingHistory.create, {
     organizationId: existing.organizationId,
     subscriptionId: subscription.id,
     eventType: 'customer.subscription.deleted',
@@ -497,5 +499,5 @@ async function updateSubscriptionFromStripe(
     mutationArgs.accessStatus = 'read_only';
   }
 
-  await convexServer.mutation(api.subscriptions.update, mutationArgs);
+  await convex.mutation(api.subscriptions.update, mutationArgs);
 }

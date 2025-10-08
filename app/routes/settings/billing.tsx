@@ -18,22 +18,17 @@ import {
 } from 'react-router';
 import type { Route } from './+types/billing';
 import { data, redirect } from 'react-router';
-import { requireUser } from '~/lib/auth.server';
-import { hasRole, ROLES, type Role } from '~/lib/permissions';
+import { billingService, rbacService, convexService } from '~/services/providers.server';
+import type { Role } from '~/lib/permissions';
 import { TIER_CONFIG, formatPrice } from '~/lib/billing-constants';
 import type { AccessStatus, SubscriptionTier } from '~/types/billing';
-import { convexServer } from '../../../lib/convex.server';
 import { api } from '../../../convex/_generated/api';
 import { sendSeatChangeEmail } from '~/lib/email.server';
-import {
-  createCheckoutSession,
-  createBillingPortalSession,
-  getAdditionalSeatPriceId,
-  getStripePriceId,
-  settleSubscriptionInvoice,
-  stripe,
-} from '~/lib/stripe.server';
 import type Stripe from 'stripe';
+
+const hasRole = rbacService.hasRole;
+const { ROLES } = rbacService;
+const stripeClient = billingService.client;
 import { BillingOverview } from '../../../components/billing/BillingOverview';
 import { SeatManagement } from '../../../components/billing/SeatManagement';
 import { BillingHistory } from '../../../components/billing/BillingHistory';
@@ -57,6 +52,16 @@ type SeatPreview = {
   additionalSeatsAfter: number;
   prorationLines: SeatPreviewLine[];
   upcomingLines: SeatPreviewLine[];
+};
+
+type BillingHistoryRecord = {
+  _id: string;
+  description?: string | null;
+  amount?: number | null;
+  status?: string | null;
+  eventType?: string | null;
+  currency?: string | null;
+  createdAt: number;
 };
 
 type TaxGroupSummary = {
@@ -129,12 +134,12 @@ async function buildSubscriptionItemPayload(options: {
   const { subscriptionId, tier, billingInterval, additionalSeatQuantity } = options;
 
   // Retrieve subscription with expanded items so we can match prices.
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+  const subscription = await stripeClient.subscriptions.retrieve(subscriptionId, {
     expand: ['items.data.price'],
   });
 
-  const basePriceId = getStripePriceId(tier, billingInterval);
-  const additionalSeatPriceId = getAdditionalSeatPriceId();
+  const basePriceId = billingService.getStripePriceId(tier, billingInterval);
+  const additionalSeatPriceId = billingService.getAdditionalSeatPriceId();
 
   const baseItem = subscription.items.data.find(item => item.price?.id === basePriceId);
 
@@ -200,7 +205,7 @@ async function previewSeatQuantityChange(options: {
         }
   );
 
-  const invoice = await stripe.invoices.createPreview({
+  const invoice = await stripeClient.invoices.createPreview({
     customer:
       typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id,
     subscription: subscriptionId,
@@ -260,27 +265,27 @@ async function applySeatQuantityChange(options: {
     additionalSeatQuantity: targetAdditionalSeats,
   });
 
-  await stripe.subscriptions.update(subscriptionId, {
+  await stripeClient.subscriptions.update(subscriptionId, {
     items: updateItems,
     proration_behavior: 'create_prorations',
   });
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireUser(request);
+  const user = await rbacService.requireUser(request);
 
   if (!user.organizationId) {
     throw redirect('/auth/create-organization');
   }
 
   const [subscription, stats, billingHistory] = await Promise.all([
-    convexServer.query(api.subscriptions.getByOrganization, {
+    convexService.client.query(api.subscriptions.getByOrganization, {
       organizationId: user.organizationId,
     }),
-    convexServer.query(api.subscriptions.getStats, {
+    convexService.client.query(api.subscriptions.getStats, {
       organizationId: user.organizationId,
     }),
-    convexServer.query(api.billingHistory.getByOrganization, {
+    convexService.client.query(api.billingHistory.getByOrganization, {
       organizationId: user.organizationId,
       limit: 25,
     }),
@@ -315,7 +320,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const user = await requireUser(request);
+  const user = await rbacService.requireUser(request);
 
   if (!user.organizationId) {
     return data({ intent: 'error', error: 'Organization required' }, { status: 400 });
@@ -326,7 +331,7 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const intent = formData.get('intent');
 
-  const subscription = await convexServer.query(api.subscriptions.getByOrganization, {
+  const subscription = await convexService.client.query(api.subscriptions.getByOrganization, {
     organizationId: user.organizationId,
   });
 
@@ -401,7 +406,7 @@ export async function action({ request }: Route.ActionArgs) {
       const seats = Math.max(subscription.seatsTotal, subscription.seatsIncluded);
       const origin = new URL(request.url).origin;
 
-      const session = await createCheckoutSession({
+      const session = await billingService.createCheckoutSession({
         customerId: subscription.stripeCustomerId,
         customerEmail: user.email,
         tier: subscription.tier as Exclude<SubscriptionTier, 'free'>,
@@ -418,7 +423,7 @@ export async function action({ request }: Route.ActionArgs) {
 
       const eventId = `manual-reactivation-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-      await convexServer.mutation(api.billingHistory.create, {
+      await convexService.client.mutation(api.billingHistory.create, {
         organizationId: subscription.organizationId,
         subscriptionId: subscription.stripeSubscriptionId,
         eventType: 'reactivation.initiated',
@@ -452,7 +457,7 @@ export async function action({ request }: Route.ActionArgs) {
       }
 
       const origin = new URL(request.url).origin;
-      const portalSession = await createBillingPortalSession(
+      const portalSession = await billingService.createBillingPortalSession(
         subscription.stripeCustomerId,
         `${origin}/settings/billing`
       );
@@ -624,13 +629,13 @@ export async function action({ request }: Route.ActionArgs) {
         });
 
         if (subscription.stripeCustomerId) {
-          await settleSubscriptionInvoice({
+          await billingService.settleSubscriptionInvoice({
             customerId: subscription.stripeCustomerId,
             subscriptionId: subscription.stripeSubscriptionId,
           });
         }
 
-        await convexServer.mutation(api.subscriptions.updateSeats, {
+        await convexService.client.mutation(api.subscriptions.updateSeats, {
           subscriptionId: subscription._id,
           seatsTotal: targetTotalSeats,
         });
@@ -1109,14 +1114,14 @@ export default function BillingSettings() {
             />
 
             <BillingHistory
-              events={billingHistory.map(event => ({
-                id: event._id,
-                description: event.description,
-                amount: event.amount,
-                status: event.status,
-                eventType: event.eventType,
-                currency: event.currency ?? 'gbp',
-                date: formatDate(event.createdAt),
+              events={billingHistory.map((historyEvent: BillingHistoryRecord) => ({
+                id: historyEvent._id,
+                description: historyEvent.description ?? 'Billing event',
+                amount: historyEvent.amount ?? undefined,
+                status: historyEvent.status ?? 'unknown',
+                eventType: historyEvent.eventType ?? 'custom',
+                currency: historyEvent.currency ?? 'gbp',
+                date: formatDate(historyEvent.createdAt),
               }))}
             />
           </div>

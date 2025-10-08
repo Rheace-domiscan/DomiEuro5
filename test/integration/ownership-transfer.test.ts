@@ -10,8 +10,19 @@ import { loader, action } from '../../app/routes/settings.team.transfer-ownershi
 
 vi.mock('~/lib/auth.server', () => ({
   requireRole: vi.fn(),
+  requireUser: vi.fn(),
+  requireTier: vi.fn(),
   getOrganizationMembershipForUser: vi.fn(),
   updateOrganizationMembershipRole: vi.fn(),
+  getUser: vi.fn(),
+  createOrganization: vi.fn(),
+  createOrganizationMembership: vi.fn(),
+  inviteOrAddUserToOrganization: vi.fn(),
+  inviteUserToOrganization: vi.fn(),
+  deactivateOrganizationMembership: vi.fn(),
+  reactivateOrganizationMembership: vi.fn(),
+  listOrganizations: vi.fn(),
+  syncUserRoleFromWorkOS: vi.fn(),
 }));
 
 vi.mock('../../lib/convex.server', () => ({
@@ -28,6 +39,19 @@ vi.mock('~/lib/session.server', () => ({
 }));
 
 vi.mock('~/lib/stripe.server', () => ({
+  createCheckoutSession: vi.fn(),
+  createBillingPortalSession: vi.fn(),
+  createStripeCustomer: vi.fn(),
+  getStripeCustomer: vi.fn(),
+  getStripeSubscription: vi.fn(),
+  updateStripeSubscription: vi.fn(),
+  settleSubscriptionInvoice: vi.fn(),
+  getAdditionalSeatPriceId: vi.fn(() => 'price_additional'),
+  getStripePriceId: vi.fn(() => 'price_base'),
+  getPublishableKeyPreview: vi.fn(() => 'pk_test_preview'),
+  getStripeMode: vi.fn(() => 'test'),
+  getTierFromPriceId: vi.fn(() => 'starter'),
+  verifyWebhookSignature: vi.fn(),
   stripe: {
     customers: {
       retrieve: vi.fn(),

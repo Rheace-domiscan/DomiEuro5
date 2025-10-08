@@ -14,6 +14,19 @@ import { createMockRequest } from '../helpers/test-utils';
 
 vi.mock('~/lib/auth.server', () => ({
   requireUser: vi.fn(),
+  requireRole: vi.fn(),
+  requireTier: vi.fn(),
+  getUser: vi.fn(),
+  createOrganization: vi.fn(),
+  createOrganizationMembership: vi.fn(),
+  inviteOrAddUserToOrganization: vi.fn(),
+  inviteUserToOrganization: vi.fn(),
+  deactivateOrganizationMembership: vi.fn(),
+  reactivateOrganizationMembership: vi.fn(),
+  updateOrganizationMembershipRole: vi.fn(),
+  getOrganizationMembershipForUser: vi.fn(),
+  listOrganizations: vi.fn(),
+  syncUserRoleFromWorkOS: vi.fn(),
 }));
 
 vi.mock('../../lib/convex.server', () => ({
@@ -21,13 +34,23 @@ vi.mock('../../lib/convex.server', () => ({
     query: vi.fn(),
     mutation: vi.fn(),
   },
+  createOrUpdateUserInConvex: vi.fn(),
 }));
 
 vi.mock('~/lib/stripe.server', () => ({
+  createCheckoutSession: vi.fn(),
   createBillingPortalSession: vi.fn(),
+  createStripeCustomer: vi.fn(),
+  getStripeCustomer: vi.fn(),
+  getStripeSubscription: vi.fn(),
+  updateStripeSubscription: vi.fn(),
+  settleSubscriptionInvoice: vi.fn(),
   getAdditionalSeatPriceId: vi.fn(() => 'price_additional'),
   getStripePriceId: vi.fn(() => 'price_base'),
-  settleSubscriptionInvoice: vi.fn(),
+  getPublishableKeyPreview: vi.fn(() => 'pk_test_preview'),
+  getStripeMode: vi.fn(() => 'test'),
+  getTierFromPriceId: vi.fn(() => 'starter'),
+  verifyWebhookSignature: vi.fn(),
   stripe: {
     subscriptions: {
       retrieve: vi.fn(),

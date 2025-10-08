@@ -1,13 +1,18 @@
 import { NavLink, Outlet, useLoaderData } from 'react-router';
 import { data } from 'react-router';
 import type { Route } from './+types/settings';
-import { requireUser } from '~/lib/auth.server';
-import { hasRole } from '~/lib/permissions';
 import { TopNav } from '../../components/navigation/TopNav';
+import { rbacService } from '~/services/providers.server';
+import { listFeatureFlags } from '~/lib/featureFlags.server';
+
+const hasRole = rbacService.hasRole;
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireUser(request);
-  return data({ user });
+  const user = await rbacService.requireUser(request);
+  return data({
+    user,
+    featureFlags: listFeatureFlags(),
+  });
 }
 
 export default function SettingsLayout() {
@@ -38,18 +43,18 @@ export default function SettingsLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface">
       <TopNav user={user} />
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8 lg:flex-row">
         <aside className="lg:w-64">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-surface-subtle bg-surface-raised p-6 shadow-sm">
             <div className="mb-6">
               <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">
                 Settings
               </p>
               <h1 className="mt-2 text-xl font-semibold text-gray-900">Account controls</h1>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-secondary">
                 Manage billing, team access, and ownership for{' '}
                 {user.organizationId ?? 'your organization'}.
               </p>
@@ -67,8 +72,8 @@ export default function SettingsLayout() {
                       [
                         'block rounded-md px-3 py-2 text-sm font-medium transition',
                         isActive
-                          ? 'bg-indigo-50 text-indigo-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                          ? 'bg-surface-muted text-indigo-600'
+                          : 'text-secondary hover-surface-muted hover:text-gray-900',
                       ].join(' ')
                     }
                   >
@@ -80,7 +85,7 @@ export default function SettingsLayout() {
         </aside>
 
         <section className="flex-1">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-surface-subtle bg-surface-raised p-6 shadow-sm">
             <Outlet />
           </div>
         </section>

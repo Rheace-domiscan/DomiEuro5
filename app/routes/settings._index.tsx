@@ -1,13 +1,37 @@
 import { Link, useRouteLoaderData } from 'react-router';
-import { hasRole } from '~/lib/permissions';
 import type { User } from '~/lib/auth.server';
+import type { FeatureFlag } from '~/lib/featureFlags.server';
+import { rbacService } from '~/services/providers.server';
+
+type SettingsCard = {
+  title: string;
+  description: string;
+  to: string;
+  cta: string;
+  visible: boolean;
+  planned?: boolean;
+};
+
+type FeatureFlagEntry = { key: FeatureFlag; enabled: boolean };
 
 export default function SettingsOverview() {
-  const parentData = useRouteLoaderData('routes/settings') as { user: User } | undefined;
+  const parentData = useRouteLoaderData('routes/settings') as
+    | { user: User; featureFlags: FeatureFlagEntry[] }
+    | undefined;
   const user = parentData?.user;
+  const featureFlags = parentData?.featureFlags ?? [];
   const role = user?.role ?? 'member';
 
-  const cards = [
+  const hasRole = rbacService.hasRole;
+
+  const usageAnalyticsEnabled = featureFlags.some(
+    flag => flag.key === 'usageAnalytics' && flag.enabled
+  );
+  const integrationsEnabled = featureFlags.some(
+    flag => flag.key === 'integrationsHub' && flag.enabled
+  );
+
+  const cards: SettingsCard[] = [
     {
       title: 'Pricing',
       description: 'Review plan tiers and compare monthly versus annual pricing options.',
@@ -36,13 +60,29 @@ export default function SettingsOverview() {
       cta: 'Start transfer',
       visible: hasRole(role, ['owner']),
     },
-  ] as const;
+    {
+      title: 'Usage analytics',
+      description: 'Future dashboard for seat consumption, MRR, churn, and cohort analysis.',
+      to: '/settings/usage',
+      cta: usageAnalyticsEnabled ? 'Open preview' : 'Planned',
+      visible: hasRole(role, ['owner', 'admin']),
+      planned: !usageAnalyticsEnabled,
+    },
+    {
+      title: 'Integrations & webhooks',
+      description: 'Centralize third-party connectors, API keys, and outbound webhook delivery.',
+      to: '/settings/integrations',
+      cta: integrationsEnabled ? 'Open preview' : 'Planned',
+      visible: hasRole(role, ['owner', 'admin']),
+      planned: !integrationsEnabled,
+    },
+  ];
 
   return (
     <div className="space-y-8">
       <header className="space-y-2">
         <h2 className="text-2xl font-semibold text-gray-900">Settings overview</h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-secondary">
           Configure billing, team permissions, and account ownership from a single place.
         </p>
       </header>
@@ -53,19 +93,30 @@ export default function SettingsOverview() {
           .map(card => (
             <div
               key={card.to}
-              className="flex h-full flex-col justify-between rounded-lg border border-gray-200 bg-gray-50 p-6 shadow-sm"
+              className="flex h-full flex-col justify-between rounded-lg border border-surface-subtle bg-surface-raised p-6 shadow-sm"
             >
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{card.title}</h3>
-                <p className="mt-2 text-sm text-gray-600">{card.description}</p>
+                {card.planned && (
+                  <span className="mt-2 inline-flex items-center rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600">
+                    Coming soon
+                  </span>
+                )}
+                <p className="mt-2 text-sm text-secondary">{card.description}</p>
               </div>
               <div className="mt-6">
-                <Link
-                  to={card.to}
-                  className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
-                >
-                  {card.cta}
-                </Link>
+                {card.planned ? (
+                  <span className="inline-flex items-center justify-center rounded-md border border-surface-subtle px-4 py-2 text-sm font-medium text-secondary">
+                    {card.cta}
+                  </span>
+                ) : (
+                  <Link
+                    to={card.to}
+                    className="btn-primary inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium shadow-sm"
+                  >
+                    {card.cta}
+                  </Link>
+                )}
               </div>
             </div>
           ))}

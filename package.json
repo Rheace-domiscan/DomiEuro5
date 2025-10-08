@@ -33,7 +33,11 @@
     "test:ui": "vitest --ui",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "env:copy": "node scripts/manage-env.mjs copy",
+    "env:activate": "node scripts/manage-env.mjs activate",
+    "env:sync": "node scripts/manage-env.mjs sync",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@react-router/node": "^7.9.2",
@@ -48,6 +52,7 @@
     "stripe": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.0",
     "@react-router/dev": "^7.9.2",
     "@tailwindcss/vite": "^4.1.13",
     "@testing-library/jest-dom": "^6.9.1",

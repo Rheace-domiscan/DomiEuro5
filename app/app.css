@@ -6,7 +6,82 @@
     'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-html,
-body {
-  @apply bg-white;
+@layer base {
+  :root {
+    --surface-base: #ffffff;
+    --surface-raised: #f8fafc;
+    --surface-muted: #f1f5f9;
+    --surface-inverted: #0f172a;
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5f5;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --brand-primary: #4f46e5;
+    --brand-primary-hover: #4338ca;
+    --brand-text: #ffffff;
+    --accent-success: #22c55e;
+    --accent-warning: #f59e0b;
+    --accent-danger: #dc2626;
+  }
+
+  [data-theme='midnight'] {
+    --surface-base: #0f172a;
+    --surface-raised: #111c33;
+    --surface-muted: #1e293b;
+    --surface-inverted: #ffffff;
+    --border-subtle: #1f314d;
+    --border-strong: #334766;
+    --text-primary: #e2e8f0;
+    --text-secondary: #cbd5f5;
+    --brand-primary: #818cf8;
+    --brand-primary-hover: #6366f1;
+    --brand-text: #0f172a;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+    margin: 0;
+    font-family: var(--font-sans);
+    background-color: var(--surface-base);
+    color: var(--text-primary);
+  }
+}
+
+@layer components {
+  .bg-surface {
+    background-color: var(--surface-base);
+  }
+
+  .bg-surface-raised {
+    background-color: var(--surface-raised);
+  }
+
+  .border-surface-subtle {
+    border-color: var(--border-subtle);
+  }
+
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+
+  .btn-primary {
+    background-color: var(--brand-primary);
+    color: var(--brand-text);
+    transition: background-color 150ms ease;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--brand-primary-hover);
+  }
+
+  .hover-surface-muted:hover {
+    background-color: var(--surface-muted);
+  }
 }

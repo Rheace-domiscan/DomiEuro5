@@ -14,3 +14,5 @@
 /playwright-report/
 /.vitest/
 /coverage/
+
+test-results/
