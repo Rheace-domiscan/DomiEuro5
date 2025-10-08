@@ -1,6 +1,5 @@
 import { Link, useRouteLoaderData } from 'react-router';
 import type { User } from '~/lib/auth.server';
-import type { FeatureFlag } from '~/lib/featureFlags.server';
 import { rbacService } from '~/services/providers.server';
 
 type SettingsCard = {
@@ -12,7 +11,7 @@ type SettingsCard = {
   planned?: boolean;
 };
 
-type FeatureFlagEntry = { key: FeatureFlag; enabled: boolean };
+type FeatureFlagEntry = { key: string; enabled: boolean };
 
 export default function SettingsOverview() {
   const parentData = useRouteLoaderData('routes/settings') as

@@ -2,12 +2,14 @@ import { NavLink, Outlet, useLoaderData } from 'react-router';
 import { data } from 'react-router';
 import type { Route } from './+types/settings';
 import { TopNav } from '../../components/navigation/TopNav';
-import { rbacService } from '~/services/providers.server';
-import { listFeatureFlags } from '~/lib/featureFlags.server';
-
-const hasRole = rbacService.hasRole;
+import { hasRole } from '~/lib/permissions';
 
 export async function loader({ request }: Route.LoaderArgs) {
+  const [{ rbacService }, { listFeatureFlags }] = await Promise.all([
+    import('~/services/providers.server'),
+    import('~/lib/featureFlags.server'),
+  ]);
+
   const user = await rbacService.requireUser(request);
   return data({
     user,
