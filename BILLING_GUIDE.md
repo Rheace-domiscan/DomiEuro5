@@ -31,6 +31,7 @@ The billing system provides a **complete multi-tier SaaS subscription model** wi
 - **Self-service billing:** Stripe Customer Portal
 - **Graceful downgrades:** No blocking, warnings instead
 - **Failed payment handling:** 28-day grace period
+- **Central settings hub:** `/settings` surfaces billing, team, pricing, and ownership tools via the shared header dropdown
 
 ### Core Philosophy
 
@@ -620,7 +621,7 @@ Feature gates unlock (analytics, API access, etc.)
 ### Adding Seats (Mid-Cycle)
 
 ```
-Owner clicks "Add Seats" in /settings/billing
+Owner opens `/settings` (via the Settings dropdown), selects **Billing**, and clicks "Add Seats"
   ↓
 Modal opens: "Add how many seats?"
   ↓

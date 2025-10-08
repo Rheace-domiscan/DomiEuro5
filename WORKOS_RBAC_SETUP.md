@@ -388,6 +388,8 @@ Before marking RBAC setup complete, verify:
 - [ ] Test user assigned `owner` role on org creation
 - [ ] Roles sync to Convex on login
 - [ ] Roles stored in session
+- [ ] Owner sees Billing & Team cards in `/settings`
+- [ ] Settings dropdown shows Billing/Team (owner/admin) and respects role visibility
 - [ ] Owner can access `/settings/billing`
 - [ ] Admin can access `/settings/billing` (read-only)
 - [ ] Manager cannot access `/settings/billing` (redirected)

@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [V1:Base template] - 2025-10-08
 
 ### 📝 Documentation
 
@@ -43,6 +43,8 @@ All notable changes to this project will be documented in this file.
 - Resolved lint failures in the billing settings route by normalizing early returns with hook usage and reformatting Stripe action responses to meet Prettier expectations, restoring CI compatibility.
 - Expanded billing and Convex coverage suites to satisfy the CI coverage gates by exercising organization membership helpers and billing history filters.
 - Captured Phase 17 verification artefacts in `.claude/verification-reports/phase-17-2025-10-08.md` after validating documentation deliverables and running `npm run typecheck`, `npm run lint`, `npm run build`, and `npx convex deploy --dry-run -y`.
+- Introduced a role-aware settings hub at `/settings` with an overview screen, persistent navigation for Billing/Team/Transfer, dashboard entry point, and a root redirect to `/home`.
+- Unified the dashboard/settings top navigation, moving Billing, Team, and Pricing into a Settings dropdown so the header stays consistent across app shells.
 
 ### 📊 Billing Analytics
 

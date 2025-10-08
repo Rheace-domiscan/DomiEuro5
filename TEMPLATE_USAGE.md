@@ -234,7 +234,16 @@ If you want to remove the billing system entirely:
    rm convex/auditLog.ts
    ```
 
-3. Remove billing documentation assets to avoid stale references:
+3. Update the settings navigation so it no longer references billing:
+
+   ```bash
+   # Remove the Billing dropdown entry and settings card
+   edit components/navigation/TopNav.tsx
+   edit app/routes/settings.tsx
+   edit app/routes/settings._index.tsx
+   ```
+
+4. Remove billing documentation assets to avoid stale references:
 
    ```bash
    rm BILLING_ROADMAP.md
@@ -244,7 +253,7 @@ If you want to remove the billing system entirely:
    rm FEATURE_GATES.md
    ```
 
-4. Update the Convex schema by removing billing tables and the `role` column from `users`:
+5. Update the Convex schema by removing billing tables and the `role` column from `users`:
 
    ```typescript
    // Remove these tables:
