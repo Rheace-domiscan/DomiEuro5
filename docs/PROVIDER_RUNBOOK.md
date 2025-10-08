@@ -41,6 +41,7 @@ Centralize common operational tasks for the three core providers bundled with th
 ### Schema Changes
 - Update `convex/schema.ts` and run `npx convex dev --once` to regenerate types (`docs/MIGRATIONS.md`).
 - Commit regenerated files in `convex/_generated/` when schema changes ship.
+- Application code now imports Convex helpers through `app/services/providers.server.ts`; use the same module when wiring new mutations or queries so everything stays centralized and easy to mock in tests.
 
 ### Deployments
 - Use `npx convex deploy --dry-run -y` to verify pending changes before production pushes.
@@ -56,3 +57,4 @@ Centralize common operational tasks for the three core providers bundled with th
 - [ ] Validate WorkOS roles + Stripe products exist for the new tenant.
 - [ ] Run `npm run test:run` and `npm run test:e2e`.
 - [ ] Update `CHANGELOG.md` with provider-specific notes.
+- [ ] Keep feature flags scoped per environment and document any preview toggles that should ship disabled by default.

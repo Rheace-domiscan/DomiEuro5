@@ -108,6 +108,7 @@ Need multiple environment profiles? Use `npm run env:copy <profile>` and `npm ru
 - **Permission system:** Granular control over billing, user management, and features
 - **Feature gates:** Tier-based access to premium features with upgrade prompts
 - **Central settings hub:** `/settings` surfaces billing, team, pricing, and owner transfer tools via a shared header dropdown
+- Feature flag previews: enable `usageAnalytics` or `integrationsHub` to unlock the placeholder routes at `/settings/usage` and `/settings/integrations`
 
 ## 🧪 Testing
 

@@ -21,6 +21,7 @@ Guidelines for evolving the template safely as you ship new SaaS products.
 - Add new roles to `WORKOS_RBAC_SETUP.md` and sync slug constants in `app/lib/permissions.ts`.
 - Update settings navigation visibility rules where appropriate.
 - Re-run RBAC regression tests (`test/integration/team-management.test.ts`).
+- When wiring new WorkOS endpoints, import provider services (e.g. `rbacService`) inside loaders/actions to avoid bundling server-only modules in client shells.
 
 ## Environment Promotion
 
