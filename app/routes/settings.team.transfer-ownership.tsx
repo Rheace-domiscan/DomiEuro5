@@ -1,14 +1,15 @@
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import type { Route } from './+types/settings.team.transfer-ownership';
 import { getSession, commitSession } from '~/lib/session.server';
+import { ROLES, getRoleName } from '~/lib/permissions';
 import type { Role } from '~/lib/permissions';
-import { billingService, rbacService, convexService } from '~/services/providers.server';
 import { api } from '../../convex/_generated/api';
 import { logError } from '~/lib/logger';
 import { sendOwnershipTransferEmails } from '~/lib/email.server';
 
-const { ROLES, getRoleName } = rbacService;
-const stripeClient = billingService.client;
+async function getServices() {
+  return import('~/services/providers.server');
+}
 
 interface LoaderMember {
   id: string;
@@ -31,6 +32,7 @@ interface ActionError {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+  const { rbacService, convexService } = await getServices();
   const user = await rbacService.requireRole(request, [ROLES.OWNER]);
 
   if (!user.organizationId) {
@@ -72,6 +74,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const { rbacService, convexService } = await getServices();
   const user = await rbacService.requireRole(request, [ROLES.OWNER]);
 
   if (!user.organizationId) {
@@ -253,6 +256,7 @@ interface OwnershipTransferLogOptions {
 
 async function logOwnershipTransferEvent(options: OwnershipTransferLogOptions) {
   try {
+    const { convexService } = await getServices();
     const { organizationId, performedBy, previousOwner, newOwner, billingEmailUpdated, request } =
       options;
 
@@ -312,6 +316,9 @@ async function updateBillingEmailIfNeeded(options: UpdateBillingEmailOptions): P
   }
 
   try {
+    const { billingService, convexService } = await getServices();
+    const stripeClient = billingService.client;
+
     const subscription = await convexService.client.query(api.subscriptions.getByOrganization, {
       organizationId,
     });

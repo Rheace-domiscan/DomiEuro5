@@ -18,7 +18,7 @@ import {
 } from 'react-router';
 import type { Route } from './+types/billing';
 import { data, redirect } from 'react-router';
-import { billingService, rbacService, convexService } from '~/services/providers.server';
+import { ROLES, hasRole } from '~/lib/permissions';
 import type { Role } from '~/lib/permissions';
 import { TIER_CONFIG, formatPrice } from '~/lib/billing-constants';
 import type { AccessStatus, SubscriptionTier } from '~/types/billing';
@@ -26,9 +26,6 @@ import { api } from '../../../convex/_generated/api';
 import { sendSeatChangeEmail } from '~/lib/email.server';
 import type Stripe from 'stripe';
 
-const hasRole = rbacService.hasRole;
-const { ROLES } = rbacService;
-const stripeClient = billingService.client;
 import { BillingOverview } from '../../../components/billing/BillingOverview';
 import { SeatManagement } from '../../../components/billing/SeatManagement';
 import { BillingHistory } from '../../../components/billing/BillingHistory';
@@ -72,6 +69,10 @@ type TaxGroupSummary = {
 };
 
 type SeatAdjustmentMode = 'add' | 'remove';
+
+async function getServices() {
+  return import('~/services/providers.server');
+}
 
 type SeatActionResponse =
   | {
@@ -131,6 +132,9 @@ async function buildSubscriptionItemPayload(options: {
   billingInterval: 'monthly' | 'annual';
   additionalSeatQuantity: number;
 }) {
+  const { billingService } = await getServices();
+  const stripeClient = billingService.client;
+
   const { subscriptionId, tier, billingInterval, additionalSeatQuantity } = options;
 
   // Retrieve subscription with expanded items so we can match prices.
@@ -184,6 +188,9 @@ async function previewSeatQuantityChange(options: {
   targetAdditionalSeats: number;
   seatsIncluded: number;
 }) {
+  const { billingService } = await getServices();
+  const stripeClient = billingService.client;
+
   const { subscriptionId, tier, billingInterval, targetAdditionalSeats, seatsIncluded } = options;
 
   const { subscription, updateItems } = await buildSubscriptionItemPayload({
@@ -256,6 +263,9 @@ async function applySeatQuantityChange(options: {
   billingInterval: 'monthly' | 'annual';
   targetAdditionalSeats: number;
 }) {
+  const { billingService } = await getServices();
+  const stripeClient = billingService.client;
+
   const { subscriptionId, tier, billingInterval, targetAdditionalSeats } = options;
 
   const { updateItems } = await buildSubscriptionItemPayload({
@@ -272,6 +282,7 @@ async function applySeatQuantityChange(options: {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+  const { rbacService, convexService } = await getServices();
   const user = await rbacService.requireUser(request);
 
   if (!user.organizationId) {
@@ -320,6 +331,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const { rbacService, billingService, convexService } = await getServices();
   const user = await rbacService.requireUser(request);
 
   if (!user.organizationId) {
