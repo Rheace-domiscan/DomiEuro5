@@ -52,6 +52,7 @@ All notable changes to this project will be documented in this file.
 - Unified the dashboard/settings top navigation, moving Billing, Team, and Pricing into a Settings dropdown so the header stays consistent across app shells.
 - Defined theme tokens in `app/app.css` (surface, border, brand colors) with reusable utilities (`bg-surface-raised`, `btn-primary`, `text-secondary`) and documented customization in `docs/THEMING.md`.
 - Added feature flag harness (`app/lib/featureFlags.server.ts`) plus settings placeholders/routes for `usageAnalytics` and `integrationsHub` previews.
+- Fixed the settings route to import server-only provider helpers inside the loader, preventing client-side SSR module errors during navigation.
 
 ### 🎨 Styling
 
