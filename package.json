@@ -37,11 +37,13 @@
     "env:copy": "node scripts/manage-env.mjs copy",
     "env:activate": "node scripts/manage-env.mjs activate",
     "env:sync": "node scripts/manage-env.mjs sync",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "seed:demo": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@react-router/node": "^7.9.2",
     "@react-router/serve": "^7.9.2",
+    "@sentry/node": "^8.55.0",
     "@stripe/stripe-js": "^8.0.0",
     "@workos-inc/node": "^7.70.0",
     "convex": "^1.27.3",
@@ -76,6 +78,7 @@
     "happy-dom": "^19.0.2",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.13",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
     "vite-tsconfig-paths": "^5.1.4",

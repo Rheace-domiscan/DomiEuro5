@@ -4,6 +4,7 @@ import { getSession, commitSession, destroySession, sessionStorage } from './ses
 import { hasRole, hasTierAccess, type Role, type Tier } from './permissions';
 import { convexServer } from '../../lib/convex.server';
 import { api } from '../../convex/_generated/api';
+import { logError } from './logger';
 
 export interface User {
   id: string;
@@ -557,6 +558,58 @@ export async function listOrganizations() {
   } catch (error) {
     console.error('Failed to list organizations:', error);
     throw error;
+  }
+}
+
+export interface UserOrganizationSummary {
+  organizationId: string;
+  name: string;
+  role: string;
+  tier?: string;
+  status?: string;
+}
+
+export async function listUserOrganizationsForNav(
+  userId: string
+): Promise<UserOrganizationSummary[]> {
+  try {
+    const { data: memberships } = await workos.userManagement.listOrganizationMemberships({
+      userId,
+    });
+
+    const summaries = await Promise.all(
+      memberships.map(async membership => {
+        let organizationName = membership.organizationId;
+
+        try {
+          const organization = await workos.organizations.getOrganization(
+            membership.organizationId
+          );
+          organizationName = organization.name;
+        } catch (error) {
+          logError('Failed to fetch WorkOS organization details', error, {
+            organizationId: membership.organizationId,
+          });
+        }
+
+        const subscription = await convexServer.query(api.subscriptions.getByOrganization, {
+          organizationId: membership.organizationId,
+        });
+
+        return {
+          organizationId: membership.organizationId,
+          name: organizationName,
+          role: membership.role?.slug ?? 'member',
+          tier: subscription?.tier,
+          status: subscription?.status,
+        } satisfies UserOrganizationSummary;
+      })
+    );
+
+    return summaries;
+  } catch (error) {
+    logError('Failed to list user organizations', error, { userId });
+    return [];
   }
 }
 

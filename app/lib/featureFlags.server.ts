@@ -2,6 +2,7 @@ const DEFAULT_FLAGS = {
   usageAnalytics: false,
   integrationsHub: false,
   experimentalThemes: false,
+  demoMode: false,
 } as const;
 
 type FeatureFlag = keyof typeof DEFAULT_FLAGS;

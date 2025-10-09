@@ -1,19 +1,21 @@
 import type { Route } from './+types/dashboard';
-import { Outlet, useLoaderData } from 'react-router';
-import { requireUser } from '~/lib/auth.server';
+import { Outlet, data, useLoaderData } from 'react-router';
 import { TopNav } from '../../components/navigation/TopNav';
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireUser(request);
-  return { user };
+  const { rbacService } = await import('~/services/providers.server');
+  const user = await rbacService.requireUser(request);
+  const organizations = await rbacService.listUserOrganizationsForNav(user.id);
+
+  return data({ user, organizations });
 }
 
 export default function Dashboard() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, organizations } = useLoaderData<typeof loader>();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TopNav user={user} />
+      <TopNav user={user} organizations={organizations} />
 
       <main className="py-6 sm:px-6 lg:px-8">
         <Outlet />

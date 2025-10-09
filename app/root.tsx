@@ -14,6 +14,7 @@ import './app.css';
 import { ConvexClientProvider } from '../lib/ConvexProvider';
 import { TestModeBanner } from '../components/dev/TestModeBanner';
 import { billingService } from '~/services/providers.server';
+import { logError } from '~/lib/logger';
 
 export async function loader(_: Route.LoaderArgs) {
   return data({
@@ -78,6 +79,8 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
+  } else if (error) {
+    logError('Unhandled route error', error);
   }
 
   return (

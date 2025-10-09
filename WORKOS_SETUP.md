@@ -58,6 +58,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 3. Click "Sign In with WorkOS"
 4. You should be redirected to WorkOS for authentication
 5. After completing the flow, confirm the authenticated TopNav renders with the Settings dropdown (Billing, Team, Pricing) and that `/settings` loads without Stripe/WorkOS import errors.
+6. If you have multiple organizations, flip the new organization switcher under the Settings dropdown and ensure the role syncs without errors.
 
 ## Available Routes
 

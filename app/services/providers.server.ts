@@ -13,6 +13,7 @@ import {
   updateOrganizationMembershipRole,
   getOrganizationMembershipForUser,
   listOrganizations,
+  listUserOrganizationsForNav,
   syncUserRoleFromWorkOS,
 } from '~/lib/auth.server';
 import { convexServer, createOrUpdateUserInConvex } from '../../lib/convex.server';
@@ -49,6 +50,7 @@ export const rbacService = {
   updateOrganizationMembershipRole,
   getOrganizationMembershipForUser,
   listOrganizations,
+  listUserOrganizationsForNav,
   syncUserRoleFromWorkOS,
   hasRole,
   hasTierAccess,

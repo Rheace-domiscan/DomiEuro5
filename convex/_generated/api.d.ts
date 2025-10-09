@@ -17,6 +17,7 @@ import type * as analytics from "../analytics.js";
 import type * as auditLog from "../auditLog.js";
 import type * as billingHistory from "../billingHistory.js";
 import type * as crons from "../crons.js";
+import type * as demoSeed from "../demoSeed.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
 
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   auditLog: typeof auditLog;
   billingHistory: typeof billingHistory;
   crons: typeof crons;
+  demoSeed: typeof demoSeed;
   subscriptions: typeof subscriptions;
   users: typeof users;
 }>;

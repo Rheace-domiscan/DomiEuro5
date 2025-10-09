@@ -58,3 +58,7 @@ Centralize common operational tasks for the three core providers bundled with th
 - [ ] Run `npm run test:run` and `npm run test:e2e`.
 - [ ] Update `CHANGELOG.md` with provider-specific notes.
 - [ ] Keep feature flags scoped per environment and document any preview toggles that should ship disabled by default.
+
+## Observability & Notifications
+- Local development defaults to `OBSERVABILITY_TARGET=console`; flip to `sentry` with `SENTRY_DSN` when you want hosted error tracking. Call `flushLogger()` before script exit to push pending events.
+- The email helpers in `app/lib/email.server.ts` write Markdown previews to `tmp/mail-previews/` when `EMAIL_TRANSPORT=file`. Point `EMAIL_PREVIEW_DIR` at a writable path on your host or swap to `EMAIL_TRANSPORT=console` for ephemeral environments.

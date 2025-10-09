@@ -29,6 +29,7 @@ export default function SettingsOverview() {
   const integrationsEnabled = featureFlags.some(
     flag => flag.key === 'integrationsHub' && flag.enabled
   );
+  const demoModeEnabled = featureFlags.some(flag => flag.key === 'demoMode' && flag.enabled);
 
   const cards: SettingsCard[] = [
     {
@@ -85,6 +86,23 @@ export default function SettingsOverview() {
           Configure billing, team permissions, and account ownership from a single place.
         </p>
       </header>
+
+      {demoModeEnabled && (
+        <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-5 text-sm text-indigo-900 shadow-sm">
+          <h3 className="text-base font-semibold text-indigo-900">Demo data enabled</h3>
+          <p className="mt-2 leading-relaxed">
+            We seeded sample organizations with{' '}
+            <code className="rounded bg-white px-1 py-0.5 text-xs">npm run seed:demo</code>. Use the
+            Settings dropdown to switch between Free, Starter, and Pro tenants and explore stateful
+            billing scenarios.
+          </p>
+          <p className="mt-2 leading-relaxed">
+            Re-run the seed command any time to reset data. Update{' '}
+            <code className="rounded bg-white px-1 py-0.5 text-xs">FEATURE_FLAGS</code> to disable
+            this banner once you’re finished demoing.
+          </p>
+        </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {cards

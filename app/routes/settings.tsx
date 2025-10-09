@@ -11,14 +11,16 @@ export async function loader({ request }: Route.LoaderArgs) {
   ]);
 
   const user = await rbacService.requireUser(request);
+  const organizations = await rbacService.listUserOrganizationsForNav(user.id);
   return data({
     user,
     featureFlags: listFeatureFlags(),
+    organizations,
   });
 }
 
 export default function SettingsLayout() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, organizations } = useLoaderData<typeof loader>();
   const userRole = user.role ?? 'member';
 
   const navigation = [
@@ -46,7 +48,7 @@ export default function SettingsLayout() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <TopNav user={user} />
+      <TopNav user={user} organizations={organizations} />
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8 lg:flex-row">
         <aside className="lg:w-64">

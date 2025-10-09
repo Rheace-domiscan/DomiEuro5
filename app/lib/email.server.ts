@@ -8,7 +8,19 @@
  * keeping the same template interfaces.
  */
 
-import { logError } from '~/lib/logger';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { logError, logInfo } from '~/lib/logger';
+
+type EmailTransport = 'console' | 'file';
+
+function getEmailTransport(): EmailTransport {
+  return (process.env.EMAIL_TRANSPORT ?? 'file').toLowerCase() as EmailTransport;
+}
+
+function getEmailPreviewDir(): string {
+  return process.env.EMAIL_PREVIEW_DIR ?? path.join(process.cwd(), 'tmp', 'mail-previews');
+}
 
 /**
  * Supported email templates for billing notifications.
@@ -45,9 +57,70 @@ function normaliseUrl(url: string | null | undefined): string | undefined {
   }
 }
 
+function serialiseMetadata(metadata: Record<string, unknown> | undefined): string {
+  if (!metadata) {
+    return '';
+  }
+
+  try {
+    return JSON.stringify(metadata, null, 2);
+  } catch (_error) {
+    return '';
+  }
+}
+
+async function writeEmailPreview(message: EmailMessage) {
+  const timestamp = new Date();
+  const id = `${timestamp.toISOString().replace(/[:.]/g, '-')}-${message.template}`;
+  const filename = `${id}.md`;
+  const previewDir = getEmailPreviewDir();
+  const filepath = path.join(previewDir, filename);
+
+  const lines: string[] = [
+    `# ${message.subject}`,
+    '',
+    `- Sent: ${timestamp.toISOString()}`,
+    `- To: ${message.to}`,
+    `- Template: ${message.template}`,
+  ];
+
+  const metadata = serialiseMetadata(message.metadata);
+  if (metadata) {
+    lines.push('', '## Metadata', '', '```json', metadata, '```');
+  }
+
+  lines.push(
+    '',
+    '## Text body',
+    '',
+    '```',
+    message.text,
+    '```',
+    '',
+    '## HTML body',
+    '',
+    '```html',
+    message.html,
+    '```',
+    ''
+  );
+
+  await mkdir(previewDir, { recursive: true });
+  await writeFile(filepath, lines.join('\n'));
+
+  logInfo('Email preview written', { filepath });
+}
+
 async function deliverEmail(message: EmailMessage): Promise<void> {
   try {
-    console.info('[email]', {
+    const transport = getEmailTransport();
+
+    if (transport === 'file') {
+      await writeEmailPreview(message);
+      return;
+    }
+
+    logInfo('[email]', {
       template: message.template,
       to: message.to,
       subject: message.subject,

@@ -390,6 +390,7 @@ Before marking RBAC setup complete, verify:
 - [ ] Roles stored in session
 - [ ] Owner sees Billing & Team cards in `/settings`
 - [ ] Settings dropdown shows Billing/Team (owner/admin) and respects role visibility
+- [ ] Organization switcher appears in the Settings dropdown when multiple memberships exist and switches session roles correctly
 - [ ] Owner can access `/settings/billing`
 - [ ] Admin can access `/settings/billing` (read-only)
 - [ ] Manager cannot access `/settings/billing` (redirected)

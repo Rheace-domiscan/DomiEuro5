@@ -26,6 +26,7 @@ vi.mock('~/lib/auth.server', () => ({
   updateOrganizationMembershipRole: vi.fn(),
   getOrganizationMembershipForUser: vi.fn(),
   listOrganizations: vi.fn(),
+  listUserOrganizationsForNav: vi.fn(),
   syncUserRoleFromWorkOS: vi.fn(),
 }));
 
@@ -63,7 +64,7 @@ vi.mock('~/lib/stripe.server', () => ({
 }));
 
 import { loader, action } from '../../app/routes/settings/billing';
-import { requireUser } from '~/lib/auth.server';
+import { requireUser, listUserOrganizationsForNav } from '~/lib/auth.server';
 import { convexServer } from '../../lib/convex.server';
 import {
   createBillingPortalSession,
@@ -182,6 +183,7 @@ beforeEach(() => {
     STRIPE_PRICE_STARTER_MONTHLY: 'price_base',
     STRIPE_PRICE_ADDITIONAL_SEAT: 'price_additional',
   };
+  vi.mocked(listUserOrganizationsForNav).mockResolvedValue([]);
 });
 
 afterEach(() => {

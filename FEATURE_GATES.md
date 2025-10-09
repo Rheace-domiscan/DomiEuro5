@@ -101,6 +101,17 @@ When loaders or actions need tier checks plus billing or RBAC helpers, import th
 
 ---
 
+### Demo Mode Flag
+
+Enable the `demoMode` feature flag (`FEATURE_FLAGS=demoMode` or `FF_DEMOMODE=true`) to surface onboarding helpers:
+
+- `/settings` shows guidance for `npm run seed:demo`
+- The navigation dropdown exposes the organization switcher populated by the seed script
+
+Use this flag during workshops or template previews, then disable it before shipping.
+
+---
+
 ## Implementation Patterns
 
 ### Pattern 1: Route-Level Gate (Recommended)

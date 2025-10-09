@@ -12,11 +12,13 @@
 - `npm run lint` / `npm run typecheck` — ESLint + Prettier and React Router typegen + `tsc`.
 - `npm run test:run` / `npm run test:e2e` — Execute Vitest integration/unit suites and Playwright smoke flows.
 - `npm run env:copy <profile>` / `npm run env:activate <profile>` / `npm run env:sync <profile>` — Manage `.env.<profile>` snapshots.
+- `npm run seed:demo` — Populate Convex with sample Free/Starter/Professional tenants (requires `CONVEX_URL`).
 
 ## Coding Style & Naming Conventions
 - TypeScript everywhere; enable explicit return types for loaders, actions, and Convex functions.
 - Prettier enforces 2-space indentation, semicolons, and trailing commas; run `npm run lint:fix` for formatting.
 - PascalCase components/modules, camelCase hooks/utilities, and route files mirror the URL tree (e.g., `settings.team.transfer-ownership.tsx`).
+- Use `~/lib/logger` (`logInfo`, `logWarn`, `logError`) for structured output. Switch to Sentry by setting `OBSERVABILITY_TARGET=sentry` and `SENTRY_DSN` in the environment.
 
 ## Testing Guidelines
 - Prefer Vitest for unit/integration tests; name files `<feature>.test.ts` alongside code or under `test/`.
@@ -32,3 +34,4 @@
 - Secrets belong in `.env.local` or `.env.<profile>`; keep `CONVEX_URL` and `VITE_CONVEX_URL` aligned.
 - Stripe webhooks: run `stripe listen --forward-to http://localhost:5173/webhooks/stripe` during billing work.
 - Rotate provider keys regularly and audit access via `docs/SECURITY_CHECKLIST.md` before production pushes.
+- Email previews default to Markdown files under `tmp/mail-previews/`; clean the folder or switch to `EMAIL_TRANSPORT=console` for CI runs.

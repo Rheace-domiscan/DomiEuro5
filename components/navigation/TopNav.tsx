@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Form, Link } from 'react-router';
-import type { User } from '~/lib/auth.server';
+import { Form, Link, useLocation } from 'react-router';
+import type { User, UserOrganizationSummary } from '~/lib/auth.server';
 import { hasRole } from '~/lib/permissions';
 
 interface TopNavProps {
   user: User;
+  organizations?: UserOrganizationSummary[];
 }
 
-export function TopNav({ user }: TopNavProps) {
+export function TopNav({ user, organizations = [] }: TopNavProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const redirectTo = `${location.pathname}${location.search}`;
   const role = user.role ?? 'member';
 
   const canAccessBilling = hasRole(role, ['owner', 'admin']);
@@ -18,6 +21,8 @@ export function TopNav({ user }: TopNavProps) {
     [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.email || 'User';
 
   const closeMenu = () => setIsMenuOpen(false);
+  const currentOrganizationId = user.organizationId;
+  const sortedOrganizations = [...organizations].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <nav className="bg-surface-raised border-b border-surface-subtle shadow-sm">
@@ -99,6 +104,45 @@ export function TopNav({ user }: TopNavProps) {
                 >
                   Pricing
                 </Link>
+                {sortedOrganizations.length > 0 && (
+                  <div className="mt-2 border-t border-surface-subtle pt-2">
+                    <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wide text-secondary">
+                      Switch organization
+                    </p>
+                    <div className="max-h-48 overflow-y-auto">
+                      {sortedOrganizations.map(org => {
+                        const isCurrent = org.organizationId === currentOrganizationId;
+
+                        return (
+                          <Form
+                            key={org.organizationId}
+                            method="post"
+                            action="/settings/switch-organization"
+                            className="px-2"
+                            onSubmit={closeMenu}
+                          >
+                            <input type="hidden" name="organizationId" value={org.organizationId} />
+                            <input type="hidden" name="redirectTo" value={redirectTo} />
+                            <button
+                              type="submit"
+                              disabled={isCurrent}
+                              className={`w-full rounded-md px-2 py-2 text-left text-sm transition hover-surface-muted ${
+                                isCurrent ? 'bg-surface-muted text-indigo-600' : 'text-gray-700'
+                              } ${isCurrent ? 'cursor-default' : ''}`}
+                            >
+                              <span className="block font-medium">{org.name}</span>
+                              <span className="block text-xs text-secondary">
+                                {isCurrent ? 'Current • ' : ''}
+                                {org.role}
+                                {org.tier ? ` • ${org.tier}` : ''}
+                              </span>
+                            </button>
+                          </Form>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

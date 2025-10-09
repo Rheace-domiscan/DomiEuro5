@@ -16,6 +16,7 @@ This template provides everything you need to build a modern B2B SaaS applicatio
 - **✨ Production Ready** - Error handling, session management, and security best practices
 - **🧩 Shared Service Layer** - Centralized Stripe/WorkOS/Convex helpers via `app/services/providers.server.ts`
 - **🧪 Feature Flag Previews** - Toggle Usage Analytics & Integrations prototypes with env flags
+- **📈 Observability Ready** - Structured logger with optional Sentry capture and Markdown email previews for local QA
 
 ## 🏗️ Tech Stack
 
@@ -59,6 +60,8 @@ npm run dev
 
 Your application will be available at `http://localhost:5173`.
 
+**Optional:** seed demo organizations and toggle onboarding previews by running `npm run seed:demo`, then launch the app with `FEATURE_FLAGS=demoMode npm run dev`.
+
 ## 📚 Documentation
 
 ### Core Setup
@@ -91,6 +94,7 @@ Need multiple environment profiles? The `env:*` scripts accept a name (e.g. `npm
 - **[Security Checklist](./docs/SECURITY_CHECKLIST.md)** - Release hardening before every deploy
 - **[Migration Playbook](./docs/MIGRATIONS.md)** - Process for schema/tier updates across environments
 - **[Provider Runbook](./docs/PROVIDER_RUNBOOK.md)** - Operational tips for Stripe, WorkOS, and Convex
+- **[Vercel Deployment](./docs/DEPLOYMENT.md)** - Launch checklist for hosting on Vercel
 
 ## 🎨 Key Features
 
@@ -117,6 +121,7 @@ Need multiple environment profiles? The `env:*` scripts accept a name (e.g. `npm
 - Authenticated pages share `TopNav`, which mounts inside `/settings` so owners/admins keep the same context
 - Billing, Team, and Pricing links now live inside the Settings dropdown to cut clutter from the primary navbar
 - Settings loaders lazily import `billingService`/`rbacService` from `app/services/providers.server.ts` to avoid bundling server SDKs in client shells
+- When multiple memberships exist, the Settings dropdown also exposes an organization switcher that posts to `/settings/switch-organization` and refreshes the session role via WorkOS
 
 ## 🧪 Testing
 
@@ -132,6 +137,13 @@ Run `npx playwright install` after cloning to download the required browsers.
 
 - Toggle preview experiences and staged UI via `FEATURE_FLAGS=usageAnalytics,integrationsHub` or `FF_USAGEANALYTICS=true` style overrides.
 - Flags currently power the admin-only settings previews for usage analytics and integrations. Extend `app/lib/featureFlags.server.ts` (and matching copy within `app/routes/settings.*`) when shipping new experiments.
+- Enable `demoMode` to surface the onboarding banner, sample organization switcher tips, and guidance for `npm run seed:demo`.
+
+## 🔍 Observability & Notifications
+
+- Configure `OBSERVABILITY_TARGET=console` for local logs or `OBSERVABILITY_TARGET=sentry` with `SENTRY_DSN` to forward captured exceptions.
+- Use `EMAIL_TRANSPORT=file` (default) to write Markdown previews under `tmp/mail-previews`; switch to `console` for JSON output when debugging tests.
+- Call `flushLogger()` in long-running scripts before exit when Sentry is enabled to ensure pending events reach the service.
 
 ### Multi-Tenant Organization Support
 
@@ -165,6 +177,7 @@ npm run lint         # Run ESLint
 npm run lint:fix     # Run ESLint with auto-fix
 npm run format       # Format code with Prettier
 npm run format:check # Check code formatting
+npm run seed:demo    # Populate Convex with multi-tier demo data (requires CONVEX_URL)
 ```
 
 ### Convex Commands

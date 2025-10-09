@@ -32,6 +32,7 @@ Update the following files:
 - React Router data APIs power loaders/actions; import Stripe/WorkOS helpers via `app/services/providers.server.ts` inside those functions to keep SDKs server-only.
 - Feature flag previews live under `/settings/usage` and `/settings/integrations`; toggle them with `FEATURE_FLAGS=usageAnalytics,integrationsHub` or per-flag env vars documented in `docs/ENVIRONMENTS.md`.
 - Authenticated navigation is centralized in `components/navigation/TopNav.tsx`; `/settings` renders the same bar so Billing, Team, and Pricing live in the Settings dropdown.
+- Run `npm run seed:demo` (with `CONVEX_URL` configured) and enable `demoMode` to populate multi-tier sample orgs for walkthroughs.
 
 ## 🔧 Customizing Authentication
 
@@ -422,6 +423,7 @@ Common customization questions:
 - Update the Settings dropdown inside `components/navigation/TopNav.tsx` when you add or rename Billing/Team/Pricing pages.
 - `/settings` renders the shared `TopNav`, keeping the dropdown available even while configuring billing.
 - Add new settings sections to both the sidebar navigation and dropdown inside `app/routes/settings.tsx` so links stay discoverable.
+- The organization switcher posts to `/settings/switch-organization`; reuse that action if you add quick-switch UI elsewhere so sessions stay consistent.
 
 ## 🧩 Feature Flags & Previews
 

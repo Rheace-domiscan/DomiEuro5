@@ -40,3 +40,4 @@ Store deployment credentials in your hosting provider’s secret manager (e.g. V
 - Stripe webhooks: the signing secret differs per environment. Document them inside the `docs/` folder rather than committing raw values.
 - When cloning this template for a new SaaS product, create a fresh production profile immediately and limit access to founders/lead engineers.
 - Feature flags: toggle staged features with `FEATURE_FLAGS=usageAnalytics,integrationsHub` or per-flag overrides like `FF_USAGEANALYTICS=true` inside each `.env.<profile>`.
+- Observability: default to `OBSERVABILITY_TARGET=console` locally; set `OBSERVABILITY_TARGET=sentry` plus `SENTRY_DSN` once you have a project. Point `EMAIL_TRANSPORT=file` at a writable folder for Markdown previews.

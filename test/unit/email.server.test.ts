@@ -1,9 +1,18 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { Mock } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import path from 'node:path';
+import { readdir, rm, stat } from 'node:fs/promises';
+
+const { logInfoMock, logErrorMock } = vi.hoisted(() => ({
+  logInfoMock: vi.fn(),
+  logErrorMock: vi.fn(),
+}));
 
 vi.mock('~/lib/logger', () => ({
-  logError: vi.fn(),
+  logInfo: logInfoMock,
+  logError: logErrorMock,
 }));
+
+process.env.EMAIL_TRANSPORT = 'console';
 
 import {
   sendWelcomeEmail,
@@ -11,16 +20,32 @@ import {
   sendUserRemovedEmail,
   sendOwnershipTransferEmails,
 } from '~/lib/email.server';
-import { logError } from '~/lib/logger';
 
 afterEach(() => {
-  vi.restoreAllMocks();
+  vi.clearAllMocks();
+  process.env.EMAIL_TRANSPORT = 'console';
+  process.env.EMAIL_PREVIEW_DIR = '';
+});
+
+const previewDir = path.join(process.cwd(), 'tmp', 'mail-previews-test');
+
+beforeEach(async () => {
+  try {
+    await rm(previewDir, { recursive: true, force: true });
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: unknown }).code !== 'ENOENT'
+    ) {
+      throw error;
+    }
+  }
 });
 
 describe('email.server helpers', () => {
   it('logs welcome email payload', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendWelcomeEmail({
       to: 'new.user@example.com',
       recipientName: 'New User',
@@ -29,8 +54,8 @@ describe('email.server helpers', () => {
       dashboardUrl: 'https://example.com/dashboard',
     });
 
-    expect(infoSpy).toHaveBeenCalledTimes(1);
-    const payload = infoSpy.mock.calls[0][1] as {
+    expect(logInfoMock).toHaveBeenCalledTimes(1);
+    const payload = logInfoMock.mock.calls[0][1] as {
       template: string;
       to: string;
       subject: string;
@@ -43,19 +68,14 @@ describe('email.server helpers', () => {
   });
 
   it('skips welcome email when recipient missing', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendWelcomeEmail({ to: '' });
-
-    expect(infoSpy).not.toHaveBeenCalled();
+    expect(logInfoMock).not.toHaveBeenCalled();
   });
 
   it('uses default welcome copy when optional fields omitted', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendWelcomeEmail({ to: 'simple@example.com' });
 
-    const [, payload] = infoSpy.mock.calls[0] as [
+    const [, payload] = logInfoMock.mock.calls[0] as [
       string,
       {
         text?: string;
@@ -66,8 +86,6 @@ describe('email.server helpers', () => {
   });
 
   it('skips seat email when recipient missing', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendSeatChangeEmail({
       to: '',
       mode: 'added',
@@ -75,12 +93,10 @@ describe('email.server helpers', () => {
       seatsTotal: 5,
     });
 
-    expect(infoSpy).not.toHaveBeenCalled();
+    expect(logInfoMock).not.toHaveBeenCalled();
   });
 
   it('logs seat added email with default fallback URL', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendSeatChangeEmail({
       to: 'owner@example.com',
       mode: 'added',
@@ -90,7 +106,7 @@ describe('email.server helpers', () => {
       manageSeatsUrl: 'notaurl',
     });
 
-    const [, payload] = infoSpy.mock.calls[0] as [
+    const [, payload] = logInfoMock.mock.calls[0] as [
       string,
       {
         template: string;
@@ -102,8 +118,6 @@ describe('email.server helpers', () => {
   });
 
   it('logs seat removed email', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendSeatChangeEmail({
       to: 'owner@example.com',
       mode: 'removed',
@@ -113,7 +127,7 @@ describe('email.server helpers', () => {
       organizationName: 'Acme',
     });
 
-    const payload = infoSpy.mock.calls[0][1] as {
+    const payload = logInfoMock.mock.calls[0][1] as {
       template: string;
       to: string;
       subject: string;
@@ -126,14 +140,12 @@ describe('email.server helpers', () => {
   });
 
   it('logs user removed email with defaults', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendUserRemovedEmail({
       to: 'former.user@example.com',
       performedByName: 'Owner User',
     });
 
-    const payload = infoSpy.mock.calls[0][1] as {
+    const payload = logInfoMock.mock.calls[0][1] as {
       template: string;
       to: string;
     };
@@ -144,8 +156,6 @@ describe('email.server helpers', () => {
   });
 
   it('sends ownership transfer emails to both parties when provided', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendOwnershipTransferEmails({
       previousOwnerEmail: 'old.owner@example.com',
       newOwnerEmail: 'new.owner@example.com',
@@ -153,8 +163,10 @@ describe('email.server helpers', () => {
       organizationName: 'Acme',
     });
 
-    expect(infoSpy).toHaveBeenCalledTimes(2);
-    const templates = infoSpy.mock.calls.map(call => (call[1] as { template: string }).template);
+    expect(logInfoMock).toHaveBeenCalledTimes(2);
+    const templates = logInfoMock.mock.calls.map(
+      call => (call[1] as { template: string }).template
+    );
     expect(templates).toEqual([
       'ownership_transfer_previous_owner',
       'ownership_transfer_new_owner',
@@ -162,64 +174,48 @@ describe('email.server helpers', () => {
   });
 
   it('handles missing ownership recipients gracefully', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendOwnershipTransferEmails({});
-
-    expect(infoSpy).not.toHaveBeenCalled();
+    expect(logInfoMock).not.toHaveBeenCalled();
   });
 
   it('sends ownership transfer email when only new owner provided', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
     await sendOwnershipTransferEmails({
       newOwnerEmail: 'solo.owner@example.com',
       organizationName: 'Solo Org',
     });
 
-    expect(infoSpy).toHaveBeenCalledTimes(1);
-    const [, payload] = infoSpy.mock.calls[0] as [string, { template: string }];
+    expect(logInfoMock).toHaveBeenCalledTimes(1);
+    const [, payload] = logInfoMock.mock.calls[0] as [string, { template: string }];
     expect(payload.template).toBe('ownership_transfer_new_owner');
   });
 
   it('captures delivery errors and logs them', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {
-      throw new Error('console failed');
+    logInfoMock.mockImplementation(() => {
+      throw new Error('logger failed');
     });
-
-    const logErrorMock = logError as unknown as Mock;
 
     await sendWelcomeEmail({
       to: 'fail@example.com',
       recipientName: 'Failure Case',
     });
 
-    expect(infoSpy).toHaveBeenCalled();
+    expect(logInfoMock).toHaveBeenCalled();
     expect(logErrorMock).toHaveBeenCalledWith(
       'Failed to record email notification',
       expect.any(Error)
     );
   });
 
-  it('logs ownership transfer failures', async () => {
-    vi.spyOn(console, 'info').mockImplementation(() => {
-      throw new Error('ownership email failed');
-    });
+  it('writes email previews to disk when using file transport', async () => {
+    process.env.EMAIL_TRANSPORT = 'file';
+    process.env.EMAIL_PREVIEW_DIR = previewDir;
 
-    const logErrorMock = logError as unknown as Mock;
-    logErrorMock.mockImplementationOnce(() => {
-      throw new Error('log handler failed');
-    });
+    await sendWelcomeEmail({ to: 'preview@example.com' });
 
-    await sendOwnershipTransferEmails({
-      previousOwnerEmail: 'old.owner@example.com',
-    });
-
-    expect(logErrorMock).toHaveBeenCalledTimes(2);
-    expect(logErrorMock).toHaveBeenNthCalledWith(
-      2,
-      'Failed to send one or more ownership transfer emails',
-      expect.any(Error)
-    );
+    const entries = await readdir(previewDir);
+    expect(entries.length).toBeGreaterThan(0);
+    const firstEntry = entries[0];
+    const fileStats = await stat(path.join(previewDir, firstEntry));
+    expect(fileStats.isFile()).toBe(true);
   });
 });

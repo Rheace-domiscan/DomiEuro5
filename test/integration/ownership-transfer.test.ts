@@ -22,6 +22,7 @@ vi.mock('~/lib/auth.server', () => ({
   deactivateOrganizationMembership: vi.fn(),
   reactivateOrganizationMembership: vi.fn(),
   listOrganizations: vi.fn(),
+  listUserOrganizationsForNav: vi.fn(),
   syncUserRoleFromWorkOS: vi.fn(),
 }));
 
@@ -64,8 +65,12 @@ vi.mock('~/lib/logger', () => ({
   logError: vi.fn(),
 }));
 
-const { requireRole, getOrganizationMembershipForUser, updateOrganizationMembershipRole } =
-  await import('~/lib/auth.server');
+const {
+  requireRole,
+  getOrganizationMembershipForUser,
+  updateOrganizationMembershipRole,
+  listUserOrganizationsForNav,
+} = await import('~/lib/auth.server');
 const { convexServer } = await import('../../lib/convex.server');
 const { getSession, commitSession } = await import('~/lib/session.server');
 const { stripe } = await import('~/lib/stripe.server');
@@ -102,6 +107,7 @@ async function readLoaderData<T>(result: unknown): Promise<T> {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(listUserOrganizationsForNav).mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -208,8 +214,6 @@ describe('ownership transfer action', () => {
     const stripeUpdateSpy = stripe.customers.update as Mock;
     stripeUpdateSpy.mockResolvedValue({ id: 'cus_123' });
 
-    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
-
     const formData = new URLSearchParams({ targetWorkosUserId: 'user_admin_1' });
     const request = createMockRequest('/settings/team/transfer-ownership', {
       method: 'POST',
@@ -249,8 +253,5 @@ describe('ownership transfer action', () => {
     });
 
     expect(mockSession.set).toHaveBeenCalledWith('role', 'admin');
-    expect(consoleInfoSpy).toHaveBeenCalled();
-
-    consoleInfoSpy.mockRestore();
   });
 });
