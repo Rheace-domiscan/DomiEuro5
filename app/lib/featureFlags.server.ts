@@ -3,6 +3,8 @@ const DEFAULT_FLAGS = {
   integrationsHub: false,
   experimentalThemes: false,
   demoMode: false,
+  onboardingWizard: false,
+  apiKeys: false,
 } as const;
 
 type FeatureFlag = keyof typeof DEFAULT_FLAGS;

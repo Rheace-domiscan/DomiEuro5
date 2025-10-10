@@ -95,6 +95,8 @@ Need multiple environment profiles? The `env:*` scripts accept a name (e.g. `npm
 - **[Migration Playbook](./docs/MIGRATIONS.md)** - Process for schema/tier updates across environments
 - **[Provider Runbook](./docs/PROVIDER_RUNBOOK.md)** - Operational tips for Stripe, WorkOS, and Convex
 - **[Vercel Deployment](./docs/DEPLOYMENT.md)** - Launch checklist for hosting on Vercel
+- **[Compliance Checklist](./docs/COMPLIANCE_CHECKLIST.md)** - SOC2/GDPR-ready tasks for each clone
+- **[Support Runbook](./docs/SUPPORT_RUNBOOK.md)** - Escalation, data export, and incident guidance
 
 ## 🎨 Key Features
 
@@ -116,11 +118,19 @@ Need multiple environment profiles? The `env:*` scripts accept a name (e.g. `npm
 - **Central settings hub:** `/settings` surfaces billing, team, pricing, and owner transfer tools via a shared header dropdown
 - Feature flag previews: enable `usageAnalytics` or `integrationsHub` to unlock the placeholder routes at `/settings/usage` and `/settings/integrations`
 
+### Provisioning & API Access
+
+- Enable the onboarding wizard to guide domain setup, billing, and branding before launch
+- Owners/admins can issue and revoke organization-scoped API keys under `/settings/api-keys`
+- Data export requests live at `/settings/support/data-export` to support compliance workflows
+
 ### Settings Navigation
 
 - Authenticated pages share `TopNav`, which mounts inside `/settings` so owners/admins keep the same context
 - Billing, Team, and Pricing links now live inside the Settings dropdown to cut clutter from the primary navbar
 - Settings loaders lazily import `billingService`/`rbacService` from `app/services/providers.server.ts` to avoid bundling server SDKs in client shells
+- When multiple memberships exist, the Settings dropdown also exposes an organization switcher that posts to `/settings/switch-organization` and refreshes the session role via WorkOS
+- Enable `onboardingWizard` to surface the `/settings/onboarding` checklist and `apiKeys` to unlock the `/settings/api-keys` management screen
 - When multiple memberships exist, the Settings dropdown also exposes an organization switcher that posts to `/settings/switch-organization` and refreshes the session role via WorkOS
 
 ## 🧪 Testing
@@ -144,6 +154,7 @@ Run `npx playwright install` after cloning to download the required browsers.
 - Configure `OBSERVABILITY_TARGET=console` for local logs or `OBSERVABILITY_TARGET=sentry` with `SENTRY_DSN` to forward captured exceptions.
 - Use `EMAIL_TRANSPORT=file` (default) to write Markdown previews under `tmp/mail-previews`; switch to `console` for JSON output when debugging tests.
 - Call `flushLogger()` in long-running scripts before exit when Sentry is enabled to ensure pending events reach the service.
+- Emit counters with `recordMetric()`; set `METRICS_TARGET=statsd` alongside `METRICS_STATSD_HOST` / `METRICS_STATSD_PORT` to forward metrics to your collector.
 
 ### Multi-Tenant Organization Support
 

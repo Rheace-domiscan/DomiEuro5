@@ -20,16 +20,23 @@ All notable changes to this project will be documented in this file.
 - Added `scripts/seed-demo.ts` plus `npm run seed:demo` to populate Free/Starter/Professional sample orgs through the new Convex `demoSeed.seedDemoData` mutation.
 - Introduced a `/settings/switch-organization` action and Settings dropdown switcher so multi-tenant accounts can flip between orgs without leaving the page.
 - Enabled the `demoMode` feature flag to surface onboarding copy in `/settings` alongside the new navigation switcher.
+- Shipped the `onboardingWizard` flag with a `/settings/onboarding` checklist to orchestrate launch tasks.
 
 ### 🔍 Observability & Notifications
 
 - Replaced the console-only logger with structured helpers that optionally forward errors to Sentry via `OBSERVABILITY_TARGET=sentry`.
 - Email helpers now write Markdown previews to `tmp/mail-previews/` by default (configurable with `EMAIL_TRANSPORT` / `EMAIL_PREVIEW_DIR`) and log message metadata for local QA.
+- Added `recordMetric()` with optional StatsD emission controlled by `METRICS_TARGET`.
 
 ### ⚙️ CI & Deployment
 
 - Added `.github/workflows/ci.yml` to run lint, typecheck, Vitest, and a Playwright chromium smoke on every push/PR.
 - Published `docs/DEPLOYMENT.md` detailing the Vercel deployment flow, env mapping, Convex deploy, and Stripe webhook configuration.
+
+### 🔑 API & Support
+
+- Owners/admins can mint and revoke organization-scoped API keys at `/settings/api-keys` (behind the `apiKeys` feature flag).
+- Added `/settings/support/data-export` as a template for GDPR/DSR responses plus new compliance/support runbooks in `docs/`.
 
 ### 🧪 Testing & Tooling
 

@@ -9,4 +9,10 @@ crons.daily(
   internal.subscriptions.checkGracePeriods
 );
 
+crons.weekly(
+  'send usage summary digest',
+  { dayOfWeek: 'monday', hourUTC: 9, minuteUTC: 0 },
+  internal.jobs.sendUsageSummary
+);
+
 export default crons;

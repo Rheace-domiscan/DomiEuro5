@@ -112,6 +112,15 @@ Use this flag during workshops or template previews, then disable it before ship
 
 ---
 
+### Onboarding & API Keys
+
+- `onboardingWizard` unlocks the `/settings/onboarding` launch checklist and highlights it in Settings cards.
+- `apiKeys` enables the `/settings/api-keys` manager so owners/admins can mint tokens during roll-out.
+
+Both flags default to off—enable them per environment once you are ready to expose the flows.
+
+---
+
 ## Implementation Patterns
 
 ### Pattern 1: Route-Level Gate (Recommended)

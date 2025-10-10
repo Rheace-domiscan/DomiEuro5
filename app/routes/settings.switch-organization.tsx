@@ -2,6 +2,7 @@ import { redirect } from 'react-router';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
 import { commitSession, getSession } from '~/lib/session.server';
 import { logError } from '~/lib/logger';
+import { recordMetric } from '~/lib/metrics.server';
 
 function normaliseRedirect(target: unknown): string {
   const value = typeof target === 'string' ? target : '';
@@ -33,6 +34,9 @@ export async function action({ request }: ActionFunctionArgs) {
     const targetOrganization = organizations.find(org => org.organizationId === organizationId);
 
     if (!targetOrganization) {
+      recordMetric('domieuro.orgSwitch.forbidden', {
+        tags: { organizationId },
+      });
       return redirect(`${redirectTo}?orgSwitch=forbidden`);
     }
 
@@ -42,6 +46,10 @@ export async function action({ request }: ActionFunctionArgs) {
     const role = await rbacService.syncUserRoleFromWorkOS(user.id, organizationId);
     session.set('role', role);
 
+    recordMetric('domieuro.orgSwitch.success', {
+      tags: { organizationId },
+    });
+
     return redirect(redirectTo, {
       headers: {
         'Set-Cookie': await commitSession(session),
@@ -49,6 +57,9 @@ export async function action({ request }: ActionFunctionArgs) {
     });
   } catch (error) {
     logError('Failed to switch organization', error, { organizationId });
+    recordMetric('domieuro.orgSwitch.error', {
+      tags: { organizationId },
+    });
     return redirect(`${redirectTo}?orgSwitch=error`);
   }
 }

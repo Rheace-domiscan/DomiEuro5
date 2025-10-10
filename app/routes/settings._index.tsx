@@ -30,8 +30,19 @@ export default function SettingsOverview() {
     flag => flag.key === 'integrationsHub' && flag.enabled
   );
   const demoModeEnabled = featureFlags.some(flag => flag.key === 'demoMode' && flag.enabled);
+  const onboardingEnabled = featureFlags.some(
+    flag => flag.key === 'onboardingWizard' && flag.enabled
+  );
+  const apiKeysEnabled = featureFlags.some(flag => flag.key === 'apiKeys' && flag.enabled);
 
   const cards: SettingsCard[] = [
+    {
+      title: 'Launch checklist',
+      description: 'Follow the guided provisioning wizard to prep domains, billing, and branding.',
+      to: '/settings/onboarding',
+      cta: 'Open checklist',
+      visible: onboardingEnabled && hasRole(role, ['owner', 'admin']),
+    },
     {
       title: 'Pricing',
       description: 'Review plan tiers and compare monthly versus annual pricing options.',
@@ -58,6 +69,20 @@ export default function SettingsOverview() {
       description: 'Pass account management to another admin and sync WorkOS/Stripe roles.',
       to: '/settings/team/transfer-ownership',
       cta: 'Start transfer',
+      visible: hasRole(role, ['owner']),
+    },
+    {
+      title: 'API keys',
+      description: 'Generate and revoke organization-scoped API credentials for integrations.',
+      to: '/settings/api-keys',
+      cta: 'Manage API keys',
+      visible: apiKeysEnabled && hasRole(role, ['owner', 'admin']),
+    },
+    {
+      title: 'Support & exports',
+      description: 'Request customer data exports and review incident response steps.',
+      to: '/settings/support/data-export',
+      cta: 'Open runbook',
       visible: hasRole(role, ['owner']),
     },
     {

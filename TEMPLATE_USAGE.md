@@ -33,6 +33,7 @@ Update the following files:
 - Feature flag previews live under `/settings/usage` and `/settings/integrations`; toggle them with `FEATURE_FLAGS=usageAnalytics,integrationsHub` or per-flag env vars documented in `docs/ENVIRONMENTS.md`.
 - Authenticated navigation is centralized in `components/navigation/TopNav.tsx`; `/settings` renders the same bar so Billing, Team, and Pricing live in the Settings dropdown.
 - Run `npm run seed:demo` (with `CONVEX_URL` configured) and enable `demoMode` to populate multi-tier sample orgs for walkthroughs.
+- `onboardingWizard` feature flag unlocks the `/settings/onboarding` checklist; `apiKeys` exposes `/settings/api-keys` so owners can mint credentials without extra wiring.
 
 ## 🔧 Customizing Authentication
 

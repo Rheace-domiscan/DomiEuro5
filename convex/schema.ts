@@ -100,4 +100,29 @@ export default defineSchema({
     .index('by_action', ['action'])
     .index('by_target', ['targetType', 'targetId'])
     .index('by_created_at', ['createdAt']),
+
+  apiKeys: defineTable({
+    organizationId: v.string(),
+    name: v.string(),
+    keyPrefix: v.string(),
+    hashedKey: v.string(),
+    createdAt: v.number(),
+    createdBy: v.string(),
+    lastUsedAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+  })
+    .index('by_organization', ['organizationId'])
+    .index('by_key_prefix', ['keyPrefix']),
+
+  onboardingProgress: defineTable({
+    organizationId: v.string(),
+    tasks: v.array(
+      v.object({
+        key: v.string(),
+        completed: v.boolean(),
+        completedAt: v.optional(v.number()),
+      })
+    ),
+    updatedAt: v.number(),
+  }).index('by_organization', ['organizationId']),
 });

@@ -20,14 +20,23 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function SettingsLayout() {
-  const { user, organizations } = useLoaderData<typeof loader>();
+  const { user, organizations, featureFlags } = useLoaderData<typeof loader>();
   const userRole = user.role ?? 'member';
+  const onboardingEnabled = featureFlags.some(
+    flag => flag.key === 'onboardingWizard' && flag.enabled
+  );
+  const apiKeysEnabled = featureFlags.some(flag => flag.key === 'apiKeys' && flag.enabled);
 
   const navigation = [
     {
       to: '/settings',
       label: 'Overview',
       visible: true,
+    },
+    {
+      to: '/settings/onboarding',
+      label: 'Onboarding',
+      visible: onboardingEnabled && hasRole(userRole, ['owner', 'admin']),
     },
     {
       to: '/settings/billing',
@@ -42,6 +51,16 @@ export default function SettingsLayout() {
     {
       to: '/settings/team/transfer-ownership',
       label: 'Transfer ownership',
+      visible: hasRole(userRole, ['owner']),
+    },
+    {
+      to: '/settings/api-keys',
+      label: 'API keys',
+      visible: apiKeysEnabled && hasRole(userRole, ['owner', 'admin']),
+    },
+    {
+      to: '/settings/support/data-export',
+      label: 'Support & exports',
       visible: hasRole(userRole, ['owner']),
     },
   ];

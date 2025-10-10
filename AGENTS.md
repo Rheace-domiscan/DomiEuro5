@@ -35,3 +35,4 @@
 - Stripe webhooks: run `stripe listen --forward-to http://localhost:5173/webhooks/stripe` during billing work.
 - Rotate provider keys regularly and audit access via `docs/SECURITY_CHECKLIST.md` before production pushes.
 - Email previews default to Markdown files under `tmp/mail-previews/`; clean the folder or switch to `EMAIL_TRANSPORT=console` for CI runs.
+- Use `METRICS_TARGET=statsd` (with host/port) when piping metrics to your observability stack; defaults stay local.
