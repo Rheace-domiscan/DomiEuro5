@@ -45,6 +45,7 @@ All notable changes to this project will be documented in this file.
 - Added Playwright end-to-end smoke tests (`npm run test:e2e`) and a Node-based environment profile manager (`npm run env:*`) to accelerate QA and deployment preparation.
 - Expanded Playwright coverage to include protected route redirects for `/dashboard`, `/settings/billing`, and `/settings/team`.
 - Introduced provider service abstractions in `app/services/providers.server.ts` so Stripe/WorkOS/Convex helpers flow through a central interface.
+- Manually verified onboarding checklist, API key issuance, organization switching metrics, and data-export requests before locking in automated coverage.
 
 ### 📧 Email Notifications
 
