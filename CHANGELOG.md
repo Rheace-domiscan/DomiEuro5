@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [V1.1:Repository Migration] - 2025-11-01
+
+### Added
+
+- Added `.prettierignore` to exclude Convex generated files and prevent formatting conflicts
+- Created new GitHub repository `DomiEuro5` and migrated codebase
+- Added Convex configuration files (`convex/README.md`, `convex/tsconfig.json`)
+
+### Changed
+
+- Updated Convex deployment from `grateful-cow-223` to `limitless-hummingbird-214` (project: domieuro5)
+- Refreshed environment configuration in `.env.local` with new Convex deployment URLs
+
+### Fixed
+
+- Resolved Convex dev server infinite retry loop caused by Prettier reformatting generated files
+- Fixed duplicate CONVEX_URL environment variable warnings
+
 ## [V1:Base template] - 2025-11-01
 
 ### 📝 Documentation Updates

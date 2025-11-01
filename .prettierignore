@@ -1,0 +1,7 @@
+convex/_generated
+node_modules
+dist
+build
+.next
+.env.local
+.env
