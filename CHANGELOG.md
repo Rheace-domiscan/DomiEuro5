@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [V1:Base template] - 2025-11-01
+
+### 📝 Documentation Updates
+
+- Refined `AGENTS.md` with improved conciseness and clarity in module organization, build commands, and testing guidelines
+- Enhanced `CLAUDE.md` with expanded documentation of key directories, database schema, and environment variable organization
+- Added explicit service layer documentation (`app/services/providers.server.ts` pattern)
+- Clarified testing infrastructure with test count breakdown (346 unit tests, 26 integration tests)
+- Improved environment variable organization with clear categorization (Core Auth, Database, Billing, Observability, Metrics, Email, Feature Flags)
+
+### ✅ Verification
+
+- `npm run typecheck` — 0 errors
+- `npm run lint` — 0 errors
+- `npm run test:run` — All tests passing
+- Documentation reviewed for accuracy and completeness
+
 ## [V1:Base template] - 2025-10-08
 
 ### 📝 Documentation
