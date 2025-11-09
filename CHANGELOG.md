@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [V1.6.0:Theme System and UI Consistency] - 2025-01-15
+
+### Added
+
+- Comprehensive UI/UX guidelines documentation (`docs/UI_UX_GUIDELINES.md`)
+- Reusable layout components (`PageLayout`, `PageHeader`, `Card`) in `components/layout/`
+- Theme-aware design system with daylight and midnight themes
+- Push release workflow script (`scripts/push-release.mjs`) for automated changelog generation
+- ESLint rules to enforce design system compliance across settings, billing, and team components
+
+### Changed
+
+- Updated all billing components to use theme-aware CSS variables instead of hardcoded colors
+- Updated all settings pages (Billing, Team, Transfer Ownership) to support dark mode
+- Standardized border radius across all components (`rounded-2xl` for cards, `rounded-xl` for buttons)
+- Improved Settings sidebar navigation with theme-aware colors and better contrast
+- Enhanced dropdown menu behavior with hover delay to prevent premature closing
+- Updated README.md with UI/UX consistency guidelines reference
+
+### Fixed
+
+- Fixed text overflow issue in Settings sidebar organization ID display
+- Fixed dropdown menu closing when moving cursor to select options
+- Fixed poor contrast in "Account controls" heading in dark mode
+- Removed Stripe test mode banner from production interface
+- Fixed hard edges on billing page header (now uses rounded corners)
+
 ## [V1.1:Repository Migration] - 2025-11-01
 
 ### Added
